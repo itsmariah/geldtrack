@@ -8,7 +8,7 @@
 ![Database](https://img.shields.io/badge/banco-PostgreSQL%20%7C%20Prisma-blue)
 ![Desktop](https://img.shields.io/badge/desktop-Electron-47848f)
 
-**🔗 Acesse online:** [moneytrack-m4dd.vercel.app](https://moneytrack-m4dd.vercel.app)
+**🔗 Acesse online:** [geldtrack.vercel.app](https://geldtrack.vercel.app)
 
 ---
 
@@ -819,7 +819,7 @@ O banco de dados é **PostgreSQL** (não SQLite), hospedado gratuitamente no **[
 
 | Camada | URL |
 |--------|-----|
-| Frontend (Vercel) | https://moneytrack-m4dd.vercel.app |
+| Frontend (Vercel) | https://geldtrack.vercel.app |
 | Backend (Render) | https://moneytrack-backend-glsk.onrender.com/api |
 | Banco de dados | Neon, projeto `moneytrack`, região `aws-sa-east-1` (São Paulo) |
 
