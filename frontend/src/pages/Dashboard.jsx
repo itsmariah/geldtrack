@@ -144,7 +144,7 @@ export default function Dashboard() {
       const dataArquivo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
       const link = document.createElement('a')
       link.href = url
-      link.download = `moneytrack-transacoes-${dataArquivo}.csv`
+      link.download = `geldtrack-transacoes-${dataArquivo}.csv`
       document.body.appendChild(link)
       link.click()
       link.remove()

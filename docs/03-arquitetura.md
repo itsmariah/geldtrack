@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-O MoneyTrack segue o modelo **Cliente-Servidor**, uma das arquiteturas mais comuns em aplicações web. O sistema é dividido em duas partes independentes que se comunicam via HTTP.
+O GeldTrack segue o modelo **Cliente-Servidor**, uma das arquiteturas mais comuns em aplicações web. O sistema é dividido em duas partes independentes que se comunicam via HTTP.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -69,7 +69,7 @@ O MoneyTrack segue o modelo **Cliente-Servidor**, uma das arquiteturas mais comu
 
 É uma arquitetura onde existe um **cliente** (quem pede informações) e um **servidor** (quem responde). O cliente nunca acessa o banco de dados diretamente — ele sempre passa pelo servidor.
 
-### No MoneyTrack
+### No GeldTrack
 
 | Papel | Tecnologia | Porta local | Responsabilidade |
 |-------|-----------|-------|-----------------|

@@ -51,5 +51,5 @@ app.use('/api/eventos', eventosRoutes);
 app.use('/api/grupos', gruposRoutes);
 
 app.listen(PORT, () => {
-  console.log(`MoneyTrack API rodando em http://localhost:${PORT}`);
+  console.log(`GeldTrack API rodando em http://localhost:${PORT}`);
 });

@@ -28,7 +28,7 @@ export default function ForgotPassword() {
     <div className="auth-page">
       <Link to="/" className="back-link">← Voltar para o início</Link>
       <div className="auth-card">
-        <h1>💰 MoneyTrack</h1>
+        <h1>💰 GeldTrack</h1>
         <h2>Esqueceu a senha?</h2>
 
         {error && <Alert type="error">{error}</Alert>}

@@ -1,8 +1,8 @@
 # 01 — Visão Geral do Projeto
 
-## O que é o MoneyTrack?
+## O que é o GeldTrack?
 
-O **MoneyTrack** é um sistema web de gestão financeira pessoal. O usuário cria uma conta, faz login e passa a registrar suas receitas (dinheiro que entra) e despesas (dinheiro que sai), organizadas em contas próprias (conta corrente, cartão, carteira...), com o saldo calculado automaticamente e sincronização opcional direto com o banco via Open Finance.
+O **GeldTrack** é um sistema web de gestão financeira pessoal. O usuário cria uma conta, faz login e passa a registrar suas receitas (dinheiro que entra) e despesas (dinheiro que sai), organizadas em contas próprias (conta corrente, cartão, carteira...), com o saldo calculado automaticamente e sincronização opcional direto com o banco via Open Finance.
 
 Além do controle básico de receitas/despesas, o sistema cobre metas financeiras, orçamento por categoria, transações recorrentes, relatórios com gráficos e exportação em PDF, categorias personalizadas, anexo de comprovante, histórico de edição, uma carteira compartilhada entre familiares ("modo família"), contas em moeda estrangeira, eventos pra agrupar gastos de uma viagem ou ocasião, e grupos pra dividir despesas com amigos estilo Splitwise (com cálculo de "quem deve quem" e quitação de saldo). Também roda como app desktop (Electron) e é instalável no celular como PWA.
 

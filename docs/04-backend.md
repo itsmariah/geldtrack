@@ -4,7 +4,7 @@
 
 O backend é o **servidor** da aplicação. Ele recebe as requisições do frontend, processa as regras de negócio, acessa o banco de dados e retorna as respostas.
 
-No MoneyTrack, o backend é uma **API REST** — um conjunto de "endereços" (endpoints) que o frontend chama para fazer operações.
+No GeldTrack, o backend é uma **API REST** — um conjunto de "endereços" (endpoints) que o frontend chama para fazer operações.
 
 ---
 
@@ -251,7 +251,7 @@ Guarda variáveis de ambiente — configurações que **não devem ir para o Git
 
 ```env
 PORT=3001
-JWT_SECRET=moneytrack_jwt_secret_mude_em_producao
+JWT_SECRET=geldtrack_jwt_secret_mude_em_producao
 FRONTEND_URL=http://localhost:5173
 ```
 

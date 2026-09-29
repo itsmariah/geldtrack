@@ -157,7 +157,7 @@ app.listen(3001)
 
 **O que é:** SDK oficial da [Pluggy](https://pluggy.ai), um agregador de Open Finance (equivalente brasileiro ao Plaid) que conecta a bancos de verdade.
 
-**Por que usamos:** Implementar a integração direto com cada banco individualmente exigiria credenciar o MoneyTrack junto a cada instituição financeira — inviável para um projeto pessoal. A Pluggy padroniza essa conexão: o usuário autoriza o acesso pelo widget deles (`react-pluggy-connect`, no frontend), e o backend só guarda o identificador da conexão (`pluggyItemId`) — nunca senha nem token de acesso ao banco em si.
+**Por que usamos:** Implementar a integração direto com cada banco individualmente exigiria credenciar o GeldTrack junto a cada instituição financeira — inviável para um projeto pessoal. A Pluggy padroniza essa conexão: o usuário autoriza o acesso pelo widget deles (`react-pluggy-connect`, no frontend), e o backend só guarda o identificador da conexão (`pluggyItemId`) — nunca senha nem token de acesso ao banco em si.
 
 **Site:** https://pluggy.ai
 
@@ -195,7 +195,7 @@ app.listen(3001)
 
 **O que é:** Biblioteca de roteamento para React. Cria navegação entre "páginas" sem recarregar o navegador.
 
-**Por que usamos:** O MoneyTrack tem múltiplas telas (landing, login, dashboard, relatórios). O React Router gerencia qual componente exibir baseado na URL, criando a experiência de uma aplicação multi-página sem o custo de recarregar tudo.
+**Por que usamos:** O GeldTrack tem múltiplas telas (landing, login, dashboard, relatórios). O React Router gerencia qual componente exibir baseado na URL, criando a experiência de uma aplicação multi-página sem o custo de recarregar tudo.
 
 **Conceito:** SPA (Single Page Application) — o HTML é carregado uma única vez, e o JavaScript troca os componentes na tela conforme o usuário navega.
 
@@ -262,7 +262,7 @@ const { data } = await api.get('/transactions')
 
 **O que é:** Widget React oficial da Pluggy — a tela onde o usuário escolhe o banco e autoriza a conexão.
 
-**Por que usamos:** Em vez de construir esse fluxo de autorização do zero (e lidar com a segurança de credenciais bancárias), o widget cuida de toda a etapa sensível; o MoneyTrack só recebe de volta um identificador de conexão já autorizada.
+**Por que usamos:** Em vez de construir esse fluxo de autorização do zero (e lidar com a segurança de credenciais bancárias), o widget cuida de toda a etapa sensível; o GeldTrack só recebe de volta um identificador de conexão já autorizada.
 
 **Site:** https://github.com/pluggyai/pluggy-connect
 
@@ -272,7 +272,7 @@ const { data } = await api.get('/transactions')
 
 **O que é:** Plugin do Vite que gera o `manifest.webmanifest` e o service worker (via Workbox) necessários pra um site virar instalável como PWA (Progressive Web App).
 
-**Por que usamos:** Deixa o MoneyTrack instalável no celular direto do navegador, sem loja de aplicativo. Configurado só pra cachear o "app shell" (JS/CSS/HTML/ícones) — nenhuma chamada `/api` é cacheada, então o app sempre busca dado real da rede, nunca mostra número desatualizado offline. Ver `frontend/vite.config.js` e `frontend/src/hooks/useInstallPrompt.js` (captura o evento `beforeinstallprompt` do navegador pra mostrar o botão "Instalar no celular").
+**Por que usamos:** Deixa o GeldTrack instalável no celular direto do navegador, sem loja de aplicativo. Configurado só pra cachear o "app shell" (JS/CSS/HTML/ícones) — nenhuma chamada `/api` é cacheada, então o app sempre busca dado real da rede, nunca mostra número desatualizado offline. Ver `frontend/vite.config.js` e `frontend/src/hooks/useInstallPrompt.js` (captura o evento `beforeinstallprompt` do navegador pra mostrar o botão "Instalar no celular").
 
 **Site:** https://vite-pwa-org.netlify.app
 

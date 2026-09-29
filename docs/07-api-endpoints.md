@@ -235,7 +235,7 @@ Exporta as transações filtradas em CSV (delimitado por `;`, com vírgula decim
 
 **Exemplo:** `GET /api/transactions/export?tipo=despesa&data_inicio=2026-05-01&data_fim=2026-05-31`
 
-**Resposta 200 OK** — `Content-Type: text/csv; charset=utf-8`, `Content-Disposition: attachment; filename="moneytrack-transacoes.csv"`:
+**Resposta 200 OK** — `Content-Type: text/csv; charset=utf-8`, `Content-Disposition: attachment; filename="geldtrack-transacoes.csv"`:
 ```
 Data;Tipo;Categoria;Descrição;Valor;Moeda
 2026-05-21;Despesa;Alimentação;Almoço restaurante;45,90;BRL
@@ -1357,7 +1357,7 @@ Exclui o evento. As transações vinculadas sobrevivem, só perdem o vínculo (`
 
 > Todas as rotas abaixo são 🔒 — requerem JWT.
 >
-> **Todo `Usuario` pertence a exatamente uma `Familia`, sempre** — mesmo alguém que "usa o app sozinho" tem uma família própria, criada automaticamente no cadastro. Família é o modelo de carteira compartilhada do MoneyTrack: outra pessoa entra digitando um código curto (não há convite por e-mail), e a partir daí os dois enxergam e editam os mesmos dados. Esse é o motivo de quase toda outra rota deste documento filtrar por `familiaId` em vez de `usuarioId` — Transação, Conta, Meta, Orçamento, Recorrência, Evento e Categoria são todos "da família", não "do usuário". O campo `usuarioId` que aparece em vários desses registros é só **atribuição** ("quem lançou isso"), nunca escopo de acesso: qualquer membro da família enxerga e edita o que qualquer outro membro criou.
+> **Todo `Usuario` pertence a exatamente uma `Familia`, sempre** — mesmo alguém que "usa o app sozinho" tem uma família própria, criada automaticamente no cadastro. Família é o modelo de carteira compartilhada do GeldTrack: outra pessoa entra digitando um código curto (não há convite por e-mail), e a partir daí os dois enxergam e editam os mesmos dados. Esse é o motivo de quase toda outra rota deste documento filtrar por `familiaId` em vez de `usuarioId` — Transação, Conta, Meta, Orçamento, Recorrência, Evento e Categoria são todos "da família", não "do usuário". O campo `usuarioId` que aparece em vários desses registros é só **atribuição** ("quem lançou isso"), nunca escopo de acesso: qualquer membro da família enxerga e edita o que qualquer outro membro criou.
 >
 > Dentro de uma família, cada membro tem um `papelFamilia`: `"dono"` (criou a família ou herdou o posto — pode renomear, gerar novo código e remover membros) ou `"membro"` (acesso igual aos dados, mas sem essas ações administrativas). Uma família nunca fica sem dono: se o dono sai, o membro mais antigo restante assume automaticamente.
 
@@ -1477,7 +1477,7 @@ Remove outro membro da família. Só o dono pode. O removido recebe uma família
 >
 > Grupo é **arquiteturalmente diferente** de Família: um `Usuario` pode pertencer a vários grupos ao mesmo tempo (diferente de família, que é sempre uma só), e um grupo serve pra dividir despesas pontuais entre pessoas — estilo Splitwise, não uma carteira compartilhada. Por isso nenhuma rota de grupo filtra por `familiaId`; a posse é sempre resolvida por `GrupoMembro` (a tabela de associação usuário↔grupo), checada em cada rota através de `:id` de grupo.
 >
-> Um `GrupoMembro` pode ser um **convidado sem conta** no MoneyTrack: nesse caso `usuarioId` é `null` e `nomeConvidado` guarda o nome digitado por quem adicionou (útil pra dividir uma despesa com alguém que não quer criar conta). Um membro (registrado ou convidado) tem um `papel`: `"admin"` (pode remover membros e excluir o grupo) ou `"membro"` (lança despesa, quita pagamento, adiciona convidado).
+> Um `GrupoMembro` pode ser um **convidado sem conta** no GeldTrack: nesse caso `usuarioId` é `null` e `nomeConvidado` guarda o nome digitado por quem adicionou (útil pra dividir uma despesa com alguém que não quer criar conta). Um membro (registrado ou convidado) tem um `papel`: `"admin"` (pode remover membros e excluir o grupo) ou `"membro"` (lança despesa, quita pagamento, adiciona convidado).
 >
 > O saldo "quem deve quem" (`saldos`, retornado por `GET /grupos/:id`) **nunca é persistido** — é recalculado a cada leitura a partir de todas as `DespesaGrupo` (com o rateio em `DivisaoDespesa`) menos todos os `PagamentoGrupo` já registrados. Para cada despesa, quem pagou (`pagoPorMembroId`) é credor de cada participante do rateio pelo valor devido (`divisoes[].valorDevido`); um `PagamentoGrupo` registra uma quitação feita **fora do app** (Pix, dinheiro...) e abate esse saldo na mesma proporção, com sinal invertido. O cálculo acumula em centavos (não em ponto flutuante) para não sofrer drift ao longo de muitas despesas, e não há simplificação de dívida nesta fase — se A deve a B e B deve a C, isso aparece como duas arestas separadas, não uma só.
 >
@@ -1875,7 +1875,7 @@ Busca a cotação atual na API pública gratuita `open.er-api.com` (sem chave) e
 
 ## 🏛️ Rotas de Open Finance
 
-> Sincronização automática de contas bancárias reais via [Pluggy](https://pluggy.ai/) (Open Finance). O MoneyTrack **nunca guarda credenciais bancárias nem tokens de acesso ao banco** — a Pluggy cuida disso inteiramente do lado dela; o backend só guarda o `pluggyItemId` (identificador da conexão) e, depois de sincronizada, o `pluggyAccountId`/`pluggyTransactionId` de cada conta/transação importada, usados só para não duplicar dados numa sincronização seguinte.
+> Sincronização automática de contas bancárias reais via [Pluggy](https://pluggy.ai/) (Open Finance). O GeldTrack **nunca guarda credenciais bancárias nem tokens de acesso ao banco** — a Pluggy cuida disso inteiramente do lado dela; o backend só guarda o `pluggyItemId` (identificador da conexão) e, depois de sincronizada, o `pluggyAccountId`/`pluggyTransactionId` de cada conta/transação importada, usados só para não duplicar dados numa sincronização seguinte.
 >
 > Todas as rotas abaixo são 🔒, **exceto `POST /open-finance/webhook`**: essa é chamada pelos servidores da Pluggy diretamente, não por um usuário logado, então não tem (nem poderia ter) o JWT de ninguém. Ela fica registrada antes do `authMiddleware` no router por esse motivo. Sem uma URL pública configurada (não funciona com `localhost` em desenvolvimento), o webhook nunca é chamado — o botão "Sincronizar agora" (`POST /conexoes/:id/sincronizar`) cobre o mesmo fluxo manualmente.
 
@@ -1943,7 +1943,7 @@ Registra a conexão bancária depois que o widget termina (callback `onSuccess` 
 
 ### GET /open-finance/conexoes 🔒
 
-Lista as conexões bancárias da família, com as contas do MoneyTrack já vinculadas a cada uma.
+Lista as conexões bancárias da família, com as contas do GeldTrack já vinculadas a cada uma.
 
 **Resposta 200 OK:**
 ```json
@@ -1982,7 +1982,7 @@ Sincronização manual — usada no botão "Sincronizar agora" (e o único jeito
 
 ### DELETE /open-finance/conexoes/:id 🔒
 
-Remove a conexão bancária. As contas e transações já importadas por ela **permanecem** no MoneyTrack como histórico — só param de ser atualizadas automaticamente.
+Remove a conexão bancária. As contas e transações já importadas por ela **permanecem** no GeldTrack como histórico — só param de ser atualizadas automaticamente.
 
 **Exemplo:** `DELETE /api/open-finance/conexoes/1`
 

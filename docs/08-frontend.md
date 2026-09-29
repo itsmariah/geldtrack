@@ -2,7 +2,7 @@
 
 ## O que é o frontend?
 
-O frontend é tudo que o usuário **vê e interage**: as telas, formulários, botões, gráficos. No MoneyTrack, o frontend é uma aplicação React que roda no navegador.
+O frontend é tudo que o usuário **vê e interage**: as telas, formulários, botões, gráficos. No GeldTrack, o frontend é uma aplicação React que roda no navegador.
 
 ---
 

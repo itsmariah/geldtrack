@@ -14,7 +14,7 @@ function getBackendPath() {
 
 function startBackend() {
   const backendPath = getBackendPath()
-  const dbPath = path.join(app.getPath('userData'), 'moneytrack.db')
+  const dbPath = path.join(app.getPath('userData'), 'geldtrack.db')
 
   return new Promise((resolve) => {
     backendProcess = spawn(process.execPath, ['server.js'], {
@@ -48,7 +48,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'MoneyTrack',
+    title: 'GeldTrack',
     icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

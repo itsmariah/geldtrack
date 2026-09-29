@@ -4,7 +4,7 @@
 
 Um banco de dados é onde as informações ficam **salvas de forma permanente**. Sem ele, os dados sumiriam toda vez que o servidor fosse reiniciado.
 
-Exemplos de dados que persistimos no MoneyTrack:
+Exemplos de dados que persistimos no GeldTrack:
 - Usuários cadastrados (nome, e-mail, senha) e a família (carteira compartilhada) de cada um
 - Transações financeiras (tipo, valor, categoria, data)
 - Metas, orçamentos, recorrências, contas, eventos, grupos de despesas compartilhadas...
@@ -133,7 +133,7 @@ Duas mudanças de schema já passaram por esse projeto vale a pena conhecer como
 
 ## O modelo de dados, em duas camadas
 
-O MoneyTrack tem dois jeitos diferentes de "várias pessoas compartilharem dados", e é fácil confundir os dois:
+O GeldTrack tem dois jeitos diferentes de "várias pessoas compartilharem dados", e é fácil confundir os dois:
 
 ### 1. Família — a carteira compartilhada (a maioria das tabelas)
 
@@ -157,7 +157,7 @@ Familia "Casa"                    Transacao
 
 ### 2. Grupos — divisão de despesas estilo Splitwise (Grupo, GrupoMembro, DespesaGrupo, DivisaoDespesa, PagamentoGrupo)
 
-Arquiteturalmente **diferente** de Família: um `Usuario` pode pertencer a **vários** `Grupo`s ao mesmo tempo (não só um), e um grupo pode incluir gente sem conta no MoneyTrack — um `GrupoMembro` com `usuarioId` nulo e só um `nomeConvidado`. Não existe `familiaId` em nenhuma tabela de grupo.
+Arquiteturalmente **diferente** de Família: um `Usuario` pode pertencer a **vários** `Grupo`s ao mesmo tempo (não só um), e um grupo pode incluir gente sem conta no GeldTrack — um `GrupoMembro` com `usuarioId` nulo e só um `nomeConvidado`. Não existe `familiaId` em nenhuma tabela de grupo.
 
 O saldo "quem deve quem" nunca é uma coluna guardada — é sempre recalculado na leitura (`backend/utils/calcularSaldosGrupo.js`) a partir de duas fontes:
 - `DespesaGrupo` + `DivisaoDespesa`: uma despesa paga por um membro, dividida entre os participantes escolhidos.

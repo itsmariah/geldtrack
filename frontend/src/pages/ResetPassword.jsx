@@ -34,7 +34,7 @@ export default function ResetPassword() {
     <div className="auth-page">
       <Link to="/" className="back-link">← Voltar para o início</Link>
       <div className="auth-card">
-        <h1>💰 MoneyTrack</h1>
+        <h1>💰 GeldTrack</h1>
         <h2>Criar nova senha</h2>
 
         {!token ? (

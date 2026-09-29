@@ -108,7 +108,7 @@ router.get('/export', async (req, res) => {
 
     const csv = buildTransactionsCsv(serializeTransactions(rawTransactions));
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="moneytrack-transacoes.csv"');
+    res.setHeader('Content-Disposition', 'attachment; filename="geldtrack-transacoes.csv"');
     res.send(csv);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao exportar transações' });

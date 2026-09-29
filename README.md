@@ -1,4 +1,4 @@
-# 💰 MoneyTrack
+# 💰 GeldTrack
 
 > Gestão financeira pessoal com dashboard, relatórios e importação de extratos bancários (OFX).
 
@@ -14,7 +14,7 @@
 
 ## 📖 Sobre o projeto
 
-O **MoneyTrack** é uma aplicação de gestão financeira pessoal que permite ao usuário registrar receitas e despesas, visualizar o saldo atualizado automaticamente, filtrar transações, importar extratos bancários (OFX) e gerar relatórios mensais com gráficos. Pode ser executado como aplicação web ou como **app desktop** via Electron.
+O **GeldTrack** é uma aplicação de gestão financeira pessoal que permite ao usuário registrar receitas e despesas, visualizar o saldo atualizado automaticamente, filtrar transações, importar extratos bancários (OFX) e gerar relatórios mensais com gráficos. Pode ser executado como aplicação web ou como **app desktop** via Electron.
 
 ---
 
@@ -60,13 +60,13 @@ O **MoneyTrack** é uma aplicação de gestão financeira pessoal que permite ao
 ## 📸 Preview
 
 **Landing Page**
-![Landing Page](./frontend/assets/imagens/moneytrack_landing.png)
+![Landing Page](./frontend/assets/imagens/geldtrack_landing.png)
 
 **Dashboard**
-![Dashboard](./frontend/assets/imagens/moneytrack_dashboard.png)
+![Dashboard](./frontend/assets/imagens/geldtrack_dashboard.png)
 
 **Relatórios**
-![Relatórios](./frontend/assets/imagens/moneytrack_relatorio.png)
+![Relatórios](./frontend/assets/imagens/geldtrack_relatorio.png)
 
 ---
 

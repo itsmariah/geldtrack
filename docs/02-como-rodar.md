@@ -58,7 +58,7 @@ npm run dev
 
 Se tudo deu certo, você verá:
 ```
-MoneyTrack API rodando em http://localhost:3001
+GeldTrack API rodando em http://localhost:3001
 ```
 
 **Deixe este terminal aberto.**
@@ -101,7 +101,7 @@ Você verá algo como:
 
 Abra o navegador e acesse: **http://localhost:5173**
 
-Você verá a landing page do MoneyTrack. Clique em **"Criar conta grátis"** para se cadastrar.
+Você verá a landing page do GeldTrack. Clique em **"Criar conta grátis"** para se cadastrar.
 
 ---
 

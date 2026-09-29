@@ -14,7 +14,7 @@ function Titulo({ texto }) {
 <Titulo texto="Olá, mundo!" />
 ```
 
-O MoneyTrack tem dois tipos de arquivos em `frontend/src/`:
+O GeldTrack tem dois tipos de arquivos em `frontend/src/`:
 - **`pages/`** — telas completas (acessadas por URL)
 - **`components/`** — partes reutilizáveis (usadas dentro das páginas)
 

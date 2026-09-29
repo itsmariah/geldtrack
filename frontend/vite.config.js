@@ -19,8 +19,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       manifest: {
-        name: 'MoneyTrack',
-        short_name: 'MoneyTrack',
+        name: 'GeldTrack',
+        short_name: 'GeldTrack',
         description: 'Controle financeiro pessoal — transações, orçamentos, metas e mais.',
         lang: 'pt-BR',
         theme_color: '#0f1117',

@@ -3,8 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import ThemeToggle from '../components/ThemeToggle'
-import screenshotDashboard from '../../assets/imagens/moneytrack_dashboard.png'
-import screenshotRelatorio from '../../assets/imagens/moneytrack_relatorio.png'
+import screenshotDashboard from '../../assets/imagens/geldtrack_dashboard.png'
+import screenshotRelatorio from '../../assets/imagens/geldtrack_relatorio.png'
 
 const RELEASES_URL = 'https://github.com/itsmariah/moneytrack/releases'
 const isDesktopApp = window.location.protocol === 'file:'
@@ -40,7 +40,7 @@ export default function Landing() {
   return (
     <div className="landing">
       <nav className="landing-nav">
-        <div className="logo"><span className="logo-coin">💰</span> <span className="navbar-brand-text">MoneyTrack</span></div>
+        <div className="logo"><span className="logo-coin">💰</span> <span className="navbar-brand-text">GeldTrack</span></div>
 
         <button
           type="button"
@@ -73,8 +73,8 @@ export default function Landing() {
 
       <section id="sobre" className="about">
         <div className="about-text">
-          <h2>O que é o MoneyTrack?</h2>
-          <p>O MoneyTrack é uma aplicação de gestão financeira pessoal criada para ajudar você a entender para onde vai o seu dinheiro. Cadastre receitas e despesas, importe extratos bancários ou sincronize direto com seu banco via Open Finance, e acompanhe o saldo atualizado automaticamente — com insights automáticos, projeção de saldo e gráficos que mostram a evolução dos seus gastos mês a mês.</p>
+          <h2>O que é o GeldTrack?</h2>
+          <p>O GeldTrack é uma aplicação de gestão financeira pessoal criada para ajudar você a entender para onde vai o seu dinheiro. Cadastre receitas e despesas, importe extratos bancários ou sincronize direto com seu banco via Open Finance, e acompanhe o saldo atualizado automaticamente — com insights automáticos, projeção de saldo e gráficos que mostram a evolução dos seus gastos mês a mês.</p>
           <p>Disponível como aplicação web, acessível de qualquer navegador, como app desktop instalável ou direto no celular via PWA — e pode ser compartilhado com sua família, todo mundo vendo e lançando na mesma carteira. Organize gastos de viagens em eventos, divida despesas com amigos em grupos e mantenha contas em outras moedas, tudo no mesmo lugar.</p>
         </div>
         <div className="browser-frame">
@@ -85,7 +85,7 @@ export default function Landing() {
           </div>
           <img
             src={screenshotDashboard}
-            alt="Painel do MoneyTrack mostrando saldo, receitas e despesas"
+            alt="Painel do GeldTrack mostrando saldo, receitas e despesas"
             className="about-image"
           />
         </div>
@@ -147,7 +147,7 @@ export default function Landing() {
           <div className="feature-card">
             <div className="feature-icon">💻</div>
             <h3>App desktop</h3>
-            <p>Instale como aplicativo nativo via Electron e use o MoneyTrack sem depender do navegador.</p>
+            <p>Instale como aplicativo nativo via Electron e use o GeldTrack sem depender do navegador.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">👤</div>
@@ -202,7 +202,7 @@ export default function Landing() {
           <div className="feature-card">
             <div className="feature-icon">📲</div>
             <h3>Instalável no celular</h3>
-            <p>Instale o MoneyTrack direto do navegador do celular, como um app — sem precisar de loja de aplicativos.</p>
+            <p>Instale o GeldTrack direto do navegador do celular, como um app — sem precisar de loja de aplicativos.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">✈️</div>
@@ -232,13 +232,13 @@ export default function Landing() {
             </div>
             <img
               src={screenshotRelatorio}
-              alt="Relatórios do MoneyTrack com gráficos de evolução mensal"
+              alt="Relatórios do GeldTrack com gráficos de evolução mensal"
               className="download-image"
             />
           </div>
           <div className="download-card">
-            <h2>Leve o MoneyTrack para o seu desktop</h2>
-            <p>Baixe o instalador para Windows, macOS ou Linux e use o MoneyTrack como um aplicativo nativo, com os mesmos dados e funcionalidades da versão web.</p>
+            <h2>Leve o GeldTrack para o seu desktop</h2>
+            <p>Baixe o instalador para Windows, macOS ou Linux e use o GeldTrack como um aplicativo nativo, com os mesmos dados e funcionalidades da versão web.</p>
             <div className="platform-badges">
               <span className="platform-badge">🪟 Windows</span>
               <span className="platform-badge">🍎 macOS</span>
@@ -265,7 +265,7 @@ export default function Landing() {
 
       <footer className="landing-footer">
         <div className="footer-row">
-          <p>💰 MoneyTrack</p>
+          <p>💰 GeldTrack</p>
           <a href="https://github.com/itsmariah/moneytrack" target="_blank" rel="noopener noreferrer">Ver no GitHub</a>
         </div>
         <p className="footer-credits">

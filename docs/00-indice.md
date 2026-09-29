@@ -1,6 +1,6 @@
-# 📚 Documentação MoneyTrack
+# 📚 Documentação GeldTrack
 
-Bem-vindo à documentação técnica completa do **MoneyTrack**. Aqui você encontra tudo que precisa para entender, rodar e contribuir com o projeto.
+Bem-vindo à documentação técnica completa do **GeldTrack**. Aqui você encontra tudo que precisa para entender, rodar e contribuir com o projeto.
 
 ---
 

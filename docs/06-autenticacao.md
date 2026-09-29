@@ -56,7 +56,7 @@ if (!senhaCorreta) return res.status(401).json({ error: 'Senha incorreta' });
 
 ### O que é?
 
-JWT (JSON Web Token) é um padrão para transmitir informações de forma segura entre duas partes. No MoneyTrack, usamos para **provar que o usuário está autenticado** sem precisar checar o banco a cada requisição.
+JWT (JSON Web Token) é um padrão para transmitir informações de forma segura entre duas partes. No GeldTrack, usamos para **provar que o usuário está autenticado** sem precisar checar o banco a cada requisição.
 
 ### Estrutura de um JWT
 

@@ -1,5 +1,5 @@
 {
-  "name": "moneytrack",
+  "name": "geldtrack",
   "version": "1.0.0",
   "main": "electron/main.js",
   "repository": {
@@ -23,8 +23,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.moneytrack.app",
-    "productName": "MoneyTrack",
+    "appId": "com.geldtrack.app",
+    "productName": "GeldTrack",
     "directories": {
       "output": "dist-electron"
     },

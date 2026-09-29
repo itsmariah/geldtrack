@@ -33,7 +33,7 @@ export default function Login() {
     <div className="auth-page">
       <Link to="/" className="back-link">← Voltar para o início</Link>
       <div className="auth-card">
-        <h1>💰 MoneyTrack</h1>
+        <h1>💰 GeldTrack</h1>
         <h2>Entrar na sua conta</h2>
 
         {location.state?.resetSuccess && (

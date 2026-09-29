@@ -43,7 +43,7 @@ export async function generateReportPdf({ month, summary, transactions, chartRef
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
-  doc.text('MoneyTrack', MARGIN, y)
+  doc.text('GeldTrack', MARGIN, y)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(11)
   doc.setTextColor(100)
@@ -114,5 +114,5 @@ export async function generateReportPdf({ month, summary, transactions, chartRef
     columnStyles: { 4: { halign: 'right' } },
   })
 
-  doc.save(`moneytrack-relatorio-${month}.pdf`)
+  doc.save(`geldtrack-relatorio-${month}.pdf`)
 }

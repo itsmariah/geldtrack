@@ -14,9 +14,9 @@ async function sendPasswordResetEmail(to, resetUrl) {
   await transporter.sendMail({
     from: process.env.EMAIL_FROM || process.env.SMTP_USER,
     to,
-    subject: 'MoneyTrack — Redefinição de senha',
+    subject: 'GeldTrack — Redefinição de senha',
     html: `
-      <p>Você solicitou a redefinição da sua senha no MoneyTrack.</p>
+      <p>Você solicitou a redefinição da sua senha no GeldTrack.</p>
       <p><a href="${resetUrl}">Clique aqui para criar uma nova senha</a></p>
       <p>Este link expira em 1 hora. Se você não solicitou isso, ignore este e-mail.</p>
     `,
@@ -31,11 +31,11 @@ async function sendOrcamentoEstouradoEmail(to, { categoria, valorLimite, gasto, 
   await transporter.sendMail({
     from: process.env.EMAIL_FROM || process.env.SMTP_USER,
     to,
-    subject: `MoneyTrack — Orçamento de ${categoria} estourado`,
+    subject: `GeldTrack — Orçamento de ${categoria} estourado`,
     html: `
       <p>Seu orçamento de <strong>${categoria}</strong> em ${mesLabel} foi ultrapassado.</p>
       <p>Limite: ${fmtBRL(valorLimite)}<br>Gasto até agora: ${fmtBRL(gasto)}</p>
-      <p>Você pode revisar seus orçamentos a qualquer momento no MoneyTrack.</p>
+      <p>Você pode revisar seus orçamentos a qualquer momento no GeldTrack.</p>
     `,
   });
 }
