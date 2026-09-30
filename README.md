@@ -607,6 +607,7 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 | nome / tipo | String | Ex: "Nubank", `corrente`/`cartao`/`dinheiro`... |
 | saldoInicial | Decimal(12,2) | Saldo que a conta já tinha antes de começar a ser rastreada |
 | moeda | String | `BRL`/`USD`/`EUR`/`GBP`, fixada na criação |
+| instituicao | String? | Opcional e editável — agrupa as contas visualmente (ex: "Wise · Real" e "Wise · Dólar" sob "Wise") |
 | pluggyAccountId / conexaoId | String? / Int? | Preenchidos só quando a conta nasceu de uma sincronização Open Finance |
 | createdAt | DateTime | Data de criação |
 

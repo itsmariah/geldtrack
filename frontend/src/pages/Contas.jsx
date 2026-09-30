@@ -11,9 +11,11 @@ import CotacoesPanel from '../components/CotacoesPanel'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
 import { fmt, fmtDate } from '../utils/format'
+import { agruparContasPorInstituicao, totalDoGrupo, instituicoesUsadas } from '../utils/agruparContas'
 
 export default function Contas() {
   const [contas, setContas] = useState([])
+  const [taxas, setTaxas] = useState({ BRL: 1 })
   const [transferencias, setTransferencias] = useState([])
   const [conexoes, setConexoes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,12 +39,16 @@ export default function Contas() {
   const fetchData = useCallback(async () => {
     setError('')
     try {
-      const [contasRes, transfRes, conexoesRes] = await Promise.all([
+      const [contasRes, transfRes, conexoesRes, cambioRes] = await Promise.all([
         api.get('/contas'),
         api.get('/transferencias'),
         api.get('/open-finance/conexoes'),
+        // Só pro total aproximado de grupos com moedas diferentes — falhar aqui não
+        // impede a tela de abrir (cai no 1:1, e o total já é marcado como aproximado).
+        api.get('/cambio').catch(() => null),
       ])
       setContas(contasRes.data)
+      if (cambioRes) setTaxas(cambioRes.data.taxas)
       setTransferencias(transfRes.data)
       setConexoes(conexoesRes.data)
     } catch (err) {
@@ -145,6 +151,21 @@ export default function Contas() {
     }
   }
 
+  // Sem nenhuma conta com instituição, a tela fica exatamente como sempre foi (grade única).
+  const { grupos, semInstituicao } = agruparContasPorInstituicao(contas)
+  const renderGridContas = (lista) => (
+    <div className="goals-grid">
+      {lista.map(conta => (
+        <ContaCard
+          key={conta.id}
+          conta={conta}
+          onEdit={handleEdit}
+          onDelete={setDeleteConta}
+        />
+      ))}
+    </div>
+  )
+
   return (
     <div className="app-layout">
       <Navbar />
@@ -177,16 +198,36 @@ export default function Contas() {
           <SkeletonList rows={3} />
         ) : (
           <>
-            <div className="goals-grid">
-              {contas.map(conta => (
-                <ContaCard
-                  key={conta.id}
-                  conta={conta}
-                  onEdit={handleEdit}
-                  onDelete={setDeleteConta}
-                />
-              ))}
-            </div>
+            {grupos.length === 0 ? (
+              renderGridContas(contas)
+            ) : (
+              <>
+                {grupos.map(grupo => {
+                  const total = totalDoGrupo(grupo.contas, taxas)
+                  return (
+                    <section key={grupo.nome} className="contas-grupo">
+                      <div className="contas-grupo-header">
+                        <h3>🏦 {grupo.nome}</h3>
+                        {grupo.contas.length > 1 && (
+                          <span className="contas-grupo-total" title={total.aproximado ? 'Convertido para R$ pela cotação salva' : undefined}>
+                            Total {total.aproximado ? '≈ ' : ''}{fmt(total.valor, total.moeda)}
+                          </span>
+                        )}
+                      </div>
+                      {renderGridContas(grupo.contas)}
+                    </section>
+                  )
+                })}
+                {semInstituicao.length > 0 && (
+                  <section className="contas-grupo">
+                    <div className="contas-grupo-header">
+                      <h3>Outras contas</h3>
+                    </div>
+                    {renderGridContas(semInstituicao)}
+                  </section>
+                )}
+              </>
+            )}
 
             <CotacoesPanel contas={contas} />
 
@@ -240,6 +281,7 @@ export default function Contas() {
       {showContaModal && (
         <ContaModal
           conta={editingConta}
+          instituicoes={instituicoesUsadas(contas)}
           onClose={handleContaModalClose}
           onSaved={handleContaSaved}
         />

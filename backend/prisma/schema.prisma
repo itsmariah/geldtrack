@@ -156,6 +156,10 @@ model Conta {
   // mudar a moeda de uma conta com transações já lançadas corromperia a leitura do
   // histórico. Ver utils/moedas.js pra lista de moedas suportadas.
   moeda                  String          @default("BRL")
+  // Só visual: contas com a mesma instituição aparecem agrupadas na tela de Contas (ex:
+  // "Wise · Real", "Wise · Dólar" e "Wise · Euro" debaixo de "Wise"). Texto livre, opcional
+  // e editável — diferente de moeda, não muda a interpretação de nada já lançado.
+  instituicao            String?
   createdAt              DateTime        @default(now())
   usuario                Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   familia                Familia         @relation(fields: [familiaId], references: [id], onDelete: Cascade)

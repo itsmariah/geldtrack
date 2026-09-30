@@ -963,8 +963,8 @@ Lista as contas da família, cada uma com o saldo atual calculado (`saldoInicial
 **Resposta 200 OK:**
 ```json
 [
-  { "id": 1, "nome": "Conta corrente", "tipo": "corrente", "moeda": "BRL", "saldoInicial": 500.00, "createdAt": "2026-01-01T08:00:00.000Z", "saldo": 2149.50 },
-  { "id": 2, "nome": "Cartão de viagem (USD)", "tipo": "cartao", "moeda": "USD", "saldoInicial": 0, "createdAt": "2026-02-10T08:00:00.000Z", "saldo": -120.50 }
+  { "id": 1, "nome": "Conta corrente", "tipo": "corrente", "moeda": "BRL", "instituicao": null, "saldoInicial": 500.00, "createdAt": "2026-01-01T08:00:00.000Z", "saldo": 2149.50 },
+  { "id": 2, "nome": "Wise · Dólar", "tipo": "corrente", "moeda": "USD", "instituicao": "Wise", "saldoInicial": 0, "createdAt": "2026-02-10T08:00:00.000Z", "saldo": -120.50 }
 ]
 ```
 
@@ -984,7 +984,7 @@ Cria uma conta nova.
 }
 ```
 
-`moeda` é opcional (padrão `BRL`).
+`moeda` é opcional (padrão `BRL`). `instituicao` é opcional (texto livre, até 60 caracteres; vazio = sem instituição) e só serve pra agrupar as contas na tela de Contas — uma conta com várias moedas, como a Wise, vira uma conta por moeda com a mesma instituição.
 
 **Resposta 201 Created:**
 ```json
@@ -998,12 +998,13 @@ Cria uma conta nova.
 | 400 | "Tipo é obrigatório" | Campo faltando |
 | 400 | "Saldo inicial deve ser um número" | `saldoInicial` ausente ou não numérico (pode ser negativo — ex: fatura de cartão em aberto) |
 | 400 | "Moeda não suportada" | `moeda` fora da lista suportada |
+| 400 | "Instituição deve ter no máximo 60 caracteres" | `instituicao` longa demais |
 
 ---
 
 ### PUT /contas/:id 🔒
 
-Atualiza nome, tipo e saldo inicial de uma conta. `moeda` não pode ser alterada (ver nota acima) e é ignorada mesmo se enviada.
+Atualiza nome, tipo, saldo inicial e instituição de uma conta. `moeda` não pode ser alterada (ver nota acima) e é ignorada mesmo se enviada. `instituicao` ausente no body mantém a atual; string vazia remove.
 
 **Exemplo:** `PUT /api/contas/1`
 

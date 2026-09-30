@@ -223,7 +223,7 @@ Agrupados por área, na mesma ordem do `schema.prisma`.
 
 ### Contas, transferências e Open Finance
 
-**Conta** — carteira/conta corrente/cartão do usuário. `saldoInicial` + receitas − despesas ± transferências = saldo exibido (nunca persistido). `moeda` (default `BRL`) é fixada na criação e nunca muda depois — trocar a moeda de uma conta com transações já lançadas corromperia a leitura do histórico.
+**Conta** — carteira/conta corrente/cartão do usuário. `saldoInicial` + receitas − despesas ± transferências = saldo exibido (nunca persistido). `moeda` (default `BRL`) é fixada na criação e nunca muda depois — trocar a moeda de uma conta com transações já lançadas corromperia a leitura do histórico. `instituicao` (String?, editável) é só visual: contas com a mesma instituição aparecem agrupadas em Contas — é como uma conta com várias moedas (Wise, Nomad...) é representada: uma `Conta` por moeda, todas com a mesma instituição.
 
 **ConexaoBancaria** — uma conexão Open Finance (Pluggy), que pode alimentar mais de uma `Conta` (ex: conta corrente + cartão do mesmo banco). Guarda só o `pluggyItemId` — nenhuma senha/token de acesso ao banco.
 

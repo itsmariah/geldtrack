@@ -4,12 +4,15 @@ import { TIPOS_CONTA } from '../utils/contaTipos'
 import Modal from './Modal'
 import Alert from './Alert'
 
-export default function ContaModal({ conta, onClose, onSaved }) {
+// instituicoes: as já usadas em outras contas da família, sugeridas no campo pra ninguém
+// criar "Wise" e "wise " como grupos separados sem querer.
+export default function ContaModal({ conta, instituicoes = [], onClose, onSaved }) {
   const [form, setForm] = useState({
     nome: conta?.nome || '',
     tipo: conta?.tipo || TIPOS_CONTA[0].valor,
     saldoInicial: conta?.saldoInicial ?? 0,
     moeda: conta?.moeda || 'BRL',
+    instituicao: conta?.instituicao || '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -63,6 +66,23 @@ export default function ContaModal({ conta, onClose, onSaved }) {
         </div>
 
         <div className="form-group">
+          <label htmlFor="conta-instituicao">Instituição (opcional)</label>
+          <input
+            id="conta-instituicao"
+            type="text"
+            list="conta-instituicoes"
+            value={form.instituicao}
+            onChange={e => setForm({ ...form, instituicao: e.target.value })}
+            placeholder="Ex: Wise, Nubank, Itaú..."
+            maxLength={60}
+          />
+          <datalist id="conta-instituicoes">
+            {instituicoes.map(i => <option key={i} value={i} />)}
+          </datalist>
+          <span className="form-hint">Contas da mesma instituição aparecem agrupadas na tela de Contas.</span>
+        </div>
+
+        <div className="form-group">
           <label htmlFor="conta-tipo">Tipo</label>
           <select
             id="conta-tipo"
@@ -86,8 +106,8 @@ export default function ContaModal({ conta, onClose, onSaved }) {
             <span className="form-hint">Não pode ser alterada depois de criar a conta.</span>
             <span className="form-hint">
               💡 Conta com saldo em várias moedas (Wise, Nomad, C6 Global...)? Crie uma conta pra cada
-              moeda, como "Wise · Real", "Wise · Dólar" e "Wise · Euro", e registre as conversões entre
-              elas em "Transferir".
+              moeda, como "Wise · Real", "Wise · Dólar" e "Wise · Euro", todas com a mesma instituição —
+              elas aparecem juntas — e registre as conversões entre elas em "Transferir".
             </span>
           </div>
         )}

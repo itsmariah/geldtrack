@@ -844,6 +844,10 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 }
 .conta-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .conta-saldo { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.contas-grupo + .contas-grupo { margin-top: 28px; }
+.contas-grupo-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 12px; }
+.contas-grupo-header h3 { font-size: 16px; font-weight: 600; }
+.contas-grupo-total { font-size: 14px; font-weight: 600; color: var(--text-muted); }
 
 /* ── MODAL ── */
 .modal-overlay {

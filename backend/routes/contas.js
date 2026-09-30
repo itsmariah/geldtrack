@@ -2,7 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
-const { validateContaInput } = require('../utils/validateConta');
+const { validateContaInput, normalizarInstituicao } = require('../utils/validateConta');
 const { serializeConta, serializeContas, withSaldo } = require('../utils/serializeConta');
 
 const router = express.Router();
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
     if (validationError) return res.status(400).json({ error: validationError });
 
     const created = await prisma.conta.create({
-      data: { usuarioId: req.userId, familiaId: req.familiaId, nome: nome.trim(), tipo, moeda, saldoInicial: Number(saldoInicial) },
+      data: { usuarioId: req.userId, familiaId: req.familiaId, nome: nome.trim(), tipo, moeda, instituicao: normalizarInstituicao(req.body.instituicao), saldoInicial: Number(saldoInicial) },
     });
     res.status(201).json(serializeConta(created));
   } catch (err) {
@@ -85,7 +85,13 @@ router.put('/:id', async (req, res) => {
     // mudar depois (mudar mudaria a interpretação de toda transação já lançada na conta).
     const updated = await prisma.conta.update({
       where: { id },
-      data: { nome: nome.trim(), tipo, saldoInicial: Number(saldoInicial) },
+      // instituicao ausente no body (cliente antigo) mantém a atual; string vazia remove.
+      data: {
+        nome: nome.trim(),
+        tipo,
+        saldoInicial: Number(saldoInicial),
+        ...(req.body.instituicao !== undefined ? { instituicao: normalizarInstituicao(req.body.instituicao) } : {}),
+      },
     });
     res.json(serializeConta(updated));
   } catch (err) {

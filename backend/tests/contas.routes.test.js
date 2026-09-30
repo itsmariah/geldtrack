@@ -187,6 +187,29 @@ describe('PUT /api/contas/:id', () => {
     expect(res.body.nome).toBe('Nubank PJ');
   });
 
+  it('grava a instituição aparada e remove com string vazia', async () => {
+    vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue(rawConta());
+    const updateSpy = vi.spyOn(prisma.conta, 'update').mockResolvedValue(rawConta({ instituicao: 'Wise' }));
+
+    await request(app).put('/api/contas/1').set('Authorization', `Bearer ${token}`)
+      .send({ nome: 'Wise · Dólar', tipo: 'corrente', saldoInicial: 0, instituicao: '  Wise ' });
+    await request(app).put('/api/contas/1').set('Authorization', `Bearer ${token}`)
+      .send({ nome: 'Wise · Dólar', tipo: 'corrente', saldoInicial: 0, instituicao: '' });
+
+    expect(updateSpy.mock.calls[0][0].data.instituicao).toBe('Wise');
+    expect(updateSpy.mock.calls[1][0].data.instituicao).toBeNull();
+  });
+
+  it('mantém a instituição atual quando o campo não vem no body', async () => {
+    vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue(rawConta({ instituicao: 'Wise' }));
+    const updateSpy = vi.spyOn(prisma.conta, 'update').mockResolvedValue(rawConta({ instituicao: 'Wise' }));
+
+    await request(app).put('/api/contas/1').set('Authorization', `Bearer ${token}`)
+      .send({ nome: 'Wise · Dólar', tipo: 'corrente', saldoInicial: 0 });
+
+    expect(updateSpy.mock.calls[0][0].data).not.toHaveProperty('instituicao');
+  });
+
   it('nunca inclui moeda no update, mesmo que o body tente mudar', async () => {
     vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue(rawConta({ moeda: 'BRL' }));
     const updateSpy = vi.spyOn(prisma.conta, 'update').mockResolvedValue(rawConta());
