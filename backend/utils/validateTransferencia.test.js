@@ -22,6 +22,13 @@ describe('validateTransferenciaInput', () => {
     expect(validateTransferenciaInput({ ...base, valor: -10 })).toMatch(/maior que zero/);
   });
 
+  it('aceita valorDestino ausente, mas rejeita valorDestino zero ou negativo', () => {
+    expect(validateTransferenciaInput(base)).toBeNull();
+    expect(validateTransferenciaInput({ ...base, valorDestino: 72.3 })).toBeNull();
+    expect(validateTransferenciaInput({ ...base, valorDestino: 0 })).toMatch(/Valor recebido/);
+    expect(validateTransferenciaInput({ ...base, valorDestino: -5 })).toMatch(/Valor recebido/);
+  });
+
   it('rejeita data em formato inválido', () => {
     expect(validateTransferenciaInput({ ...base, data: '10/08/2026' })).toMatch(/YYYY-MM-DD/);
   });

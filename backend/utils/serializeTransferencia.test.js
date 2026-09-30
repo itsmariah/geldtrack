@@ -23,6 +23,8 @@ describe('serializeTransferencia', () => {
       contaDestinoNome: 'Cartão',
       moeda: 'USD',
       valor: 300,
+      moedaDestino: 'USD',
+      valorDestino: 300,
       data: '2026-08-10',
       descricao: '',
       createdAt: '2026-08-10T00:00:00.000Z',
@@ -35,6 +37,17 @@ describe('serializeTransferencia', () => {
     expect(result.contaOrigemNome).toBeUndefined();
     expect(result.valor).toBe(50);
     expect(result.moeda).toBe('BRL');
+  });
+});
+
+describe('serializeTransferencia entre moedas', () => {
+  it('expõe o valor recebido e a moeda da conta de destino', () => {
+    const t = {
+      id: 1, contaOrigemId: 1, contaDestinoId: 2, data: '2026-08-10', descricao: '',
+      contaOrigem: { nome: 'Nubank', moeda: 'BRL' }, contaDestino: { nome: 'Wise · Dólar', moeda: 'USD' },
+      valor: new Prisma.Decimal('400.00'), valorDestino: new Prisma.Decimal('72.30'),
+    };
+    expect(serializeTransferencia(t)).toMatchObject({ moeda: 'BRL', valor: 400, moedaDestino: 'USD', valorDestino: 72.3 });
   });
 });
 

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import api from '../services/api'
+import { fmt } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
 
@@ -18,17 +19,50 @@ export default function TransferModal({ contas, onClose, onSaved }) {
     data: todayLocal(),
     descricao: '',
   })
+  // Entre moedas diferentes o valor recebido começa como sugestão pela cotação salva e
+  // acompanha o valor enviado até o usuário digitar o valor real (com spread/IOF/taxas).
+  const [valorDestinoDigitado, setValorDestinoDigitado] = useState(null)
+  const [cambio, setCambio] = useState({ moedas: [], taxas: { BRL: 1 }, atualizadoEm: {} })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    api.get('/cambio').then(res => setCambio(res.data)).catch(() => {})
+  }, [])
+
   const destinoOptions = contas.filter(c => c.id !== Number(form.contaOrigemId))
+  const origem = contas.find(c => c.id === Number(form.contaOrigemId))
+  const destino = contas.find(c => c.id === Number(form.contaDestinoId))
+  const moedaOrigem = origem?.moeda || 'BRL'
+  const moedaDestino = destino?.moeda || 'BRL'
+  const moedasDiferentes = moedaOrigem !== moedaDestino
+  const simbolo = (codigo) => cambio.moedas.find(m => m.codigo === codigo)?.simbolo || codigo
+
+  const taxaOrigem = cambio.taxas[moedaOrigem]
+  const taxaDestino = cambio.taxas[moedaDestino]
+  const temCotacao = Boolean(taxaOrigem && taxaDestino)
+  const sugestao = temCotacao && Number(form.valor) > 0
+    ? (Number(form.valor) * taxaOrigem / taxaDestino).toFixed(2)
+    : ''
+  const valorDestino = valorDestinoDigitado ?? sugestao
+
+  // Data da cotação mais antiga envolvida (BRL não tem data — é sempre 1).
+  const datasCotacao = [moedaOrigem, moedaDestino].map(m => cambio.atualizadoEm?.[m]).filter(Boolean)
+  const dataCotacao = datasCotacao.length > 0
+    ? new Date(Math.min(...datasCotacao.map(d => new Date(d).getTime()))).toLocaleDateString('pt-BR')
+    : null
+
+  const trocarConta = (partial) => {
+    setForm(f => ({ ...f, ...partial }))
+    setValorDestinoDigitado(null)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await api.post('/transferencias', form)
+      await api.post('/transferencias', { ...form, valorDestino: moedasDiferentes ? valorDestino : undefined })
       onSaved()
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao criar transferência')
@@ -54,11 +88,10 @@ export default function TransferModal({ contas, onClose, onSaved }) {
             value={form.contaOrigemId}
             onChange={e => {
               const contaOrigemId = Number(e.target.value)
-              setForm(f => ({
-                ...f,
+              trocarConta({
                 contaOrigemId,
-                contaDestinoId: f.contaDestinoId === contaOrigemId ? (contas.find(c => c.id !== contaOrigemId)?.id || '') : f.contaDestinoId,
-              }))
+                contaDestinoId: Number(form.contaDestinoId) === contaOrigemId ? (contas.find(c => c.id !== contaOrigemId)?.id || '') : form.contaDestinoId,
+              })
             }}
           >
             {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
@@ -70,14 +103,14 @@ export default function TransferModal({ contas, onClose, onSaved }) {
           <select
             id="transf-destino"
             value={form.contaDestinoId}
-            onChange={e => setForm({ ...form, contaDestinoId: Number(e.target.value) })}
+            onChange={e => trocarConta({ contaDestinoId: Number(e.target.value) })}
           >
             {destinoOptions.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
           </select>
         </div>
 
         <div className="form-group">
-          <label htmlFor="transf-valor">Valor (R$)</label>
+          <label htmlFor="transf-valor">{moedasDiferentes ? 'Valor enviado' : 'Valor'} ({simbolo(moedaOrigem)})</label>
           <input
             id="transf-valor"
             type="number"
@@ -89,6 +122,28 @@ export default function TransferModal({ contas, onClose, onSaved }) {
             required
           />
         </div>
+
+        {moedasDiferentes && (
+          <div className="form-group">
+            <label htmlFor="transf-valor-destino">Valor recebido ({simbolo(moedaDestino)})</label>
+            <input
+              id="transf-valor-destino"
+              type="number"
+              step="0.01"
+              min="0.01"
+              value={valorDestino}
+              onChange={e => setValorDestinoDigitado(e.target.value)}
+              placeholder="0,00"
+              required
+            />
+            <span className="form-hint">
+              {temCotacao && dataCotacao
+                ? <>Sugestão de acordo com a cotação de {dataCotacao} ({fmt(1, moedaDestino)} = {fmt(taxaDestino / taxaOrigem, moedaOrigem)}). </>
+                : <>Sem cotação salva pra essa moeda — atualize as cotações nesta página ou informe o valor manualmente. </>}
+              Ajuste para o valor que realmente chegou, já descontadas as taxas e o IOF.
+            </span>
+          </div>
+        )}
 
         <div className="form-group">
           <label htmlFor="transf-data">Data</label>
@@ -108,7 +163,7 @@ export default function TransferModal({ contas, onClose, onSaved }) {
             type="text"
             value={form.descricao}
             onChange={e => setForm({ ...form, descricao: e.target.value })}
-            placeholder="Ex: Pagamento da fatura..."
+            placeholder={moedasDiferentes ? 'Ex: Compra de dólar pra viagem...' : 'Ex: Pagamento da fatura...'}
           />
         </div>
 

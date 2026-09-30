@@ -15,7 +15,7 @@ const { generateInsights } = require('../utils/generateInsights');
 const { futureOccurrenceThisMonth, projectBalance } = require('../utils/projectBalance');
 const { ensureOccurrences } = require('../utils/materializeRecorrencias');
 const { TRANSACAO_SELECT_SEM_ANEXO } = require('../utils/transactionSelect');
-const { buscarTaxas, converterParaBRL, agruparPorCategoriaTipo } = require('../utils/currency');
+const { buscarTaxas, converterParaBRL, efeitoTransferenciasEmBRL, agruparPorCategoriaTipo } = require('../utils/currency');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -54,7 +54,7 @@ router.get('/balance', async (req, res) => {
     // diferentes não podem ser somadas direto.
     const saldoInicialTotal = contas.reduce(
       (soma, c) => soma + converterParaBRL(c.saldoInicial, c.moeda, taxas), 0
-    );
+    ) + await efeitoTransferenciasEmBRL(req.familiaId, taxas, where.data);
 
     // Total geral convertido (por tipo) + detalhamento por moeda com o valor original,
     // sem conversão — o front mostra os dois, nunca só o número blended escondendo a conta.
@@ -263,7 +263,7 @@ router.get('/projecao', async (req, res) => {
     ];
     const saldoInicialTotal = contas.reduce(
       (soma, c) => soma + converterParaBRL(c.saldoInicial, c.moeda, taxas), 0
-    );
+    ) + await efeitoTransferenciasEmBRL(req.familiaId, taxas);
     const { saldo: saldoAtual } = calculateBalance(normalized, saldoInicialTotal);
 
     const despesasNaoRecorrentesAteHoje = despesasNaoRecRows.reduce(

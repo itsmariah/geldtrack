@@ -84,6 +84,11 @@ export default function ContaModal({ conta, onClose, onSaved }) {
               {moedas.map(m => <option key={m.codigo} value={m.codigo}>{m.simbolo} {m.nome}</option>)}
             </select>
             <span className="form-hint">Não pode ser alterada depois de criar a conta.</span>
+            <span className="form-hint">
+              💡 Conta com saldo em várias moedas (Wise, Nomad, C6 Global...)? Crie uma conta pra cada
+              moeda, como "Wise · Real", "Wise · Dólar" e "Wise · Euro", e registre as conversões entre
+              elas em "Transferir".
+            </span>
           </div>
         )}
 

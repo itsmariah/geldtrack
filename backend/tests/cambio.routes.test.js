@@ -24,13 +24,14 @@ describe('GET /api/cambio', () => {
 
   it('retorna as moedas suportadas e as taxas atuais (BRL sempre 1)', async () => {
     vi.spyOn(prisma.taxaCambio, 'findMany').mockResolvedValue([
-      { moeda: 'USD', taxaParaBRL: new Prisma.Decimal('5.200000') },
+      { moeda: 'USD', taxaParaBRL: new Prisma.Decimal('5.200000'), atualizadoEm: new Date('2026-09-30T12:00:00.000Z') },
     ]);
 
     const res = await request(app).get('/api/cambio').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.taxas).toEqual({ BRL: 1, USD: 5.2 });
+    expect(res.body.atualizadoEm).toEqual({ USD: '2026-09-30T12:00:00.000Z' });
     expect(res.body.moedas.map(m => m.codigo)).toEqual(['BRL', 'USD', 'EUR', 'GBP']);
   });
 });

@@ -227,7 +227,7 @@ Agrupados por área, na mesma ordem do `schema.prisma`.
 
 **ConexaoBancaria** — uma conexão Open Finance (Pluggy), que pode alimentar mais de uma `Conta` (ex: conta corrente + cartão do mesmo banco). Guarda só o `pluggyItemId` — nenhuma senha/token de acesso ao banco.
 
-**Transferencia** — movimento entre duas `Conta`s do mesmo usuário. Nunca gera `Transacao` (não é receita nem despesa de verdade), então não entra nos relatórios de receita/despesa, só no saldo de cada conta.
+**Transferencia** — movimento entre duas `Conta`s do mesmo usuário. Nunca gera `Transacao` (não é receita nem despesa de verdade), então não entra nos relatórios de receita/despesa, só no saldo de cada conta. `valor` está sempre na moeda da origem; `valorDestino` (Decimal?, nulo na mesma moeda) guarda quanto chegou quando as contas têm moedas diferentes — a entrada no saldo do destino usa `valorDestino ?? valor`.
 
 ### Automação
 

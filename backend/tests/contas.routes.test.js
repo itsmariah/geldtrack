@@ -67,12 +67,29 @@ describe('GET /api/contas', () => {
     vi.spyOn(prisma.transacao, 'groupBy').mockResolvedValue([]);
     vi.spyOn(prisma.transferencia, 'groupBy')
       .mockResolvedValueOnce([{ contaOrigemId: 1, _sum: { valor: new Prisma.Decimal('100.00') } }])
-      .mockResolvedValueOnce([{ contaDestinoId: 1, _sum: { valor: new Prisma.Decimal('40.00') } }]);
+      .mockResolvedValueOnce([{ contaDestinoId: 1, _sum: { valor: new Prisma.Decimal('40.00') } }])
+      .mockResolvedValueOnce([]);
 
     const res = await request(app).get('/api/contas').set('Authorization', `Bearer ${token}`);
 
     // saldoInicial 500 - saída 100 + entrada 40 = 440
     expect(res.body[0].saldo).toBe(440);
+  });
+
+  it('soma valorDestino (não valor) nas entradas de transferência entre moedas', async () => {
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([rawConta({ moeda: 'USD', saldoInicial: new Prisma.Decimal('5000.00') })]);
+    vi.spyOn(prisma.transacao, 'groupBy').mockResolvedValue([]);
+    const groupBySpy = vi.spyOn(prisma.transferencia, 'groupBy')
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ contaDestinoId: 1, _sum: { valorDestino: new Prisma.Decimal('72.30') } }]);
+
+    const res = await request(app).get('/api/contas').set('Authorization', `Bearer ${token}`);
+
+    // US$ 5000 + US$ 72,30 que chegaram de uma transferência de R$ 400
+    expect(res.body[0].saldo).toBeCloseTo(5072.3, 2);
+    expect(groupBySpy.mock.calls[1][0].where.valorDestino).toBeNull();
+    expect(groupBySpy.mock.calls[2][0].where.valorDestino).toEqual({ not: null });
   });
 
   it('escopa a busca por familiaId do token', async () => {

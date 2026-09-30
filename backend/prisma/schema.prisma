@@ -198,7 +198,13 @@ model Transferencia {
   familiaId      Int
   contaOrigemId  Int
   contaDestinoId Int
+  // Sempre na moeda da conta de origem (o que saiu).
   valor          Decimal  @db.Decimal(12, 2)
+  // Só preenchido quando as contas têm moedas diferentes: quanto chegou na conta de
+  // destino, na moeda dela (ex: saiu R$ 400, chegou US$ 72,30). Informado pelo usuário, não
+  // calculado pela cotação — o câmbio real já embute spread/IOF/taxas do banco. Nulo = mesma
+  // moeda, chegou exatamente "valor" (é o caso de toda transferência antiga).
+  valorDestino   Decimal? @db.Decimal(12, 2)
   data           String
   descricao      String   @default("")
   createdAt      DateTime @default(now())

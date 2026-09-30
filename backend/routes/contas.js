@@ -26,10 +26,13 @@ router.get('/', async (req, res) => {
     if (contas.length === 0) return res.json([]);
 
     const contaIds = contas.map(c => c.id);
-    const [porTipo, saidas, entradas] = await Promise.all([
+    // Entrada de transferência soma valorDestino quando ele existe (moedas diferentes) e
+    // valor quando é nulo (mesma moeda) — daí as duas consultas separadas pro destino.
+    const [porTipo, saidas, entradasMesmaMoeda, entradasCambio] = await Promise.all([
       prisma.transacao.groupBy({ by: ['contaId', 'tipo'], where: { contaId: { in: contaIds } }, _sum: { valor: true } }),
       prisma.transferencia.groupBy({ by: ['contaOrigemId'], where: { contaOrigemId: { in: contaIds } }, _sum: { valor: true } }),
-      prisma.transferencia.groupBy({ by: ['contaDestinoId'], where: { contaDestinoId: { in: contaIds } }, _sum: { valor: true } }),
+      prisma.transferencia.groupBy({ by: ['contaDestinoId'], where: { contaDestinoId: { in: contaIds }, valorDestino: null }, _sum: { valor: true } }),
+      prisma.transferencia.groupBy({ by: ['contaDestinoId'], where: { contaDestinoId: { in: contaIds }, valorDestino: { not: null } }, _sum: { valorDestino: true } }),
     ]);
 
     const movimento = {};
@@ -39,7 +42,8 @@ router.get('/', async (req, res) => {
       movimento[row.contaId] += row.tipo === 'receita' ? valor : -valor;
     }
     for (const row of saidas) movimento[row.contaOrigemId] -= Number(row._sum.valor || 0);
-    for (const row of entradas) movimento[row.contaDestinoId] += Number(row._sum.valor || 0);
+    for (const row of entradasMesmaMoeda) movimento[row.contaDestinoId] += Number(row._sum.valor || 0);
+    for (const row of entradasCambio) movimento[row.contaDestinoId] += Number(row._sum.valorDestino || 0);
 
     res.json(serializeContas(contas).map(c => withSaldo(c, movimento[c.id] || 0)));
   } catch (err) {

@@ -220,7 +220,11 @@ export default function Contas() {
                         <span className="tx-desc">{t.contaOrigemNome} → {t.contaDestinoNome}{t.descricao ? ` · ${t.descricao}` : ''}</span>
                         <span className="tx-meta">{fmtDate(t.data)}</span>
                       </div>
-                      <div className="tx-amount">{fmt(t.valor, t.moeda)}</div>
+                      <div className="tx-amount">
+                        {t.moedaDestino && t.moedaDestino !== t.moeda
+                          ? `${fmt(t.valor, t.moeda)} → ${fmt(t.valorDestino, t.moedaDestino)}`
+                          : fmt(t.valor, t.moeda)}
+                      </div>
                       <div className="tx-actions">
                         <button className="btn-icon btn-danger" onClick={() => setDeleteTransferId(t.id)} title="Desfazer">🗑️</button>
                       </div>

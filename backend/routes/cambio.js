@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
 const { MOEDAS_SUPORTADAS, CODIGOS_SUPORTADOS } = require('../utils/moedas');
-const { buscarTaxas } = require('../utils/currency');
+const { buscarCotacoes } = require('../utils/currency');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -23,8 +23,7 @@ const atualizarLimiter = rateLimit({
 // conta quanto pro painel de cotações em Contas.
 router.get('/', async (req, res) => {
   try {
-    const taxas = await buscarTaxas();
-    res.json({ moedas: MOEDAS_SUPORTADAS, taxas });
+    res.json({ moedas: MOEDAS_SUPORTADAS, ...(await buscarCotacoes()) });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar cotações' });
   }
@@ -51,8 +50,7 @@ router.post('/atualizar', atualizarLimiter, async (req, res) => {
       }));
 
     await Promise.all(atualizacoes);
-    const taxas = await buscarTaxas();
-    res.json({ moedas: MOEDAS_SUPORTADAS, taxas });
+    res.json({ moedas: MOEDAS_SUPORTADAS, ...(await buscarCotacoes()) });
   } catch (err) {
     console.error('Erro ao atualizar cotações:', err.message);
     res.status(502).json({ error: 'Não foi possível buscar a cotação agora. Tente novamente mais tarde.' });

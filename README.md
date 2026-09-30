@@ -633,7 +633,8 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 | id | Int (PK) | Identificador único |
 | usuarioId / familiaId | Int (FK) | Atribuição / escopo |
 | contaOrigemId / contaDestinoId | Int (FK) | Contas envolvidas na movimentação |
-| valor | Decimal(12,2) | Valor transferido |
+| valor | Decimal(12,2) | Valor que saiu da conta de origem (na moeda dela) |
+| valorDestino | Decimal(12,2)? | Só entre moedas diferentes: quanto chegou no destino (na moeda dele) |
 | data / descricao | String | Data e descrição opcional |
 | createdAt | DateTime | Data de criação |
 

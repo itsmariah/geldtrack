@@ -108,18 +108,47 @@ describe('POST /api/transferencias', () => {
     expect(createSpy).toHaveBeenCalled();
   });
 
-  it('rejeita transferência entre contas de moedas diferentes (400)', async () => {
+  it('exige o valor recebido entre contas de moedas diferentes (400)', async () => {
     vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([{ id: 1, moeda: 'BRL' }, { id: 2, moeda: 'USD' }]);
     const createSpy = vi.spyOn(prisma.transferencia, 'create');
 
     const res = await request(app)
       .post('/api/transferencias')
       .set('Authorization', `Bearer ${token}`)
-      .send({ contaOrigemId: 1, contaDestinoId: 2, valor: 100, data: '2026-08-10' });
+      .send({ contaOrigemId: 1, contaDestinoId: 2, valor: 400, data: '2026-08-10' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/moedas diferentes/);
+    expect(res.body.error).toMatch(/valor recebido/);
     expect(createSpy).not.toHaveBeenCalled();
+  });
+
+  it('cria transferência entre moedas guardando o valor recebido no destino', async () => {
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([{ id: 1, moeda: 'BRL' }, { id: 2, moeda: 'USD' }]);
+    const createSpy = vi.spyOn(prisma.transferencia, 'create').mockResolvedValue(rawTransferencia({
+      valor: new Prisma.Decimal('400.00'), valorDestino: new Prisma.Decimal('72.30'),
+      contaOrigem: { nome: 'Nubank', moeda: 'BRL' }, contaDestino: { nome: 'Wise · Dólar', moeda: 'USD' },
+    }));
+
+    const res = await request(app)
+      .post('/api/transferencias')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ contaOrigemId: 1, contaDestinoId: 2, valor: 400, valorDestino: 72.3, data: '2026-08-10' });
+
+    expect(res.status).toBe(201);
+    expect(createSpy.mock.calls[0][0].data).toMatchObject({ valor: 400, valorDestino: 72.3 });
+    expect(res.body).toMatchObject({ valor: 400, moeda: 'BRL', valorDestino: 72.3, moedaDestino: 'USD' });
+  });
+
+  it('descarta valorDestino na mesma moeda (chegou exatamente o que saiu)', async () => {
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([{ id: 1, moeda: 'BRL' }, { id: 2, moeda: 'BRL' }]);
+    const createSpy = vi.spyOn(prisma.transferencia, 'create').mockResolvedValue(rawTransferencia());
+
+    await request(app)
+      .post('/api/transferencias')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ contaOrigemId: 1, contaDestinoId: 2, valor: 300, valorDestino: 999, data: '2026-08-10' });
+
+    expect(createSpy.mock.calls[0][0].data.valorDestino).toBeNull();
   });
 });
 

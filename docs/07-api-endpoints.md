@@ -1045,7 +1045,9 @@ Exclui uma conta. As transações e transferências dela são apagadas em cascat
 ## 🔀 Rotas de Transferências
 
 > Todas as rotas abaixo são 🔒 — requerem JWT.
-> Uma transferência move dinheiro entre duas Contas **da mesma família** e **da mesma moeda** — nunca cria uma `Transacao`. Câmbio entre moedas diferentes é tratado como uma operação de mercado, fora do app: não há uma transferência que converta BRL para USD, por exemplo, pra não ter que inventar uma taxa própria pra esse movimento.
+> Uma transferência move dinheiro entre duas Contas **da mesma família** — nunca cria uma `Transacao`. Entre contas de **moedas diferentes** (ex: R$ 400 do Nubank → US$ 72,30 na "Wise · Dólar"), o usuário informa também quanto chegou no destino (`valorDestino`, na moeda da conta de destino). O app nunca calcula esse valor sozinho pela cotação: o câmbio real já embute spread, IOF e taxas do banco. O frontend só sugere um valor pela cotação salva, e o usuário ajusta.
+>
+> Conta com saldo em várias moedas (Wise, Nomad...) é modelada como **uma Conta por moeda** ("Wise · Real", "Wise · Dólar"...), com as conversões entre elas registradas como transferências.
 
 ---
 
@@ -1064,12 +1066,16 @@ Lista as transferências da família, mais recente primeiro.
     "contaDestinoNome": "Poupança",
     "moeda": "BRL",
     "valor": 200.00,
+    "moedaDestino": "BRL",
+    "valorDestino": 200.00,
     "data": "2026-05-15",
     "descricao": "Reserva de emergência",
     "createdAt": "2026-05-15T09:00:00.000Z"
   }
 ]
 ```
+
+`valor`/`moeda` = o que saiu da conta de origem; `valorDestino`/`moedaDestino` = o que chegou na de destino. Na mesma moeda, os dois lados são iguais.
 
 ---
 
@@ -1088,6 +1094,11 @@ Cria uma transferência entre duas contas da família.
 }
 ```
 
+Entre moedas diferentes, inclua `valorDestino` (obrigatório nesse caso; ignorado na mesma moeda):
+```json
+{ "contaOrigemId": 1, "contaDestinoId": 4, "valor": 400.00, "valorDestino": 72.30, "data": "2026-09-30" }
+```
+
 **Resposta 201 Created:** a transferência criada, no mesmo formato do GET.
 
 **Erros possíveis:**
@@ -1098,7 +1109,8 @@ Cria uma transferência entre duas contas da família.
 | 400 | "Valor deve ser maior que zero" | `valor` ausente ou ≤ 0 |
 | 400 | "Data deve estar no formato YYYY-MM-DD" | `data` inválida |
 | 400 | "Conta de origem ou destino inválida" | Uma das contas não existe ou não pertence à família |
-| 400 | "Não é possível transferir entre contas de moedas diferentes" | `contaOrigem.moeda` ≠ `contaDestino.moeda` |
+| 400 | "Informe o valor recebido na conta de destino" | Moedas diferentes e `valorDestino` ausente |
+| 400 | "Valor recebido deve ser maior que zero" | `valorDestino` ≤ 0 |
 
 ---
 
@@ -1884,12 +1896,20 @@ Lista as moedas suportadas e a cotação atual de cada uma (para BRL).
     { "codigo": "GBP", "simbolo": "£", "nome": "Libra esterlina" }
   ],
   "taxas": {
+    "BRL": 1,
     "USD": 5.42,
     "EUR": 5.85,
     "GBP": 6.87
+  },
+  "atualizadoEm": {
+    "USD": "2026-09-30T12:00:00.000Z",
+    "EUR": "2026-09-30T12:00:00.000Z",
+    "GBP": "2026-09-30T12:00:00.000Z"
   }
 }
 ```
+
+`atualizadoEm` diz quando cada cotação foi buscada — usado pra mostrar "de acordo com a cotação de 30/09/2026" ao sugerir uma conversão.
 
 ---
 

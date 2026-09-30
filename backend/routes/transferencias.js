@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
 // Criar transferência entre duas contas da família
 router.post('/', async (req, res) => {
   try {
-    const { contaOrigemId, contaDestinoId, valor, data, descricao } = req.body;
+    const { contaOrigemId, contaDestinoId, valor, valorDestino, data, descricao } = req.body;
 
     const validationError = validateTransferenciaInput(req.body);
     if (validationError) return res.status(400).json({ error: validationError });
@@ -47,11 +47,12 @@ router.post('/', async (req, res) => {
     });
     if (contas.length !== 2) return res.status(400).json({ error: 'Conta de origem ou destino inválida' });
 
-    // Câmbio entre moedas é uma operação de mercado, não uma transferência interna —
-    // quem quiser mover dinheiro entre uma conta em BRL e uma em USD faz isso fora do
-    // app, evitando ter que inventar uma taxa própria pra essa movimentação.
-    if (contas[0].moeda !== contas[1].moeda) {
-      return res.status(400).json({ error: 'Não é possível transferir entre contas de moedas diferentes' });
+    // Entre moedas diferentes o usuário informa quanto chegou no destino (valorDestino) —
+    // o app nunca inventa o câmbio pela cotação, porque o real já vem com spread/IOF/taxas.
+    // Na mesma moeda, valorDestino é descartado: chegou exatamente o que saiu.
+    const moedasDiferentes = contas[0].moeda !== contas[1].moeda;
+    if (moedasDiferentes && !(Number(valorDestino) > 0)) {
+      return res.status(400).json({ error: 'Informe o valor recebido na conta de destino' });
     }
 
     const created = await prisma.transferencia.create({
@@ -61,6 +62,7 @@ router.post('/', async (req, res) => {
         contaOrigemId: Number(contaOrigemId),
         contaDestinoId: Number(contaDestinoId),
         valor: Number(valor),
+        valorDestino: moedasDiferentes ? Number(valorDestino) : null,
         data,
         descricao: descricao || '',
       },

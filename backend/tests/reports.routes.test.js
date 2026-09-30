@@ -17,6 +17,8 @@ beforeEach(() => {
   // linha em TaxaCambio, buscarTaxas() cai no default (BRL: 1), que é o caso comum
   // nos testes abaixo (a menos que um teste específico configure moedas diferentes).
   vi.spyOn(prisma.taxaCambio, 'findMany').mockResolvedValue([]);
+  // Saldo total e projeção somam o efeito de transferências entre moedas — nenhuma por padrão.
+  vi.spyOn(prisma.transferencia, 'findMany').mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -107,6 +109,26 @@ describe('GET /api/reports/balance', () => {
     const res = await request(app).get('/api/reports/balance').set('Authorization', `Bearer ${token}`);
 
     expect(res.body.saldo).toBe(350); // 100 + (50 * 5)
+  });
+
+  it('soma a diferença de câmbio de transferências entre moedas ao saldo total', async () => {
+    vi.spyOn(prisma.taxaCambio, 'findMany').mockResolvedValue([
+      { moeda: 'USD', taxaParaBRL: new Prisma.Decimal('5.600000') },
+    ]);
+    vi.spyOn(prisma.transacao, 'groupBy').mockResolvedValue([]);
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([
+      { id: 1, moeda: 'BRL', saldoInicial: new Prisma.Decimal('1000.00') },
+      { id: 2, moeda: 'USD', saldoInicial: new Prisma.Decimal('0.00') },
+    ]);
+    const transfSpy = vi.spyOn(prisma.transferencia, 'findMany').mockResolvedValue([
+      { valor: new Prisma.Decimal('400.00'), valorDestino: new Prisma.Decimal('70.00'), contaOrigem: { moeda: 'BRL' }, contaDestino: { moeda: 'USD' } },
+    ]);
+
+    const res = await request(app).get('/api/reports/balance').set('Authorization', `Bearer ${token}`);
+
+    // Contas: R$ 600 + US$ 70 (a 5,60 = R$ 392) = R$ 992
+    expect(res.body.saldo).toBeCloseTo(992, 2);
+    expect(transfSpy.mock.calls[0][0].where).toMatchObject({ familiaId: 1, valorDestino: { not: null } });
   });
 });
 
