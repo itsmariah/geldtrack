@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fmt, fmtDate } from './format'
+import { fmt, fmtDate, descreverConversao } from './format'
 
 // Intl.NumberFormat('pt-BR') separa "R$" do valor com um espaço não separável (U+00A0),
 // não um espaço comum — por isso os testes usam regex com \s em vez de comparar a string exata.
@@ -32,5 +32,17 @@ describe('fmtDate', () => {
 
   it('mantém o dia correto mesmo no último dia do ano', () => {
     expect(fmtDate('2026-12-31')).toBe('31/12/2026')
+  })
+})
+
+describe('descreverConversao', () => {
+  it('mostra o valor original e o convertido com a data da cotação', () => {
+    expect(descreverConversao({ valorOriginal: 20, moedaOriginal: 'USD', valor: 103.62, moeda: 'BRL', dataCotacao: '2026-09-30' }))
+      .toMatch(/^US\$\s20,00 \(R\$\s103,62 de acordo com a cotação de 30\/09\/2026\)$/)
+  })
+
+  it('sem data, diz que o câmbio foi informado', () => {
+    expect(descreverConversao({ valorOriginal: 20, moedaOriginal: 'USD', valor: 110, moeda: 'BRL', dataCotacao: null }))
+      .toMatch(/pelo câmbio informado\)$/)
   })
 })

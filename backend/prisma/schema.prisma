@@ -119,6 +119,16 @@ model Transacao {
   // vezes pro mesmo usuário (cada membro importa a própria parte).
   despesaGrupoId Int?
   despesaGrupo   DespesaGrupo? @relation(fields: [despesaGrupoId], references: [id], onDelete: SetNull)
+  // Preenchidos quando o valor foi convertido de outra moeda (hoje: parte de uma despesa de
+  // grupo em € lançada numa conta em R$). "valor" continua sempre na moeda da conta — saldo e
+  // relatórios não mudam; isto é só o registro de onde o número veio, pra exibir "US$ 20,00
+  // (R$ 103,62 de acordo com a cotação de 30/09/2026)" e pra reconverter na sincronização.
+  // taxaConversao = quantas unidades da moeda da conta vale 1 unidade de moedaOriginal.
+  // dataCotacao nula = câmbio informado à mão pelo usuário (não a cotação salva).
+  moedaOriginal  String?
+  valorOriginal  Decimal?     @db.Decimal(12, 2)
+  taxaConversao  Decimal?     @db.Decimal(12, 6)
+  dataCotacao    String?
   // Preenchido só em transações vindas de sincronização Open Finance — usado pra nunca
   // importar a mesma transação duas vezes num novo sync (upsert idempotente).
   pluggyTransactionId String? @unique

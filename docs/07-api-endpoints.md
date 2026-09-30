@@ -320,6 +320,8 @@ Cria uma nova transação.
 
 Atualiza uma transação existente. O `:id` é o ID da transação na URL.
 
+> Numa transação convertida de outra moeda (`moedaOriginal` preenchido), mudar `valor` ou `contaId` apaga `moedaOriginal`/`valorOriginal`/`taxaConversao`/`dataCotacao` — a conversão deixa de descrever o número.
+
 **Exemplo:** `PUT /api/transactions/3`
 
 **Body (todos os campos obrigatórios):**
@@ -1794,12 +1796,13 @@ Edita uma despesa — substitui completamente descrição, valor, data, pagador 
   "eventoId": null,
   "destinos": [
     { "moeda": "BRL", "contaId": 3 },
-    { "moeda": "EUR", "contaId": 7 }
+    { "moeda": "EUR", "contaId": 7 },
+    { "moeda": "USD", "contaId": 3, "taxa": 5.42 }
   ]
 }
 ```
 
-`destinos` tem uma conta por moeda das despesas, sempre **na mesma moeda** (a parte em € vai pra uma conta em €). Despesas numa moeda sem destino ficam de fora e podem ser importadas depois. O formato antigo `{ "contaId": 3 }` ainda é aceito e vale como destino das despesas em R$.
+`destinos` tem uma conta por moeda das despesas. Conta **na mesma moeda**: a parte entra como está. Conta **em outra moeda**: a parte é convertida — pela cotação salva (a data dela fica em `dataCotacao`) ou, se `taxa` vier (quantas unidades da moeda da conta vale 1 da moeda da despesa), pelo câmbio informado, com `dataCotacao` nula. A transação guarda `moedaOriginal`, `valorOriginal` e `taxaConversao`, e editar a despesa no grupo depois reconverte com a mesma taxa. Despesas numa moeda sem destino ficam de fora e podem ser importadas depois. O formato antigo `{ "contaId": 3 }` ainda é aceito e vale como destino das despesas em R$.
 
 **Resposta 201 Created:**
 ```json
@@ -1814,10 +1817,10 @@ Edita uma despesa — substitui completamente descrição, valor, data, pagador 
 | 400 | "Escolha a conta de destino" | `destinos` vazio (e sem `contaId`) |
 | 400 | "Escolha só uma conta por moeda" | Moeda repetida em `destinos` |
 | 400 | "Conta inválida" | Conta de outra família (IDOR) |
-| 400 | "Escolha uma conta em EUR para as despesas em EUR" | Moeda da conta ≠ moeda do destino |
+| 400 | "Sem cotação salva pra converter USD em BRL — informe o câmbio" | Conta em outra moeda, sem `taxa` e sem cotação salva |
 | 400 | "Evento inválido" | `eventoId` de outra família |
 | 400 | "Todas as suas despesas deste grupo já estão no dashboard" | Nada pendente pra importar |
-| 400 | "Nenhuma das despesas pendentes está na moeda das contas escolhidas" | Há pendentes, mas nenhuma numa moeda com destino |
+| 400 | "Nenhuma das despesas pendentes está numa moeda com conta escolhida" | Há pendentes, mas nenhuma numa moeda com destino |
 | 409 | "Essas despesas já foram adicionadas ao dashboard" | Importação paralela (duplo clique/duas abas) barrada pela constraint única |
 
 ---

@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable'
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
-import { fmt, fmtDate, fmtDayHeader } from '../utils/format'
+import { fmt, fmtDate, fmtDayHeader, descreverConversao } from '../utils/format'
 import { useAuth } from '../context/AuthContext'
 
 // updatedAt e createdAt vêm do mesmo INSERT (mesmo now() do Postgres), mas usamos uma
@@ -100,6 +100,11 @@ function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHist
           {t.conta?.moeda && t.conta.moeda !== 'BRL' && ` · ${t.conta.nome}`}
           {t.usuario?.nome && t.usuario.nome !== user?.nome && ` · por ${t.usuario.nome}`}
         </span>
+        {t.moedaOriginal && (
+          <span className="tx-meta tx-conversao">
+            💱 {descreverConversao({ ...t, moeda: t.conta?.moeda || 'BRL' })}
+          </span>
+        )}
       </div>
       <div className="tx-amount">
         {t.tipo === 'receita' ? '+' : '-'}{fmt(t.valor, t.conta?.moeda)}

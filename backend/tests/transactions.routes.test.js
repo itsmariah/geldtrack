@@ -298,6 +298,38 @@ describe('PUT /api/transactions/:id', () => {
     expect(res.body.valor).toBe(100);
   });
 
+  it('apaga os dados de conversão quando o valor é editado à mão', async () => {
+    vi.spyOn(prisma.transacao, 'findFirst').mockResolvedValue({
+      id: 5, usuarioId: 7, valor: new Prisma.Decimal('103.62'), contaId: 1, moedaOriginal: 'USD',
+    });
+    const updateSpy = vi.spyOn(prisma.transacao, 'update').mockResolvedValue({
+      id: 5, usuarioId: 7, tipo: 'despesa', valor: new Prisma.Decimal('110.00'), categoria: 'Lazer', descricao: '', data: '2026-08-10',
+    });
+
+    await request(app)
+      .put('/api/transactions/5')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tipo: 'despesa', valor: 110, categoria: 'Lazer', data: '2026-08-10', contaId: 1 });
+
+    expect(updateSpy.mock.calls[0][0].data).toMatchObject({ moedaOriginal: null, valorOriginal: null, taxaConversao: null, dataCotacao: null });
+  });
+
+  it('mantém os dados de conversão quando valor e conta não mudam', async () => {
+    vi.spyOn(prisma.transacao, 'findFirst').mockResolvedValue({
+      id: 5, usuarioId: 7, valor: new Prisma.Decimal('103.62'), contaId: 1, moedaOriginal: 'USD',
+    });
+    const updateSpy = vi.spyOn(prisma.transacao, 'update').mockResolvedValue({
+      id: 5, usuarioId: 7, tipo: 'despesa', valor: new Prisma.Decimal('103.62'), categoria: 'Viagem', descricao: '', data: '2026-08-10',
+    });
+
+    await request(app)
+      .put('/api/transactions/5')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tipo: 'despesa', valor: 103.62, categoria: 'Viagem', data: '2026-08-10', contaId: 1 });
+
+    expect(updateSpy.mock.calls[0][0].data).not.toHaveProperty('moedaOriginal');
+  });
+
   it('não mexe no anexo existente quando o campo não é enviado', async () => {
     vi.spyOn(prisma.transacao, 'findFirst').mockResolvedValue({ id: 5, usuarioId: 7 });
     const updateSpy = vi.spyOn(prisma.transacao, 'update').mockResolvedValue({

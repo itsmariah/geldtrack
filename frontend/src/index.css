@@ -662,6 +662,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .tx-anexo-btn:hover { opacity: 1; }
 .tx-evento-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--primary-light); background: rgba(99,102,241,0.15); padding: 2px 8px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
 .tx-meta { font-size: 12px; color: var(--text-muted); }
+.tx-conversao { display: block; margin-top: 2px; }
 .tx-amount { font-size: 15px; font-weight: 700; white-space: nowrap; }
 .transaction-item.receita .tx-amount { color: var(--green); }
 .transaction-item.despesa .tx-amount { color: var(--red); }

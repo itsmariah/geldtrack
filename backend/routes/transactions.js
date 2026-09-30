@@ -259,11 +259,18 @@ router.put('/:id', async (req, res) => {
     const alteracoes = buildTransactionDiff(existing, novosValores);
     // Fora de novosValores de propósito: posição na lista não é campo financeiro, não entra no histórico.
     const ordemData = data !== existing.data ? { ordem: await proximaOrdemDoDia(req.familiaId, data) } : {};
+    // Valor ou conta mudados à mão: o "US$ 20,00 pela cotação de..." não descreve mais esse
+    // número, então os dados de conversão saem (e a sincronização com o grupo para de
+    // mexer no valor, já que a conta não está na moeda da despesa).
+    const conversaoData = existing.moedaOriginal
+      && (Number(valor) !== Number(existing.valor) || Number(contaId) !== existing.contaId)
+      ? { moedaOriginal: null, valorOriginal: null, taxaConversao: null, dataCotacao: null }
+      : {};
 
     const [updated] = await prisma.$transaction([
       prisma.transacao.update({
         where: { id },
-        data: { ...novosValores, ...anexoData, ...ordemData },
+        data: { ...novosValores, ...anexoData, ...ordemData, ...conversaoData },
         select: TRANSACAO_SELECT_SEM_ANEXO,
       }),
       ...(alteracoes.length > 0

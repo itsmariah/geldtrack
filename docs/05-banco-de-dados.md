@@ -215,6 +215,7 @@ Agrupados por área, na mesma ordem do `schema.prisma`.
 | recorrenciaId | Int? (FK, SetNull) | Se veio de uma recorrência materializada |
 | eventoId | Int? (FK, SetNull) | Etiqueta opcional pra um Evento (ex: viagem) |
 | despesaGrupoId | Int? (FK, SetNull) | Preenchido quando veio de "Adicionar despesas ao dashboard" num Grupo — `@@unique([despesaGrupoId, usuarioId])` impede importar a mesma despesa duas vezes pro mesmo usuário |
+| moedaOriginal, valorOriginal, taxaConversao, dataCotacao | String?, Decimal(12,2)?, Decimal(12,6)?, String? | Só quando o valor foi convertido de outra moeda (ex: parte de uma despesa de grupo em US$ lançada numa conta em R$). `valor` continua na moeda da conta; estes campos registram a origem ("US$ 20,00 (R$ 103,62 de acordo com a cotação de 30/09/2026)"). `dataCotacao` nula = câmbio informado pelo usuário. Editar valor/conta à mão apaga os quatro |
 | pluggyTransactionId | String? (único) | Preenchido só em transações sincronizadas via Open Finance — evita duplicar num novo sync |
 | anexo, anexoNome | String? | Comprovante anexado (data URL base64) — nunca vem na listagem, só via `GET /transactions/:id/anexo` |
 | updatedAt | DateTime | Atualizado a cada `update()` — sinaliza "editada" na lista |

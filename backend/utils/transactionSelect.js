@@ -16,6 +16,12 @@ const TRANSACAO_SELECT_SEM_ANEXO = {
   eventoId: true,
   pluggyTransactionId: true,
   anexoNome: true,
+  // Origem do valor quando ele foi convertido de outra moeda (ver schema) — a lista mostra
+  // "US$ 20,00 (R$ 103,62 de acordo com a cotação de 30/09/2026)".
+  moedaOriginal: true,
+  valorOriginal: true,
+  taxaConversao: true,
+  dataCotacao: true,
   // Nome de quem lançou — usado no frontend pra mostrar "por Fulano" quando a
   // transação foi criada por outro membro da família, não pelo usuário logado.
   usuario: { select: { nome: true } },

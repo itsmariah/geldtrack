@@ -13,6 +13,7 @@ const { descricaoTransacaoGrupo, parteDoMembro } = require('../utils/despesaGrup
 const { proximaOrdemDoDia } = require('../utils/proximaOrdemDoDia');
 const { buildTransactionDiff } = require('../utils/buildTransactionDiff');
 const { notifyOrcamentoEstouradoSeNecessario } = require('../utils/notifyOrcamentoEstourado');
+const { buscarCotacoes, taxaEntre, dataDaCotacao, converterValor } = require('../utils/currency');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -89,21 +90,36 @@ async function sincronizarTransacoesDaDespesa(despesa, membrosDoGrupo) {
 
   for (const t of transacoes) {
     const parte = parteDoMembro(despesa.divisoes, membroIdPorUsuario.get(t.usuarioId));
-    // Se a moeda da despesa mudou e não bate mais com a da conta, a parte nova não pode ir
-    // pra transação como está (seria € gravado como R$) — só data/descrição acompanham.
-    const mesmaMoeda = (t.conta?.moeda || 'BRL') === (despesa.moeda || 'BRL');
+    const moedaDespesa = despesa.moeda || 'BRL';
+    // O valor só acompanha a nova parte quando dá pra expressá-la na moeda da conta: direto
+    // (mesma moeda) ou reconvertendo com a mesma taxa da importação (transação convertida,
+    // despesa ainda na moeda original). Se a moeda da despesa mudou pra outra, a parte nova
+    // não pode ir como está (seria € gravado como R$) — só data/descrição acompanham.
+    let valor = Number(t.valor);
+    const conversao = {};
+    if (parte > 0) {
+      if (t.moedaOriginal) {
+        if (t.moedaOriginal === moedaDespesa) {
+          valor = converterValor(parte, Number(t.taxaConversao));
+          conversao.valorOriginal = parte;
+        }
+      } else if ((t.conta?.moeda || 'BRL') === moedaDespesa) {
+        valor = parte;
+      }
+    }
     const novos = {
       data: despesa.data,
       descricao: descricaoTransacaoGrupo(despesa.descricao, grupo.nome),
-      valor: parte > 0 && mesmaMoeda ? parte : Number(t.valor),
+      valor,
     };
     const alteracoes = buildTransactionDiff(t, { ...t, ...novos });
-    if (alteracoes.length === 0) continue;
+    const mudouOriginal = conversao.valorOriginal !== undefined && conversao.valorOriginal !== Number(t.valorOriginal);
+    if (alteracoes.length === 0 && !mudouOriginal) continue;
 
     const ordemData = novos.data !== t.data ? { ordem: await proximaOrdemDoDia(t.familiaId, novos.data) } : {};
     await prisma.$transaction([
-      prisma.transacao.update({ where: { id: t.id }, data: { ...novos, ...ordemData } }),
-      prisma.transacaoHistorico.create({ data: { transacaoId: t.id, alteracoes } }),
+      prisma.transacao.update({ where: { id: t.id }, data: { ...novos, ...conversao, ...ordemData } }),
+      ...(alteracoes.length > 0 ? [prisma.transacaoHistorico.create({ data: { transacaoId: t.id, alteracoes } })] : []),
     ]);
   }
 }
@@ -364,9 +380,12 @@ router.post('/:id/despesas', async (req, res) => {
 // do dashboard. Pode ser chamado de novo depois de lançar mais despesas: só as que ainda
 // não foram importadas por este usuário entram (garantido também pelo @@unique no banco).
 //
-// destinos: [{ moeda, contaId }] — uma conta por moeda das despesas, sempre na mesma moeda
-// da despesa (€ vai pra uma conta em €). Moeda sem destino fica de fora dessa importação e
-// pode entrar numa próxima. contaId solto (formato antigo) = destino só pras despesas em R$.
+// destinos: [{ moeda, contaId, taxa? }] — uma conta por moeda das despesas. Conta na mesma
+// moeda: a parte entra como está. Conta em outra moeda (ex: € numa conta em R$): a parte é
+// convertida — pela cotação salva (e a data dela fica registrada) ou, se "taxa" vier, pelo
+// câmbio que o usuário informou (ex: o do cartão, com IOF). Moeda sem destino fica de fora
+// dessa importação e pode entrar numa próxima. contaId solto (formato antigo) = destino
+// só pras despesas em R$.
 router.post('/:id/dashboard', async (req, res) => {
   try {
     const grupoId = Number(req.params.id);
@@ -385,15 +404,30 @@ router.post('/:id/dashboard', async (req, res) => {
     const contas = await prisma.conta.findMany({
       where: { familiaId: req.familiaId, id: { in: destinos.map(d => Number(d.contaId)) } },
     });
-    const contaPorMoeda = new Map();
+    const precisaCotacao = destinos.some(d => {
+      const conta = contas.find(c => c.id === Number(d.contaId));
+      return conta && conta.moeda !== d.moeda && !(Number(d.taxa) > 0);
+    });
+    const cotacoes = precisaCotacao ? await buscarCotacoes() : null;
+
+    // moeda da despesa -> { conta, conversao: null | { taxa, dataCotacao } }
+    const destinoPorMoeda = new Map();
     for (const destino of destinos) {
       const conta = contas.find(c => c.id === Number(destino.contaId));
       if (!conta) return res.status(400).json({ error: 'Conta inválida' });
-      // Gravar a parte em € numa conta em R$ leria o valor como se fosse real.
+      let conversao = null;
       if (conta.moeda !== destino.moeda) {
-        return res.status(400).json({ error: `Escolha uma conta em ${destino.moeda} para as despesas em ${destino.moeda}` });
+        if (Number(destino.taxa) > 0) {
+          conversao = { taxa: Number(Number(destino.taxa).toFixed(6)), dataCotacao: null };
+        } else {
+          const taxa = taxaEntre(destino.moeda, conta.moeda, cotacoes.taxas);
+          if (!taxa) {
+            return res.status(400).json({ error: `Sem cotação salva pra converter ${destino.moeda} em ${conta.moeda} — informe o câmbio` });
+          }
+          conversao = { taxa, dataCotacao: dataDaCotacao([destino.moeda, conta.moeda], cotacoes.atualizadoEm) };
+        }
       }
-      contaPorMoeda.set(destino.moeda, conta);
+      destinoPorMoeda.set(destino.moeda, { conta, conversao });
     }
     if (eventoId) {
       const evento = await prisma.evento.findFirst({ where: { id: Number(eventoId), familiaId: req.familiaId } });
@@ -415,9 +449,9 @@ router.post('/:id/dashboard', async (req, res) => {
     if (naoImportadas.length === 0) {
       return res.status(400).json({ error: 'Todas as suas despesas deste grupo já estão no dashboard' });
     }
-    const pendentes = naoImportadas.filter(d => contaPorMoeda.has(d.moeda || 'BRL'));
+    const pendentes = naoImportadas.filter(d => destinoPorMoeda.has(d.moeda || 'BRL'));
     if (pendentes.length === 0) {
-      return res.status(400).json({ error: 'Nenhuma das despesas pendentes está na moeda das contas escolhidas' });
+      return res.status(400).json({ error: 'Nenhuma das despesas pendentes está numa moeda com conta escolhida' });
     }
 
     // Várias despesas no mesmo dia: cada uma entra acima da anterior, sem repetir "ordem".
@@ -426,14 +460,18 @@ router.post('/:id/dashboard', async (req, res) => {
     for (const d of pendentes) {
       const ordem = ordemPorDia.has(d.data) ? ordemPorDia.get(d.data) + 1 : await proximaOrdemDoDia(req.familiaId, d.data);
       ordemPorDia.set(d.data, ordem);
+      const moeda = d.moeda || 'BRL';
+      const { conta, conversao } = destinoPorMoeda.get(moeda);
+      const parte = parteDoMembro(d.divisoes, meuMembro.id);
       dados.push({
         usuarioId: req.userId,
         familiaId: req.familiaId,
-        contaId: contaPorMoeda.get(d.moeda || 'BRL').id,
+        contaId: conta.id,
         eventoId: eventoId ? Number(eventoId) : null,
         despesaGrupoId: d.id,
         tipo: 'despesa',
-        valor: parteDoMembro(d.divisoes, meuMembro.id),
+        valor: conversao ? converterValor(parte, conversao.taxa) : parte,
+        ...(conversao ? { moedaOriginal: moeda, valorOriginal: parte, taxaConversao: conversao.taxa, dataCotacao: conversao.dataCotacao } : {}),
         categoria: categoria.trim(),
         descricao: descricaoTransacaoGrupo(d.descricao, grupo.nome),
         data: d.data,

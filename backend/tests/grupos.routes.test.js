@@ -442,6 +442,34 @@ describe('PUT /api/grupos/:id/despesas/:despesaId', () => {
     expect(historicoSpy.mock.calls[0][0].data.alteracoes.map(a => a.campo)).toEqual(['valor', 'descricao', 'data']);
     expect(transactionSpy).toHaveBeenCalledWith(['update-op', 'historico-op']);
   });
+
+  it('reconverte com a mesma taxa da importação quando a transação foi convertida', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ papel: 'admin', usuarioId: 7 }));
+    vi.spyOn(prisma.despesaGrupo, 'findFirst').mockResolvedValue({ ...despesaExistente, moeda: 'USD' });
+    vi.spyOn(prisma.grupoMembro, 'findMany').mockResolvedValue([{ id: 1, usuarioId: 7 }, { id: 2, usuarioId: 8 }]);
+    vi.spyOn(prisma.despesaGrupo, 'update').mockResolvedValue({
+      ...despesaExistente, moeda: 'USD', valorTotal: new Prisma.Decimal('60.00'),
+      divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('30.00') }, { membroId: 2, valorDevido: new Prisma.Decimal('30.00') }],
+    });
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([{
+      id: 30, usuarioId: 7, familiaId: 1, tipo: 'despesa', valor: new Prisma.Decimal('103.62'), categoria: 'Lazer',
+      descricao: 'Jantar (Viagem Nordeste)', data: '2026-08-10', contaId: 3, eventoId: null, despesaGrupoId: 5,
+      conta: { moeda: 'BRL' }, moedaOriginal: 'USD', valorOriginal: new Prisma.Decimal('20.00'), taxaConversao: new Prisma.Decimal('5.181000'),
+    }]);
+    vi.spyOn(prisma.grupo, 'findUnique').mockResolvedValue({ nome: 'Viagem Nordeste' });
+    const txUpdateSpy = vi.spyOn(prisma.transacao, 'update').mockReturnValue('update-op');
+    vi.spyOn(prisma.transacaoHistorico, 'create').mockReturnValue('historico-op');
+    vi.spyOn(prisma, '$transaction').mockResolvedValue([]);
+
+    const res = await request(app)
+      .put('/api/grupos/1/despesas/5')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ descricao: 'Jantar', valorTotal: 60, moeda: 'USD', data: '2026-08-10', pagoPorMembroId: 1, participanteIds: [1, 2] });
+
+    expect(res.status).toBe(200);
+    // US$ 30 × 5,181 = R$ 155,43
+    expect(txUpdateSpy.mock.calls[0][0].data).toMatchObject({ valor: 155.43, valorOriginal: 30 });
+  });
 });
 
 describe('POST /api/grupos/:id/dashboard', () => {
@@ -471,10 +499,52 @@ describe('POST /api/grupos/:id/dashboard', () => {
     expect(contaSpy.mock.calls[0][0].where).toEqual({ familiaId: 1, id: { in: [3] } });
   });
 
-  it('rejeita conta numa moeda diferente da das despesas do destino', async () => {
-    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([{ id: 3, familiaId: 1, moeda: 'USD' }]);
-    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
+  it('conta em outra moeda sem cotação salva nem câmbio informado: 400 pedindo o câmbio', async () => {
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([{ id: 3, familiaId: 1, moeda: 'BRL' }]);
+    vi.spyOn(prisma.taxaCambio, 'findMany').mockResolvedValue([]);
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`)
+      .send({ categoria: 'Lazer', destinos: [{ moeda: 'USD', contaId: 3 }] });
     expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/informe o câmbio/);
+  });
+
+  const prepararImportacaoUSD = () => {
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([{ id: 3, familiaId: 1, moeda: 'BRL' }]);
+    vi.spyOn(prisma.despesaGrupo, 'findMany').mockResolvedValue([
+      despesa({ id: 5, moeda: 'USD', divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('20.00') }] }),
+    ]);
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([]);
+    vi.spyOn(prisma.transacao, 'aggregate').mockResolvedValue({ _max: { ordem: null } });
+    vi.spyOn(prisma, '$transaction').mockResolvedValue([]);
+    vi.spyOn(prisma.orcamento, 'findUnique').mockResolvedValue(null);
+    return vi.spyOn(prisma.transacao, 'create').mockImplementation(args => args);
+  };
+
+  it('converte a parte pela cotação salva e registra moeda/valor originais, taxa e data da cotação', async () => {
+    const createSpy = prepararImportacaoUSD();
+    vi.spyOn(prisma.taxaCambio, 'findMany').mockResolvedValue([
+      { moeda: 'USD', taxaParaBRL: new Prisma.Decimal('5.181000'), atualizadoEm: new Date('2026-09-30T15:00:00.000Z') },
+    ]);
+
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`)
+      .send({ categoria: 'Lazer', destinos: [{ moeda: 'USD', contaId: 3 }] });
+
+    expect(res.status).toBe(201);
+    expect(createSpy.mock.calls[0][0].data).toMatchObject({
+      contaId: 3, valor: 103.62, moedaOriginal: 'USD', valorOriginal: 20, taxaConversao: 5.181, dataCotacao: '2026-09-30',
+    });
+  });
+
+  it('usa o câmbio informado pelo usuário quando vem "taxa" (sem data de cotação)', async () => {
+    const createSpy = prepararImportacaoUSD();
+    const taxaSpy = vi.spyOn(prisma.taxaCambio, 'findMany');
+
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`)
+      .send({ categoria: 'Lazer', destinos: [{ moeda: 'USD', contaId: 3, taxa: 5.5 }] });
+
+    expect(res.status).toBe(201);
+    expect(createSpy.mock.calls[0][0].data).toMatchObject({ valor: 110, valorOriginal: 20, taxaConversao: 5.5, dataCotacao: null });
+    expect(taxaSpy).not.toHaveBeenCalled();
   });
 
   it('manda cada despesa pra conta da própria moeda e deixa de fora moedas sem destino', async () => {

@@ -27,6 +27,29 @@ function converterParaBRL(valor, moeda, taxas) {
   return Number(valor) * taxa;
 }
 
+// Quantas unidades de "para" vale 1 unidade de "de", pela cotação salva — arredondada em
+// 6 casas (a precisão de Transacao.taxaConversao), pra conta feita agora e a refeita na
+// sincronização darem exatamente o mesmo resultado. null se faltar cotação de alguma.
+function taxaEntre(de, para, taxas) {
+  if (!taxas[de] || !taxas[para]) return null;
+  return Number((taxas[de] / taxas[para]).toFixed(6));
+}
+
+// Data (YYYY-MM-DD, no horário de Brasília) da cotação mais antiga entre as moedas — BRL não
+// tem data, é sempre 1. null se nenhuma das moedas tiver cotação datada.
+function dataDaCotacao(moedas, atualizadoEm) {
+  const datas = moedas.map(m => atualizadoEm[m]).filter(Boolean).map(d => new Date(d));
+  if (datas.length === 0) return null;
+  const maisAntiga = new Date(Math.min(...datas.map(d => d.getTime())));
+  return maisAntiga.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+}
+
+// Valor convertido em centavos exatos; nunca zero (uma parte de centavos convertida pra uma
+// moeda mais "forte" poderia arredondar pra 0, e transação de valor 0 não existe).
+function converterValor(valor, taxa) {
+  return Math.max(0.01, Math.round(Number(valor) * taxa * 100) / 100);
+}
+
 // Efeito das transferências no total consolidado em R$. Transferência na mesma moeda sai
 // de uma conta e entra em outra com o mesmo valor — se anula, nem é buscada. Entre moedas
 // (valorDestino preenchido) sobra a diferença de câmbio: spread/IOF e a variação da cotação
@@ -63,4 +86,13 @@ function agruparPorCategoriaTipo(rows, moedaPorConta, taxas) {
   });
 }
 
-module.exports = { buscarCotacoes, buscarTaxas, converterParaBRL, efeitoTransferenciasEmBRL, agruparPorCategoriaTipo };
+module.exports = {
+  buscarCotacoes,
+  buscarTaxas,
+  converterParaBRL,
+  taxaEntre,
+  dataDaCotacao,
+  converterValor,
+  efeitoTransferenciasEmBRL,
+  agruparPorCategoriaTipo,
+};
