@@ -60,6 +60,26 @@ describe('GET /api/grupos', () => {
 });
 
 describe('GET /api/grupos/:id', () => {
+  beforeEach(() => {
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([]);
+  });
+
+  it('marca noDashboard só nas despesas que o usuário logado já importou', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro());
+    const despesa = (id) => ({
+      id, grupoId: 1, descricao: 'Jantar', valorTotal: new Prisma.Decimal('90.00'), data: '2026-08-10', pagoPorMembroId: 1, criadoPorUsuarioId: 7, createdAt: new Date(),
+      divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('90.00') }],
+    });
+    vi.spyOn(prisma.grupo, 'findUnique').mockResolvedValue({ ...rawGrupo(), membros: [rawMembro()], despesas: [despesa(1), despesa(2)], pagamentos: [] });
+    const txSpy = vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([{ despesaGrupoId: 2 }]);
+
+    const res = await request(app).get('/api/grupos/1').set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(txSpy.mock.calls[0][0].where).toEqual({ usuarioId: 7, despesaGrupoId: { in: [1, 2] } });
+    expect(res.body.despesas.map(d => d.noDashboard)).toEqual([false, true]);
+  });
+
   it('retorna 404 quando o usuário não é membro do grupo (proteção contra IDOR)', async () => {
     vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(null);
     const res = await request(app).get('/api/grupos/1').set('Authorization', `Bearer ${token}`);
@@ -380,6 +400,7 @@ describe('PUT /api/grupos/:id/despesas/:despesaId', () => {
     const updateSpy = vi.spyOn(prisma.despesaGrupo, 'update').mockResolvedValue({
       ...despesaExistente, divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('45.00') }, { membroId: 2, valorDevido: new Prisma.Decimal('45.00') }],
     });
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([]);
 
     const res = await request(app)
       .put('/api/grupos/1/despesas/5')
@@ -388,6 +409,117 @@ describe('PUT /api/grupos/:id/despesas/:despesaId', () => {
 
     expect(res.status).toBe(200);
     expect(updateSpy.mock.calls[0][0].data.divisoes.deleteMany).toEqual({});
+  });
+
+  it('leva a nova data, descrição e parte pras transações já adicionadas ao dashboard, com histórico', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ papel: 'admin', usuarioId: 7 }));
+    vi.spyOn(prisma.despesaGrupo, 'findFirst').mockResolvedValue(despesaExistente);
+    vi.spyOn(prisma.grupoMembro, 'findMany').mockResolvedValue([{ id: 1, usuarioId: 7 }, { id: 2, usuarioId: 8 }]);
+    vi.spyOn(prisma.despesaGrupo, 'update').mockResolvedValue({
+      ...despesaExistente, descricao: 'Jantar japonês', valorTotal: new Prisma.Decimal('120.00'), data: '2026-08-12',
+      divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('60.00') }, { membroId: 2, valorDevido: new Prisma.Decimal('60.00') }],
+    });
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([{
+      id: 30, usuarioId: 7, familiaId: 1, tipo: 'despesa', valor: new Prisma.Decimal('45.00'), categoria: 'Lazer',
+      descricao: 'Jantar (Viagem Nordeste)', data: '2026-08-10', contaId: 3, eventoId: null, despesaGrupoId: 5,
+    }]);
+    vi.spyOn(prisma.grupo, 'findUnique').mockResolvedValue({ nome: 'Viagem Nordeste' });
+    vi.spyOn(prisma.transacao, 'aggregate').mockResolvedValue({ _max: { ordem: 2 } });
+    const txUpdateSpy = vi.spyOn(prisma.transacao, 'update').mockReturnValue('update-op');
+    const historicoSpy = vi.spyOn(prisma.transacaoHistorico, 'create').mockReturnValue('historico-op');
+    const transactionSpy = vi.spyOn(prisma, '$transaction').mockResolvedValue([]);
+
+    const res = await request(app)
+      .put('/api/grupos/1/despesas/5')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ descricao: 'Jantar japonês', valorTotal: 120, data: '2026-08-12', pagoPorMembroId: 1, participanteIds: [1, 2] });
+
+    expect(res.status).toBe(200);
+    expect(txUpdateSpy).toHaveBeenCalledWith({
+      where: { id: 30 },
+      data: { data: '2026-08-12', descricao: 'Jantar japonês (Viagem Nordeste)', valor: 60, ordem: 3 },
+    });
+    expect(historicoSpy.mock.calls[0][0].data.alteracoes.map(a => a.campo)).toEqual(['valor', 'descricao', 'data']);
+    expect(transactionSpy).toHaveBeenCalledWith(['update-op', 'historico-op']);
+  });
+});
+
+describe('POST /api/grupos/:id/dashboard', () => {
+  const body = { contaId: 3, categoria: 'Lazer' };
+  const despesa = (overrides = {}) => ({
+    id: 5, grupoId: 1, descricao: 'Jantar', valorTotal: new Prisma.Decimal('90.00'), data: '2026-08-10', pagoPorMembroId: 2, criadoPorUsuarioId: 8, createdAt: new Date(),
+    divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('45.00') }],
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ id: 1, papel: 'membro' }));
+    vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue({ id: 3, familiaId: 1, moeda: 'BRL' });
+    vi.spyOn(prisma.grupo, 'findUnique').mockResolvedValue({ nome: 'Viagem Nordeste' });
+  });
+
+  it('retorna 404 quando o usuário não é membro do grupo', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(null);
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
+    expect(res.status).toBe(404);
+  });
+
+  it('rejeita conta de outra família (proteção contra IDOR)', async () => {
+    const contaSpy = vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue(null);
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
+    expect(res.status).toBe(400);
+    expect(contaSpy.mock.calls[0][0].where).toEqual({ id: 3, familiaId: 1 });
+  });
+
+  it('rejeita conta em moeda estrangeira', async () => {
+    vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue({ id: 3, familiaId: 1, moeda: 'USD' });
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
+    expect(res.status).toBe(400);
+  });
+
+  it('cria uma despesa por despesa do grupo, com a parte do usuário e a data da despesa, pulando as já importadas', async () => {
+    vi.spyOn(prisma.despesaGrupo, 'findMany').mockResolvedValue([
+      despesa({ id: 4, data: '2026-08-09' }),
+      despesa({ id: 5, data: '2026-08-10' }),
+      despesa({ id: 6, data: '2026-08-10', descricao: 'Uber', divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('12.50') }] }),
+    ]);
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([{ despesaGrupoId: 4 }]);
+    vi.spyOn(prisma.transacao, 'aggregate').mockResolvedValue({ _max: { ordem: 0 } });
+    const createSpy = vi.spyOn(prisma.transacao, 'create').mockImplementation(args => args);
+    vi.spyOn(prisma, '$transaction').mockResolvedValue([]);
+    vi.spyOn(prisma.orcamento, 'findUnique').mockResolvedValue(null);
+
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ count: 2 });
+    expect(createSpy.mock.calls.map(c => c[0].data)).toEqual([
+      expect.objectContaining({ despesaGrupoId: 5, usuarioId: 7, familiaId: 1, contaId: 3, tipo: 'despesa', valor: 45, categoria: 'Lazer', descricao: 'Jantar (Viagem Nordeste)', data: '2026-08-10', ordem: 1 }),
+      expect.objectContaining({ despesaGrupoId: 6, valor: 12.5, descricao: 'Uber (Viagem Nordeste)', data: '2026-08-10', ordem: 2 }),
+    ]);
+  });
+
+  it('retorna 400 quando tudo já foi importado', async () => {
+    vi.spyOn(prisma.despesaGrupo, 'findMany').mockResolvedValue([despesa()]);
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([{ despesaGrupoId: 5 }]);
+    const createSpy = vi.spyOn(prisma.transacao, 'create');
+
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
+
+    expect(res.status).toBe(400);
+    expect(createSpy).not.toHaveBeenCalled();
+  });
+
+  it('retorna 409 (não 500) quando uma importação paralela esbarra no @@unique', async () => {
+    vi.spyOn(prisma.despesaGrupo, 'findMany').mockResolvedValue([despesa()]);
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([]);
+    vi.spyOn(prisma.transacao, 'aggregate').mockResolvedValue({ _max: { ordem: null } });
+    vi.spyOn(prisma.transacao, 'create').mockImplementation(args => args);
+    vi.spyOn(prisma, '$transaction').mockRejectedValue(new Prisma.PrismaClientKnownRequestError('Unique', { code: 'P2002', clientVersion: 'x' }));
+
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
+
+    expect(res.status).toBe(409);
   });
 });
 

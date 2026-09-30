@@ -13,6 +13,7 @@ const { TRANSACAO_SELECT_SEM_ANEXO } = require('../utils/transactionSelect');
 const { buildTransactionDiff } = require('../utils/buildTransactionDiff');
 const { notifyOrcamentoEstouradoSeNecessario } = require('../utils/notifyOrcamentoEstourado');
 const { reorderDia } = require('../utils/reorderDia');
+const { proximaOrdemDoDia } = require('../utils/proximaOrdemDoDia');
 
 // Fire-and-forget (mesmo padrão do e-mail de reset de senha em auth.js): a resposta da
 // rota não deve esperar o envio de e-mail, e uma falha aqui não pode derrubar a requisição.
@@ -31,13 +32,6 @@ const MAX_BULK_ITEMS = 500;
 // Mesma ordem em toda listagem (Dashboard, export, evento): dia mais recente primeiro;
 // dentro do dia, a ordem manual (drag-and-drop) e, no empate, a mais recente primeiro.
 const ORDEM_LISTAGEM = [{ data: 'desc' }, { ordem: 'desc' }, { createdAt: 'desc' }];
-
-// Transação nova (ou que mudou de dia) entra no topo do dia — sem isso ela cairia abaixo
-// de qualquer transação que o usuário já tivesse arrastado pra cima naquele dia.
-async function proximaOrdemDoDia(familiaId, data) {
-  const agg = await prisma.transacao.aggregate({ where: { familiaId, data }, _max: { ordem: true } });
-  return (agg?._max?.ordem ?? -1) + 1;
-}
 
 // Confere que a conta existe e pertence à família do token (evita atribuir uma
 // transação a uma conta de outra família via IDOR) — qualquer membro pode usar qualquer

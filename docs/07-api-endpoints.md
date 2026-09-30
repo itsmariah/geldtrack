@@ -1541,7 +1541,8 @@ Detalhe de um grupo: membros, despesas, pagamentos e o saldo "quem deve quem" ca
       "divisoes": [
         { "membroId": 1, "valorDevido": 300.00 },
         { "membroId": 2, "valorDevido": 300.00 }
-      ]
+      ],
+      "noDashboard": false
     }
   ],
   "pagamentos": [],
@@ -1555,6 +1556,8 @@ Detalhe de um grupo: membros, despesas, pagamentos e o saldo "quem deve quem" ca
 | Código | Mensagem | Causa |
 |--------|----------|-------|
 | 404 | "Grupo não encontrado" | `:id` não existe ou o usuário logado não é membro dele (mesmo 404 para os dois casos, para não vazar a existência do grupo) |
+
+> `noDashboard` é **por usuário**: indica se o usuário logado já adicionou a parte dele naquela despesa ao dashboard (ver `POST /grupos/:id/dashboard`).
 
 ---
 
@@ -1745,6 +1748,8 @@ Edita uma despesa — substitui completamente descrição, valor, data, pagador 
 
 **Resposta 200 OK:** a despesa atualizada, mesmo formato do POST.
 
+> Se algum membro já adicionou essa despesa ao dashboard, a transação dele é atualizada junto: **data** e **descrição** sempre acompanham a despesa, e o **valor** acompanha a nova parte do membro (se ele saiu do rateio, o valor fica como estava). Categoria, conta e evento escolhidos no dashboard não mudam. Cada mudança entra no histórico de edição da transação.
+
 **Erros possíveis:**
 | Código | Mensagem | Causa |
 |--------|----------|-------|
@@ -1752,6 +1757,35 @@ Edita uma despesa — substitui completamente descrição, valor, data, pagador 
 | 404 | "Despesa não encontrada" | `:despesaId` não existe neste grupo |
 | 403 | "Só quem criou a despesa ou um admin do grupo pode editá-la" | Quem chamou não é o criador nem admin |
 | 400 | (mesmas mensagens de validação do POST) | Campos inválidos |
+
+---
+
+### POST /grupos/:id/dashboard 🔒
+
+"Adicionar despesas ao dashboard": cria, na família do usuário logado, uma transação de **despesa** para cada despesa do grupo em que ele participa do rateio — no valor da **parte dele** (`valorDevido`), não do total, e com a **mesma data da despesa** (não a data de hoje), para cada gasto cair no dia/mês certo do dashboard. A descrição vira `"<descrição> (<nome do grupo>)"`. Pode ser chamado de novo depois de lançar mais despesas: só entram as que este usuário ainda não importou (`@@unique([despesaGrupoId, usuarioId])` em `Transacao`). Excluir a despesa ou o grupo depois **não** apaga as transações já importadas.
+
+**Exemplo:** `POST /api/grupos/1/dashboard`
+
+**Body:**
+```json
+{ "contaId": 3, "categoria": "Lazer", "eventoId": null }
+```
+
+**Resposta 201 Created:**
+```json
+{ "count": 2 }
+```
+
+**Erros possíveis:**
+| Código | Mensagem | Causa |
+|--------|----------|-------|
+| 404 | "Grupo não encontrado" | `:id` não existe ou usuário não é membro dele |
+| 400 | "Categoria é obrigatória" | `categoria` ausente/vazia |
+| 400 | "Conta inválida" | `contaId` ausente ou de outra família (IDOR) |
+| 400 | "Escolha uma conta em reais (R$)" | Conta em moeda estrangeira — despesas de grupo são sempre em R$ |
+| 400 | "Evento inválido" | `eventoId` de outra família |
+| 400 | "Todas as suas despesas deste grupo já estão no dashboard" | Nada pendente pra importar |
+| 409 | "Essas despesas já foram adicionadas ao dashboard" | Importação paralela (duplo clique/duas abas) barrada pela constraint única |
 
 ---
 

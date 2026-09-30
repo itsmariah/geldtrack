@@ -5,6 +5,7 @@ import api from '../services/api'
 import Navbar from '../components/Navbar'
 import DespesaGrupoModal from '../components/DespesaGrupoModal'
 import PagamentoGrupoModal from '../components/PagamentoGrupoModal'
+import DespesasGrupoDashboardModal from '../components/DespesasGrupoDashboardModal'
 import SaldosGrupo from '../components/SaldosGrupo'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
@@ -28,6 +29,8 @@ export default function GrupoDetalhe() {
   const [pagamentoPrefill, setPagamentoPrefill] = useState(null)
   const [showPagamentoModal, setShowPagamentoModal] = useState(false)
   const [deletePagamentoId, setDeletePagamentoId] = useState(null)
+
+  const [showDashboardModal, setShowDashboardModal] = useState(false)
 
   const [showConvidadoForm, setShowConvidadoForm] = useState(false)
   const [nomeConvidado, setNomeConvidado] = useState('')
@@ -88,6 +91,12 @@ export default function GrupoDetalhe() {
   const souAdmin = meuMembro?.papel === 'admin'
   const posoSair = grupo.membros.length > 1
   const membroPorId = Object.fromEntries(grupo.membros.map(m => [m.id, m]))
+
+  // Só despesas em que o usuário tem parte no rateio (ter só pagado não conta como gasto dele).
+  const minhasDespesas = grupo.despesas
+    .map(d => ({ ...d, minhaParte: d.divisoes.find(x => x.membroId === meuMembro?.id)?.valorDevido ?? 0 }))
+    .filter(d => d.minhaParte > 0)
+  const despesasForaDoDashboard = minhasDespesas.filter(d => !d.noDashboard)
 
   const handleCopiarCodigo = async () => {
     try {
@@ -174,6 +183,12 @@ export default function GrupoDetalhe() {
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível excluir a despesa.')
     }
+  }
+
+  const handleDashboardSaved = (count) => {
+    setShowDashboardModal(false)
+    setToast(count === 1 ? '1 despesa adicionada ao dashboard.' : `${count} despesas adicionadas ao dashboard.`)
+    fetchGrupo()
   }
 
   const handleQuitarSaldo = (saldo) => {
@@ -337,9 +352,23 @@ export default function GrupoDetalhe() {
         <div className="transactions-section">
           <div className="section-header">
             <h3>Despesas</h3>
-            <button className="btn btn-primary btn-sm" onClick={() => setShowDespesaModal(true)}>
-              + Nova despesa
-            </button>
+            <div className="header-actions">
+              {minhasDespesas.length > 0 && (
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setShowDashboardModal(true)}
+                  disabled={despesasForaDoDashboard.length === 0}
+                  title={despesasForaDoDashboard.length === 0 ? 'Todas as suas despesas deste grupo já estão no dashboard' : undefined}
+                >
+                  {despesasForaDoDashboard.length === 0
+                    ? '✓ Tudo no dashboard'
+                    : `Adicionar despesas ao dashboard (${despesasForaDoDashboard.length})`}
+                </button>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={() => setShowDespesaModal(true)}>
+                + Nova despesa
+              </button>
+            </div>
           </div>
 
           {grupo.despesas.length === 0 ? (
@@ -352,7 +381,10 @@ export default function GrupoDetalhe() {
               {grupo.despesas.map(d => (
                 <li key={d.id} className="grupo-despesa-item">
                   <div className="grupo-despesa-info">
-                    <span className="grupo-despesa-desc">{d.descricao}</span>
+                    <span className="grupo-despesa-desc">
+                      {d.descricao}
+                      {d.noDashboard && <span className="tx-evento-chip" style={{ marginLeft: 8 }}>✓ No dashboard</span>}
+                    </span>
                     <span className="tx-meta grupo-pessoas">
                       Pago por
                       <Avatar nome={membroPorId[d.pagoPorMembroId]?.nome} foto={membroPorId[d.pagoPorMembroId]?.foto} size="xs" />
@@ -381,6 +413,15 @@ export default function GrupoDetalhe() {
           defaultPagoPorMembroId={meuMembro?.id}
           onClose={handleDespesaModalClose}
           onSaved={handleDespesaSaved}
+        />
+      )}
+
+      {showDashboardModal && (
+        <DespesasGrupoDashboardModal
+          grupoId={id}
+          despesas={despesasForaDoDashboard}
+          onClose={() => setShowDashboardModal(false)}
+          onSaved={handleDashboardSaved}
         />
       )}
 

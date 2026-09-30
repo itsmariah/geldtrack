@@ -214,6 +214,7 @@ Agrupados por área, na mesma ordem do `schema.prisma`.
 | contaId | Int (FK) | Conta à qual pertence (obrigatório) |
 | recorrenciaId | Int? (FK, SetNull) | Se veio de uma recorrência materializada |
 | eventoId | Int? (FK, SetNull) | Etiqueta opcional pra um Evento (ex: viagem) |
+| despesaGrupoId | Int? (FK, SetNull) | Preenchido quando veio de "Adicionar despesas ao dashboard" num Grupo — `@@unique([despesaGrupoId, usuarioId])` impede importar a mesma despesa duas vezes pro mesmo usuário |
 | pluggyTransactionId | String? (único) | Preenchido só em transações sincronizadas via Open Finance — evita duplicar num novo sync |
 | anexo, anexoNome | String? | Comprovante anexado (data URL base64) — nunca vem na listagem, só via `GET /transactions/:id/anexo` |
 | updatedAt | DateTime | Atualizado a cada `update()` — sinaliza "editada" na lista |
@@ -253,6 +254,8 @@ Ver a seção "O modelo de dados, em duas camadas" acima para a explicação arq
 **DespesaGrupo** + **DivisaoDespesa** — despesa paga por um `GrupoMembro` (`pagoPorMembroId`), dividida entre participantes; uma linha de `DivisaoDespesa` por participante (`valorDevido`), soma sempre igual a `valorTotal`. A linha do próprio pagador existe só pra fechar essa soma — o cálculo de saldo a ignora.
 
 **PagamentoGrupo** — quitação registrada entre dois membros (`deMembroId` pagou `paraMembroId`, fora do app), que abate o saldo calculado.
+
+**Grupo → Dashboard** — "Adicionar despesas ao dashboard" cria uma `Transacao` por despesa em que o usuário participa, com `despesaGrupoId` apontando pra ela, valor = parte dele e a mesma data da despesa. Editar a despesa no grupo depois atualiza data/descrição/valor dessas transações. `SetNull`: excluir a despesa ou o grupo não apaga o que já foi pro dashboard.
 
 ### Câmbio
 

@@ -112,6 +112,13 @@ model Transacao {
   // SetNull (não Cascade): apagar o evento não deve apagar as transações já lançadas nele.
   eventoId      Int?
   evento        Evento?      @relation(fields: [eventoId], references: [id], onDelete: SetNull)
+  // Preenchido quando a transação nasceu de "Adicionar despesas ao dashboard" num Grupo —
+  // guarda a parte do usuário naquela despesa, com a mesma data dela. SetNull (não Cascade):
+  // excluir a despesa ou o grupo inteiro depois que a atividade acabou não deve apagar o
+  // gasto que já foi pro dashboard. O @@unique abaixo impede importar a mesma despesa duas
+  // vezes pro mesmo usuário (cada membro importa a própria parte).
+  despesaGrupoId Int?
+  despesaGrupo   DespesaGrupo? @relation(fields: [despesaGrupoId], references: [id], onDelete: SetNull)
   // Preenchido só em transações vindas de sincronização Open Finance — usado pra nunca
   // importar a mesma transação duas vezes num novo sync (upsert idempotente).
   pluggyTransactionId String? @unique
@@ -120,6 +127,8 @@ model Transacao {
   anexo     String?
   anexoNome String?
   historico TransacaoHistorico[]
+
+  @@unique([despesaGrupoId, usuarioId])
 }
 
 // Um registro por edição que muda pelo menos um campo financeiro (tipo/valor/categoria/
@@ -345,6 +354,7 @@ model DespesaGrupo {
   criadoPor          Usuario          @relation("DespesaGrupoCriador", fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict)
   createdAt          DateTime         @default(now())
   divisoes           DivisaoDespesa[]
+  transacoes         Transacao[]
 }
 
 // Uma linha por participante de uma despesa, incluindo quem pagou (se ele também fizer
