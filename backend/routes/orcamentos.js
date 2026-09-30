@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
+const { reorderHandler, ORDEM_MANUAL } = require('../utils/reorderLista');
 const { validateOrcamentoInput } = require('../utils/validateOrcamento');
 const { serializeOrcamento, serializeOrcamentos, withProgress } = require('../utils/serializeOrcamento');
 const { getMonthDateRange } = require('../utils/reportCalculations');
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
 
     const orcamentos = await prisma.orcamento.findMany({
       where: { familiaId: req.familiaId },
-      orderBy: { categoria: 'asc' },
+      orderBy: ORDEM_MANUAL,
     });
     if (orcamentos.length === 0) return res.json([]);
 
@@ -54,6 +55,10 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Erro ao listar orçamentos' });
   }
 });
+
+// Reordenar (arrastar e soltar na tela) — recebe { ids } com a lista inteira na nova
+// ordem. Declarado antes de /:id pra "reorder" não ser capturado como id.
+router.put('/reorder', reorderHandler('orcamento', 'Erro ao reordenar orçamentos'));
 
 // Criar orçamento (um por categoria por família)
 router.post('/', async (req, res) => {

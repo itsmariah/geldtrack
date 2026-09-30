@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
+const { reorderHandler, ORDEM_MANUAL } = require('../utils/reorderLista');
 const { validateRecorrenciaInput } = require('../utils/validateRecorrencia');
 const { serializeRecorrencia, serializeRecorrencias } = require('../utils/serializeRecorrencia');
 const { ensureOccurrences } = require('../utils/materializeRecorrencias');
@@ -34,13 +35,17 @@ router.get('/', async (req, res) => {
     await ensureOccurrences(req.familiaId);
     const recorrencias = await prisma.recorrencia.findMany({
       where: { familiaId: req.familiaId },
-      orderBy: [{ ativa: 'desc' }, { diaDoMes: 'asc' }],
+      orderBy: ORDEM_MANUAL,
     });
     res.json(serializeRecorrencias(recorrencias));
   } catch (err) {
     res.status(500).json({ error: 'Erro ao listar recorrências' });
   }
 });
+
+// Reordenar (arrastar e soltar na tela) — recebe { ids } com a lista inteira na nova
+// ordem. Declarado antes de /:id pra "reorder" não ser capturado como id.
+router.put('/reorder', reorderHandler('recorrencia', 'Erro ao reordenar recorrências'));
 
 // Criar recorrência
 router.post('/', async (req, res) => {

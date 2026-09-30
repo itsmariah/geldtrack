@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
+const { reorderHandler, ORDEM_MANUAL } = require('../utils/reorderLista');
 const { validateContaInput, normalizarInstituicao } = require('../utils/validateConta');
 const { serializeConta, serializeContas, withSaldo } = require('../utils/serializeConta');
 
@@ -22,7 +23,7 @@ router.use(dataLimiter);
 // Listar contas da família com o saldo atual de cada uma
 router.get('/', async (req, res) => {
   try {
-    const contas = await prisma.conta.findMany({ where: { familiaId: req.familiaId }, orderBy: { createdAt: 'asc' } });
+    const contas = await prisma.conta.findMany({ where: { familiaId: req.familiaId }, orderBy: ORDEM_MANUAL });
     if (contas.length === 0) return res.json([]);
 
     const contaIds = contas.map(c => c.id);
@@ -50,6 +51,10 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Erro ao listar contas' });
   }
 });
+
+// Reordenar (arrastar e soltar na tela) — recebe { ids } com a lista inteira na nova
+// ordem. Declarado antes de /:id pra "reorder" não ser capturado como id.
+router.put('/reorder', reorderHandler('conta', 'Erro ao reordenar contas'));
 
 // Criar conta
 router.post('/', async (req, res) => {

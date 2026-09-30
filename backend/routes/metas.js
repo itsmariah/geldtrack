@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
+const { reorderHandler, ORDEM_MANUAL } = require('../utils/reorderLista');
 const { validateMetaInput, validateAporteInput } = require('../utils/validateMeta');
 const { serializeMeta, serializeMetas } = require('../utils/serializeMeta');
 
@@ -27,13 +28,17 @@ router.get('/', async (req, res) => {
     const metas = await prisma.meta.findMany({
       where: { familiaId: req.familiaId },
       include: metaInclude,
-      orderBy: { createdAt: 'desc' },
+      orderBy: ORDEM_MANUAL,
     });
     res.json(serializeMetas(metas));
   } catch (err) {
     res.status(500).json({ error: 'Erro ao listar metas' });
   }
 });
+
+// Reordenar (arrastar e soltar na tela) — recebe { ids } com a lista inteira na nova
+// ordem. Declarado antes de /:id pra "reorder" não ser capturado como id.
+router.put('/reorder', reorderHandler('meta', 'Erro ao reordenar metas'));
 
 // Criar meta
 router.post('/', async (req, res) => {

@@ -3,6 +3,8 @@ import api from '../services/api'
 import Navbar from '../components/Navbar'
 import RecurringModal from '../components/RecurringModal'
 import RecurringCard from '../components/RecurringCard'
+import SortableGrid from '../components/SortableGrid'
+import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
@@ -112,17 +114,14 @@ export default function Recurring() {
             </button>
           </div>
         ) : (
-          <div className="goals-grid">
-            {recorrencias.map(recorrencia => (
-              <RecurringCard
-                key={recorrencia.id}
-                recorrencia={recorrencia}
-                onEdit={handleEdit}
-                onDelete={setDeleteId}
-                onToggleAtiva={handleToggleAtiva}
-              />
-            ))}
-          </div>
+          <SortableGrid
+            items={recorrencias}
+            onReorder={handleReorder}
+            descricao="recorrência reordenável"
+            renderItem={recorrencia => (
+              <RecurringCard recorrencia={recorrencia} onEdit={handleEdit} onDelete={setDeleteId} onToggleAtiva={handleToggleAtiva} />
+            )}
+          />
         )}
       </main>
 

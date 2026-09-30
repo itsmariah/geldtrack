@@ -22,6 +22,7 @@ const familiaRoutes = require('./routes/familia');
 const cambioRoutes = require('./routes/cambio');
 const eventosRoutes = require('./routes/eventos');
 const gruposRoutes = require('./routes/grupos');
+const resumosRoutes = require('./routes/resumos');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,6 +50,7 @@ app.use('/api/familia', familiaRoutes);
 app.use('/api/cambio', cambioRoutes);
 app.use('/api/eventos', eventosRoutes);
 app.use('/api/grupos', gruposRoutes);
+app.use('/api/resumos', resumosRoutes);
 
 app.listen(PORT, () => {
   console.log(`GeldTrack API rodando em http://localhost:${PORT}`);

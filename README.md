@@ -854,6 +854,17 @@ O banco de dados é **PostgreSQL** (não SQLite), hospedado gratuitamente no **[
 
 O `vercel.json` já cuida do rewrite de SPA (`BrowserRouter`), então rotas como `/dashboard` funcionam mesmo com acesso direto/F5.
 
+### Resumo por e-mail (GitHub Actions)
+
+O resumo semanal/mensal é disparado pelo workflow [`resumo-email.yml`](.github/workflows/resumo-email.yml), que roda todo dia às 08:00 (Brasília) e chama `POST /api/resumos/enviar`. Ele fica fora do backend porque o Render gratuito dorme sem acesso, e a própria chamada acorda o servidor. Para ativar:
+
+1. Gere um segredo aleatório longo (ex: `openssl rand -hex 32`).
+2. No Render, adicione a variável `CRON_SECRET` com esse valor no serviço do backend.
+3. No GitHub, em **Settings → Secrets and variables → Actions**, crie `CRON_SECRET` (o mesmo valor) e `RESUMO_API_URL` (a URL da API com `/api` no fim, ex: `https://moneytrack-backend.onrender.com/api`).
+4. Para testar na hora: **Actions → Resumo por e-mail → Run workflow**.
+
+Sem `CRON_SECRET` no Render, a rota responde 503 e nada é enviado. Cada usuário liga ou desliga o resumo no próprio perfil.
+
 ### Desenvolvimento local com Postgres
 
 Como o schema usa `provider = "postgresql"`, rodar localmente também exige uma conexão Postgres real (não dá mais para usar só um arquivo `dev.db`). Opções mais simples:

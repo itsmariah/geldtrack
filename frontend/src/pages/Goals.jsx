@@ -4,6 +4,8 @@ import Navbar from '../components/Navbar'
 import MetaModal from '../components/MetaModal'
 import AporteModal from '../components/AporteModal'
 import MetaCard from '../components/MetaCard'
+import SortableGrid from '../components/SortableGrid'
+import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
@@ -39,6 +41,8 @@ export default function Goals() {
   }, [])
 
   useEffect(() => { fetchMetas() }, [fetchMetas])
+
+  const handleReorder = (novaLista) => salvarOrdem('/metas/reorder', novaLista, { setLista: setMetas, recarregar: fetchMetas, setError })
 
   const handleEdit = (meta) => {
     setEditingMeta(meta)
@@ -118,18 +122,20 @@ export default function Goals() {
             </button>
           </div>
         ) : (
-          <div className="goals-grid">
-            {metas.map(meta => (
+          <SortableGrid
+            items={metas}
+            onReorder={handleReorder}
+            descricao="meta reordenável"
+            renderItem={meta => (
               <MetaCard
-                key={meta.id}
                 meta={meta}
                 onEdit={handleEdit}
                 onDelete={setDeleteMetaId}
                 onAddAporte={setAporteMeta}
                 onDeleteAporte={(m, aporteId) => setDeleteAporte({ metaId: m.id, aporteId })}
               />
-            ))}
-          </div>
+            )}
+          />
         )}
       </main>
 

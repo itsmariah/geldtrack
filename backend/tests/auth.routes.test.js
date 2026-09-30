@@ -166,6 +166,37 @@ describe('PUT /api/auth/profile', () => {
     expect(res.body.token).toBeUndefined();
   });
 
+  it('ligar o resumo semanal marca a semana que acabou de fechar como já enviada', async () => {
+    vi.spyOn(prisma.usuario, 'findUnique').mockResolvedValue({ tokenVersion: 0, familiaId: 1, papelFamilia: 'dono', resumoSemanal: false, resumoMensal: false });
+    const updateSpy = vi.spyOn(prisma.usuario, 'update').mockResolvedValue({ id: 1, nome: 'Ana', email: 'ana@example.com', foto: null, tokenVersion: 0, resumoSemanal: true, resumoMensal: false });
+    const token = makeToken(1, 0);
+
+    const res = await request(app).put('/api/auth/profile').set('Authorization', `Bearer ${token}`).send({ resumoSemanal: true });
+
+    expect(res.status).toBe(200);
+    expect(updateSpy.mock.calls[0][0].data).toMatchObject({ resumoSemanal: true, ultimoResumoSemanal: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
+    expect(updateSpy.mock.calls[0][0].data).not.toHaveProperty('ultimoResumoMensal');
+    expect(res.body.resumoSemanal).toBe(true);
+  });
+
+  it('desligar o resumo não mexe no último período enviado', async () => {
+    vi.spyOn(prisma.usuario, 'findUnique').mockResolvedValue({ tokenVersion: 0, familiaId: 1, papelFamilia: 'dono', resumoSemanal: true, resumoMensal: true });
+    const updateSpy = vi.spyOn(prisma.usuario, 'update').mockResolvedValue({ id: 1, nome: 'Ana', email: 'ana@example.com', foto: null, tokenVersion: 0 });
+    const token = makeToken(1, 0);
+
+    await request(app).put('/api/auth/profile').set('Authorization', `Bearer ${token}`).send({ resumoMensal: false });
+
+    expect(updateSpy.mock.calls[0][0].data).toEqual({ resumoMensal: false });
+  });
+
+  it('rejeita preferência de resumo que não é booleana (400)', async () => {
+    const updateSpy = vi.spyOn(prisma.usuario, 'update');
+    const token = makeToken(1, 0);
+    const res = await request(app).put('/api/auth/profile').set('Authorization', `Bearer ${token}`).send({ resumoSemanal: 'sim' });
+    expect(res.status).toBe(400);
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+
   it('rejeita e-mail já usado por outro usuário (409)', async () => {
     vi.spyOn(prisma.usuario, 'findFirst').mockResolvedValue({ id: 2, email: 'outro@example.com' });
     const token = makeToken(1, 0);

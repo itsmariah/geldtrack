@@ -1,0 +1,31 @@
+name: Resumo por e-mail
+
+# Dispara, uma vez por dia, o envio dos resumos semanais/mensais (POST /api/resumos/enviar).
+# O backend decide o que mandar: o resumo da última semana/mês completos que cada usuário
+# ainda não recebeu — na prática, o semanal sai às segundas e o mensal no dia 1, e um dia
+# em que isto falhar é coberto no dia seguinte. Fica aqui (e não num cron dentro do backend)
+# porque o Render gratuito dorme sem acesso; a própria chamada acorda o servidor.
+#
+# Precisa de dois segredos em Settings → Secrets and variables → Actions:
+#   RESUMO_API_URL  URL da API em produção, com /api no fim
+#   CRON_SECRET     o mesmo valor da variável CRON_SECRET do backend no Render
+
+on:
+  schedule:
+    - cron: '0 11 * * *' # 08:00 em Brasília
+  workflow_dispatch:
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar resumos pendentes
+        env:
+          RESUMO_API_URL: ${{ secrets.RESUMO_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        # --retry: a primeira chamada pode estourar o tempo enquanto o Render acorda.
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --max-time 120 --retry 3 --retry-delay 30 --retry-all-errors \
+            -X POST -H "x-cron-secret: $CRON_SECRET" \
+            "$RESUMO_API_URL/resumos/enviar"

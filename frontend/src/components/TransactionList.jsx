@@ -1,16 +1,7 @@
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
+import { DndContext, closestCenter } from '@dnd-kit/core'
 import {
   SortableContext,
   arrayMove,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
@@ -18,6 +9,7 @@ import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifi
 import { CSS } from '@dnd-kit/utilities'
 import { fmt, fmtDate, fmtDayHeader, descreverConversao } from '../utils/format'
 import { useAuth } from '../context/AuthContext'
+import { useSortSensors, listenersSemTeclaDosFilhos } from '../hooks/useSortSensors'
 
 // updatedAt e createdAt vêm do mesmo INSERT (mesmo now() do Postgres), mas usamos uma
 // margem pra não depender de igualdade exata de timestamp entre as duas colunas.
@@ -38,17 +30,6 @@ function agruparPorDia(transactions) {
 }
 
 const sortableModifiers = [restrictToVerticalAxis, restrictToParentElement]
-
-// Mouse arrasta depois de mover alguns pixels (um clique simples nos botões de
-// editar/excluir continua sendo clique). No toque, precisa segurar um instante antes de
-// arrastar — senão rolar a página com o dedo em cima da lista viraria um arraste.
-function useTransactionSensors() {
-  return useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
-}
 
 function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHistorico, sortable }) {
   const { user } = useAuth()
@@ -119,17 +100,11 @@ function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHist
 
 function SortableTransactionRow(props) {
   const { setNodeRef, transform, transition, attributes, listeners, isDragging } = useSortable({ id: props.t.id })
-  // O KeyboardSensor escuta keydown no <li> inteiro; sem esse filtro, apertar Enter/Espaço
-  // num botão de dentro (editar, excluir, anexo) começaria um arraste em vez de clicar nele.
-  const { onKeyDown, ...pointerListeners } = listeners || {}
   const sortable = {
     setNodeRef,
     isDragging,
     attributes: { ...attributes, 'aria-roledescription': 'transação reordenável' },
-    listeners: {
-      ...pointerListeners,
-      onKeyDown: (e) => { if (e.target === e.currentTarget) onKeyDown?.(e) },
-    },
+    listeners: listenersSemTeclaDosFilhos(listeners),
     style: { transform: CSS.Transform.toString(transform), transition },
   }
   return <TransactionRow {...props} sortable={sortable} />
@@ -138,7 +113,7 @@ function SortableTransactionRow(props) {
 // Um DndContext por dia: o arraste fica preso dentro do próprio dia (restrictToParentElement),
 // então nunca dá pra "mudar a data" de uma transação arrastando — isso continua sendo pelo modal.
 function DiaSortable({ grupo, onReorder, rowProps }) {
-  const sensors = useTransactionSensors()
+  const sensors = useSortSensors()
 
   const handleDragEnd = ({ active, over }) => {
     if (!over || active.id === over.id) return

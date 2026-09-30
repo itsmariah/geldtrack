@@ -9,7 +9,8 @@ const { serializeGrupo, serializeGrupoMembro, serializeDespesaGrupo, serializeDe
 const { gerarCodigoUnico } = require('../utils/gerarCodigoGrupo');
 const { splitIgualmente } = require('../utils/splitDespesaGrupo');
 const { calcularSaldosGrupo } = require('../utils/calcularSaldosGrupo');
-const { descricaoTransacaoGrupo, parteDoMembro } = require('../utils/despesaGrupoTransacao');
+const { descricaoTransacaoGrupo, parteDoMembro, descricaoTransacaoPagamento, valorRecebido, descricaoComGrupoRenomeado } = require('../utils/despesaGrupoTransacao');
+const { reorderLista } = require('../utils/reorderLista');
 const { proximaOrdemDoDia } = require('../utils/proximaOrdemDoDia');
 const { buildTransactionDiff } = require('../utils/buildTransactionDiff');
 const { notifyOrcamentoEstouradoSeNecessario } = require('../utils/notifyOrcamentoEstourado');
@@ -124,6 +125,32 @@ async function sincronizarTransacoesDaDespesa(despesa, membrosDoGrupo) {
   }
 }
 
+// Transações que o usuário logado já levou deste grupo pro dashboard (despesas e receitas
+// de pagamentos), só na família atual dele.
+function transacoesDoGrupoNoDashboard(grupoId, req) {
+  return prisma.transacao.findMany({
+    where: {
+      usuarioId: req.userId,
+      familiaId: req.familiaId,
+      OR: [{ despesaGrupo: { grupoId } }, { pagamentoGrupo: { grupoId } }],
+    },
+  });
+}
+
+// Conversão de um valor em "moeda" pra moeda da conta de destino — mesma regra de
+// POST /:id/dashboard: câmbio informado pelo usuário vence a cotação salva.
+// Retorna { conversao: null | { taxa, dataCotacao } } ou { erro }.
+async function conversaoParaConta(moeda, conta, taxaInformada) {
+  if (conta.moeda === moeda) return { conversao: null };
+  if (Number(taxaInformada) > 0) {
+    return { conversao: { taxa: Number(Number(taxaInformada).toFixed(6)), dataCotacao: null } };
+  }
+  const cotacoes = await buscarCotacoes();
+  const taxa = taxaEntre(moeda, conta.moeda, cotacoes.taxas);
+  if (!taxa) return { erro: `Sem cotação salva pra converter ${moeda} em ${conta.moeda} — informe o câmbio` };
+  return { conversao: { taxa, dataCotacao: dataDaCotacao([moeda, conta.moeda], cotacoes.atualizadoEm) } };
+}
+
 // Grupos do usuário logado — nunca passa por familiaId, é a diferença arquitetural
 // chave desta feature (um usuário pode estar em vários grupos, não só um).
 router.get('/', async (req, res) => {
@@ -131,7 +158,9 @@ router.get('/', async (req, res) => {
     const meusMembros = await prisma.grupoMembro.findMany({
       where: { usuarioId: req.userId },
       include: { grupo: { include: { _count: { select: { membros: true } } } } },
-      orderBy: { grupo: { createdAt: 'desc' } },
+      // Posição manual (por usuário, fica no GrupoMembro) e, no empate, a ordem em que ele
+      // entrou/criou cada grupo.
+      orderBy: [{ ordem: 'asc' }, { createdAt: 'asc' }],
     });
     const result = meusMembros.map(m => ({
       ...serializeGrupo(m.grupo),
@@ -169,21 +198,33 @@ router.get('/:id', async (req, res) => {
     });
     const importadasIds = new Set(importadas.map(t => t.despesaGrupoId));
 
-    // eventoIdDashboard: o evento da importação mais recente deste grupo pro dashboard (só
-    // na família atual do usuário) — o modal já abre com ele, pra viagem inteira cair no
-    // mesmo evento sem escolher de novo a cada importação.
-    const ultimaComEvento = importadas
-      .filter(t => t.eventoId && t.familiaId === req.familiaId)
+    // Mesma marcação pros pagamentos que o usuário recebeu e já adicionou como receita.
+    const pagamentosIds = grupo.pagamentos.map(p => p.id);
+    const receitas = pagamentosIds.length === 0 ? [] : await prisma.transacao.findMany({
+      where: { usuarioId: req.userId, pagamentoGrupoId: { in: pagamentosIds } },
+      select: { pagamentoGrupoId: true, eventoId: true, familiaId: true, createdAt: true },
+    });
+    const receitasIds = new Set(receitas.map(t => t.pagamentoGrupoId));
+
+    // Só o que está na família atual do usuário (as de uma família antiga não são visíveis).
+    const naFamilia = [...importadas, ...receitas].filter(t => t.familiaId === req.familiaId);
+    // eventoIdDashboard: o evento da importação mais recente deste grupo pro dashboard — os
+    // modais já abrem com ele, pra viagem inteira cair no mesmo evento sem escolher de novo.
+    const ultimaComEvento = naFamilia
+      .filter(t => t.eventoId)
       .reduce((ultima, t) => (!ultima || t.createdAt > ultima.createdAt ? t : ultima), null);
 
     const despesas = serializeDespesasGrupo(grupo.despesas).map(d => ({ ...d, noDashboard: importadasIds.has(d.id) }));
-    const pagamentos = serializePagamentosGrupo(grupo.pagamentos);
+    const pagamentos = serializePagamentosGrupo(grupo.pagamentos).map(p => ({ ...p, noDashboard: receitasIds.has(p.id) }));
     res.json({
       ...serializeGrupo(grupo),
       despesas,
       pagamentos,
       saldos: calcularSaldosGrupo(despesas, pagamentos),
       eventoIdDashboard: ultimaComEvento?.eventoId ?? null,
+      // Um item por transação deste grupo no dashboard do usuário (o evento atual de cada) —
+      // é o que o "vincular ao evento" mostra antes de aplicar.
+      eventosNoDashboard: naFamilia.map(t => t.eventoId ?? null),
     });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar grupo' });
@@ -214,9 +255,29 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Renomeia o grupo — só admin, mesma regra de excluir. Transações que já foram pro
-// dashboard com "(nome antigo)" na descrição não mudam aqui: são dados da família de cada
-// membro (só uma edição posterior da despesa leva a descrição nova pra elas).
+// Reordena a lista de grupos do usuário logado — { ids } com os ids dos grupos (não dos
+// GrupoMembro) na nova ordem. A posição fica no GrupoMembro: cada membro organiza a sua.
+// Declarado antes de /:id pra "reorder" não ser capturado como id.
+router.put('/reorder', async (req, res) => {
+  try {
+    const meusMembros = await prisma.grupoMembro.findMany({ where: { usuarioId: req.userId }, select: { id: true, grupoId: true } });
+    const { erro, ordens } = reorderLista(meusMembros.map(m => m.grupoId), req.body?.ids);
+    if (erro) return res.status(400).json({ error: erro });
+
+    const membroPorGrupo = new Map(meusMembros.map(m => [m.grupoId, m.id]));
+    await prisma.$transaction(ordens.map(({ id, ordem }) =>
+      prisma.grupoMembro.update({ where: { id: membroPorGrupo.get(id) }, data: { ordem } })
+    ));
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao reordenar grupos' });
+  }
+});
+
+// Renomeia o grupo — só admin, mesma regra de excluir. Leva o nome novo pras transações
+// que os membros já adicionaram ao dashboard (o sufixo "(nome antigo)" da descrição), com
+// histórico de edição — igual à sincronização de uma despesa editada. Descrição que o
+// usuário já mudou no dashboard fica como está.
 router.put('/:id', async (req, res) => {
   try {
     const grupoId = Number(req.params.id);
@@ -228,7 +289,20 @@ router.put('/:id', async (req, res) => {
     const validationError = validateNomeGrupo(nome);
     if (validationError) return res.status(400).json({ error: validationError });
 
+    const anterior = await prisma.grupo.findUnique({ where: { id: grupoId }, select: { nome: true } });
     const grupo = await prisma.grupo.update({ where: { id: grupoId }, data: { nome: nome.trim() }, include: membrosInclude });
+
+    const transacoes = await prisma.transacao.findMany({
+      where: { OR: [{ despesaGrupo: { grupoId } }, { pagamentoGrupo: { grupoId } }] },
+    });
+    for (const t of transacoes) {
+      const descricao = descricaoComGrupoRenomeado(t.descricao, anterior.nome, grupo.nome);
+      if (descricao === null) continue;
+      await prisma.$transaction([
+        prisma.transacao.update({ where: { id: t.id }, data: { descricao } }),
+        prisma.transacaoHistorico.create({ data: { transacaoId: t.id, alteracoes: buildTransactionDiff(t, { ...t, descricao }) } }),
+      ]);
+    }
     res.json(serializeGrupo(grupo));
   } catch (err) {
     res.status(500).json({ error: 'Erro ao renomear grupo' });
@@ -536,6 +610,103 @@ router.post('/:id/dashboard', async (req, res) => {
     res.status(201).json({ count: dados.length });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao adicionar despesas ao dashboard' });
+  }
+});
+
+// "Vincular ao evento": põe no evento escolhido, de uma vez, todas as transações que o
+// usuário logado já levou deste grupo pro dashboard (despesas e receitas) — pra quando o
+// evento foi criado depois da importação. Transações que já estavam em outro evento também
+// mudam (o modal mostra quantas antes). eventoId null desvincula. Cada mudança entra no
+// histórico de edição, igual a trocar o evento pelo modal da transação.
+router.post('/:id/evento', async (req, res) => {
+  try {
+    const grupoId = Number(req.params.id);
+    const meuMembro = await getMembroAtual(grupoId, req.userId);
+    if (!meuMembro) return res.status(404).json({ error: 'Grupo não encontrado' });
+
+    const eventoId = req.body.eventoId ? Number(req.body.eventoId) : null;
+    if (eventoId) {
+      const evento = await prisma.evento.findFirst({ where: { id: eventoId, familiaId: req.familiaId } });
+      if (!evento) return res.status(400).json({ error: 'Evento inválido' });
+    }
+
+    const transacoes = await transacoesDoGrupoNoDashboard(grupoId, req);
+    if (transacoes.length === 0) {
+      return res.status(400).json({ error: 'Nenhuma transação deste grupo está no seu dashboard ainda' });
+    }
+    const mudar = transacoes.filter(t => t.eventoId !== eventoId);
+    await prisma.$transaction(mudar.flatMap(t => [
+      prisma.transacao.update({ where: { id: t.id }, data: { eventoId } }),
+      prisma.transacaoHistorico.create({ data: { transacaoId: t.id, alteracoes: buildTransactionDiff(t, { ...t, eventoId }) } }),
+    ]));
+    res.json({ count: mudar.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao vincular transações ao evento' });
+  }
+});
+
+// Adiciona ao dashboard, como receita, um pagamento que o usuário logado RECEBEU no grupo.
+// Botão por pagamento, nunca automático: quem já levou a própria parte das despesas pro
+// dashboard contaria o dinheiro duas vezes (o front avisa); faz sentido pra quem lançou a
+// cobrança real (cartão, Open Finance) e quer registrar o reembolso. O valor é o que de fato
+// entrou (valorRecebido), convertido pra moeda da conta se preciso, na data do pagamento.
+router.post('/:id/pagamentos/:pagamentoId/dashboard', async (req, res) => {
+  try {
+    const grupoId = Number(req.params.id);
+    const pagamentoId = Number(req.params.pagamentoId);
+    const meuMembro = await getMembroAtual(grupoId, req.userId);
+    if (!meuMembro) return res.status(404).json({ error: 'Grupo não encontrado' });
+
+    const pagamento = await prisma.pagamentoGrupo.findFirst({
+      where: { id: pagamentoId, grupoId },
+      include: { de: { include: { usuario: { select: { nome: true } } } }, grupo: { select: { nome: true } } },
+    });
+    if (!pagamento) return res.status(404).json({ error: 'Pagamento não encontrado' });
+    if (pagamento.paraMembroId !== meuMembro.id) {
+      return res.status(403).json({ error: 'Só quem recebeu o pagamento pode adicioná-lo como receita' });
+    }
+
+    const { contaId, categoria, eventoId, taxa } = req.body;
+    if (typeof categoria !== 'string' || !categoria.trim()) {
+      return res.status(400).json({ error: 'Categoria é obrigatória' });
+    }
+    const conta = await prisma.conta.findFirst({ where: { id: Number(contaId), familiaId: req.familiaId } });
+    if (!conta) return res.status(400).json({ error: 'Conta inválida' });
+    if (eventoId) {
+      const evento = await prisma.evento.findFirst({ where: { id: Number(eventoId), familiaId: req.familiaId } });
+      if (!evento) return res.status(400).json({ error: 'Evento inválido' });
+    }
+
+    const { valor, moeda } = valorRecebido(pagamento);
+    const { erro, conversao } = await conversaoParaConta(moeda, conta, taxa);
+    if (erro) return res.status(400).json({ error: erro });
+
+    const nomeQuemPagou = pagamento.de.usuario?.nome ?? pagamento.de.nomeConvidado;
+    try {
+      const transacao = await prisma.transacao.create({
+        data: {
+          usuarioId: req.userId,
+          familiaId: req.familiaId,
+          contaId: conta.id,
+          eventoId: eventoId ? Number(eventoId) : null,
+          pagamentoGrupoId: pagamento.id,
+          tipo: 'receita',
+          valor: conversao ? converterValor(valor, conversao.taxa) : valor,
+          ...(conversao ? { moedaOriginal: moeda, valorOriginal: valor, taxaConversao: conversao.taxa, dataCotacao: conversao.dataCotacao } : {}),
+          categoria: categoria.trim(),
+          descricao: descricaoTransacaoPagamento(nomeQuemPagou, pagamento.grupo.nome),
+          data: pagamento.data,
+          ordem: await proximaOrdemDoDia(req.familiaId, pagamento.data),
+        },
+      });
+      res.status(201).json({ id: transacao.id });
+    } catch (err) {
+      // Já adicionado (dois cliques/abas): o @@unique([pagamentoGrupoId, usuarioId]) barra.
+      if (err.code === 'P2002') return res.status(409).json({ error: 'Esse pagamento já está no dashboard' });
+      throw err;
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao adicionar pagamento ao dashboard' });
   }
 });
 

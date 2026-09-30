@@ -8,38 +8,46 @@ datasource db {
 }
 
 model Usuario {
-  id                  Int         @id @default(autoincrement())
-  nome                String
-  email               String      @unique
-  senha               String
-  foto                String?
-  resetTokenHash      String?     @unique
-  resetTokenExpiresAt DateTime?
+  id                     Int               @id @default(autoincrement())
+  nome                   String
+  email                  String            @unique
+  senha                  String
+  foto                   String?
+  resetTokenHash         String?           @unique
+  resetTokenExpiresAt    DateTime?
   // Incrementado sempre que a senha muda — tokens JWT emitidos antes disso
   // carregam a versão antiga e são recusados por authMiddleware.
-  tokenVersion        Int         @default(0)
-  createdAt           DateTime    @default(now())
+  tokenVersion           Int               @default(0)
+  createdAt              DateTime          @default(now())
   // Todo usuário pertence a exatamente uma família (a "família pessoal" criada no
   // registro, ou uma compartilhada depois de entrar com um código) — nunca mais de uma,
   // sem seletor de workspace.
-  familiaId           Int
-  familia             Familia     @relation(fields: [familiaId], references: [id], onDelete: Restrict)
+  familiaId              Int
+  familia                Familia           @relation(fields: [familiaId], references: [id], onDelete: Restrict)
   // "dono" pode remover membros, renomear a família e regenerar o código; "membro" só
   // mexe nos dados (criar/editar/excluir), igual a um dono, mas não na família em si.
-  papelFamilia        String      @default("dono")
-  transacoes          Transacao[]
-  metas               Meta[]
-  orcamentos          Orcamento[]
-  recorrencias        Recorrencia[]
-  contas              Conta[]
-  transferencias      Transferencia[]
-  conexoesBancarias   ConexaoBancaria[]
-  categorias          Categoria[]
-  eventos             Evento[]
-  grupoMembros        GrupoMembro[]
-  gruposCriados       Grupo[]          @relation("GrupoCriador")
-  despesasGrupoCriadas DespesaGrupo[]  @relation("DespesaGrupoCriador")
-  pagamentosGrupoCriados PagamentoGrupo[] @relation("PagamentoGrupoCriador")
+  papelFamilia           String            @default("dono")
+  // Resumo periódico por e-mail (opt-in, desligado por padrão). Disparado por um workflow
+  // agendado do GitHub Actions que chama POST /api/resumos/enviar (ver routes/resumos.js).
+  // ultimoResumo* = período já enviado (segunda-feira da semana / YYYY-MM) — deixa o envio
+  // idempotente, mesmo se o workflow rodar mais de uma vez ou atrasar.
+  resumoSemanal          Boolean           @default(false)
+  resumoMensal           Boolean           @default(false)
+  ultimoResumoSemanal    String?
+  ultimoResumoMensal     String?
+  transacoes             Transacao[]
+  metas                  Meta[]
+  orcamentos             Orcamento[]
+  recorrencias           Recorrencia[]
+  contas                 Conta[]
+  transferencias         Transferencia[]
+  conexoesBancarias      ConexaoBancaria[]
+  categorias             Categoria[]
+  eventos                Evento[]
+  grupoMembros           GrupoMembro[]
+  gruposCriados          Grupo[]           @relation("GrupoCriador")
+  despesasGrupoCriadas   DespesaGrupo[]    @relation("DespesaGrupoCriador")
+  pagamentosGrupoCriados PagamentoGrupo[]  @relation("PagamentoGrupoCriador")
 }
 
 // Uma "carteira" compartilhada entre 1+ usuários. Toda visibilidade/posse de dado
@@ -84,61 +92,67 @@ model Categoria {
 }
 
 model Transacao {
-  id            Int          @id @default(autoincrement())
-  usuarioId     Int
-  familiaId     Int
-  familia       Familia      @relation(fields: [familiaId], references: [id], onDelete: Cascade)
-  tipo          String
-  valor         Decimal      @db.Decimal(12, 2)
-  categoria     String
-  descricao     String       @default("")
-  data          String
-  createdAt     DateTime     @default(now())
+  id                  Int                  @id @default(autoincrement())
+  usuarioId           Int
+  familiaId           Int
+  familia             Familia              @relation(fields: [familiaId], references: [id], onDelete: Cascade)
+  tipo                String
+  valor               Decimal              @db.Decimal(12, 2)
+  categoria           String
+  descricao           String               @default("")
+  data                String
+  createdAt           DateTime             @default(now())
   // Atualizado automaticamente pelo Prisma em todo update() — usado só pra sinalizar "editada"
   // na lista; o que mudou de fato fica no histórico (TransacaoHistorico).
-  updatedAt     DateTime     @default(now()) @updatedAt
+  updatedAt           DateTime             @default(now()) @updatedAt
   // Posição manual dentro do mesmo dia (maior = mais acima na lista) — definida quando o
   // usuário arrasta transações do mesmo dia no Dashboard. Empates (ex: tudo 0, o default
   // de transações antigas/importadas) caem no createdAt desc, a ordem de sempre.
-  ordem         Int          @default(0)
-  usuario       Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  recorrenciaId Int?
+  ordem               Int                  @default(0)
+  usuario             Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  recorrenciaId       Int?
   // SetNull (não Cascade): apagar a regra de recorrência não deve apagar o histórico
   // de transações já lançadas a partir dela.
-  recorrencia   Recorrencia? @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
-  contaId       Int
-  conta         Conta        @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  recorrencia         Recorrencia?         @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
+  contaId             Int
+  conta               Conta                @relation(fields: [contaId], references: [id], onDelete: Cascade)
   // Etiqueta opcional pra agrupar a transação dentro de um Evento (ex: "Viagem Rio 2026").
   // SetNull (não Cascade): apagar o evento não deve apagar as transações já lançadas nele.
-  eventoId      Int?
-  evento        Evento?      @relation(fields: [eventoId], references: [id], onDelete: SetNull)
+  eventoId            Int?
+  evento              Evento?              @relation(fields: [eventoId], references: [id], onDelete: SetNull)
   // Preenchido quando a transação nasceu de "Adicionar despesas ao dashboard" num Grupo —
   // guarda a parte do usuário naquela despesa, com a mesma data dela. SetNull (não Cascade):
   // excluir a despesa ou o grupo inteiro depois que a atividade acabou não deve apagar o
   // gasto que já foi pro dashboard. O @@unique abaixo impede importar a mesma despesa duas
   // vezes pro mesmo usuário (cada membro importa a própria parte).
-  despesaGrupoId Int?
-  despesaGrupo   DespesaGrupo? @relation(fields: [despesaGrupoId], references: [id], onDelete: SetNull)
+  despesaGrupoId      Int?
+  despesaGrupo        DespesaGrupo?        @relation(fields: [despesaGrupoId], references: [id], onDelete: SetNull)
+  // Mesma ideia, pra receita: um pagamento que o usuário RECEBEU num grupo, adicionado ao
+  // dashboard por ele (botão por pagamento, nunca automático — ver POST
+  // /grupos/:id/pagamentos/:pagamentoId/dashboard). SetNull pelo mesmo motivo acima.
+  pagamentoGrupoId    Int?
+  pagamentoGrupo      PagamentoGrupo?      @relation(fields: [pagamentoGrupoId], references: [id], onDelete: SetNull)
   // Preenchidos quando o valor foi convertido de outra moeda (hoje: parte de uma despesa de
   // grupo em € lançada numa conta em R$). "valor" continua sempre na moeda da conta — saldo e
   // relatórios não mudam; isto é só o registro de onde o número veio, pra exibir "US$ 20,00
   // (R$ 103,62 de acordo com a cotação de 30/09/2026)" e pra reconverter na sincronização.
   // taxaConversao = quantas unidades da moeda da conta vale 1 unidade de moedaOriginal.
   // dataCotacao nula = câmbio informado à mão pelo usuário (não a cotação salva).
-  moedaOriginal  String?
-  valorOriginal  Decimal?     @db.Decimal(12, 2)
-  taxaConversao  Decimal?     @db.Decimal(12, 6)
-  dataCotacao    String?
+  moedaOriginal       String?
+  valorOriginal       Decimal?             @db.Decimal(12, 2)
+  taxaConversao       Decimal?             @db.Decimal(12, 6)
+  dataCotacao         String?
   // Preenchido só em transações vindas de sincronização Open Finance — usado pra nunca
   // importar a mesma transação duas vezes num novo sync (upsert idempotente).
-  pluggyTransactionId String? @unique
+  pluggyTransactionId String?              @unique
   // Comprovante anexado (data URL base64, imagem ou PDF) — nunca incluído nas consultas
   // de listagem/export (só via GET /transactions/:id/anexo), pra não pesar a paginação.
-  anexo     String?
-  anexoNome String?
-  historico TransacaoHistorico[]
+  anexo               String?
+  anexoNome           String?
+  historico           TransacaoHistorico[]
 
   @@unique([despesaGrupoId, usuarioId])
+  @@unique([pagamentoGrupoId, usuarioId])
 }
 
 // Um registro por edição que muda pelo menos um campo financeiro (tipo/valor/categoria/
@@ -156,32 +170,36 @@ model TransacaoHistorico {
 // é o valor que a conta já tinha antes de começar a ser rastreada aqui — o saldo exibido
 // nunca é guardado, é sempre saldoInicial + receitas - despesas dessa conta (± transferências).
 model Conta {
-  id                     Int             @id @default(autoincrement())
-  usuarioId              Int
-  familiaId              Int
-  nome                   String
-  tipo                   String
-  saldoInicial           Decimal         @db.Decimal(12, 2) @default(0)
+  id                    Int              @id @default(autoincrement())
+  usuarioId             Int
+  familiaId             Int
+  nome                  String
+  tipo                  String
+  saldoInicial          Decimal          @default(0) @db.Decimal(12, 2)
   // Fixada na criação, nunca muda depois (mesmo princípio de Recorrencia.dataInicio) —
   // mudar a moeda de uma conta com transações já lançadas corromperia a leitura do
   // histórico. Ver utils/moedas.js pra lista de moedas suportadas.
-  moeda                  String          @default("BRL")
+  moeda                 String           @default("BRL")
   // Só visual: contas com a mesma instituição aparecem agrupadas na tela de Contas (ex:
   // "Wise · Real", "Wise · Dólar" e "Wise · Euro" debaixo de "Wise"). Texto livre, opcional
   // e editável — diferente de moeda, não muda a interpretação de nada já lançado.
-  instituicao            String?
-  createdAt              DateTime        @default(now())
-  usuario                Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  familia                Familia         @relation(fields: [familiaId], references: [id], onDelete: Cascade)
-  transacoes             Transacao[]
-  transferenciasSaida    Transferencia[] @relation("TransferenciasSaida")
-  transferenciasEntrada  Transferencia[] @relation("TransferenciasEntrada")
-  recorrencias           Recorrencia[]
+  instituicao           String?
+  createdAt             DateTime         @default(now())
+  // Posição manual na tela (arrastar e soltar) — menor = mais acima. Reordenar grava
+  // -n..-1 (ver utils/reorderLista.js), então registro novo (default 0) entra no fim sem
+  // ninguém calcular "próxima posição"; empates caem no createdAt asc (ordem de criação).
+  ordem                 Int              @default(0)
+  usuario               Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  familia               Familia          @relation(fields: [familiaId], references: [id], onDelete: Cascade)
+  transacoes            Transacao[]
+  transferenciasSaida   Transferencia[]  @relation("TransferenciasSaida")
+  transferenciasEntrada Transferencia[]  @relation("TransferenciasEntrada")
+  recorrencias          Recorrencia[]
   // Preenchidos só quando a conta nasceu de uma sincronização Open Finance (Pluggy).
   // SetNull: apagar a conexão bancária não apaga a conta nem o histórico importado.
-  pluggyAccountId        String?         @unique
-  conexaoId              Int?
-  conexao                ConexaoBancaria? @relation(fields: [conexaoId], references: [id], onDelete: SetNull)
+  pluggyAccountId       String?          @unique
+  conexaoId             Int?
+  conexao               ConexaoBancaria? @relation(fields: [conexaoId], references: [id], onDelete: SetNull)
 }
 
 // Uma conexão com um banco via Open Finance (Pluggy). Uma conexão pode alimentar mais de
@@ -189,17 +207,17 @@ model Conta {
 // bancário sensível (senha, token de acesso ao banco) é guardado aqui — só o identificador
 // do Item na Pluggy, que por si só não dá acesso a nada sem a API key do servidor.
 model ConexaoBancaria {
-  id                  Int      @id @default(autoincrement())
+  id                  Int       @id @default(autoincrement())
   usuarioId           Int
   familiaId           Int
-  pluggyItemId        String   @unique
+  pluggyItemId        String    @unique
   nomeConector        String
   status              String
   erro                String?
   ultimaSincronizacao DateTime?
-  createdAt           DateTime @default(now())
-  usuario             Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  familia             Familia  @relation(fields: [familiaId], references: [id], onDelete: Cascade)
+  createdAt           DateTime  @default(now())
+  usuario             Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  familia             Familia   @relation(fields: [familiaId], references: [id], onDelete: Cascade)
   contas              Conta[]
 }
 
@@ -233,23 +251,27 @@ model Transferencia {
 // utils/materializeRecorrencias.js) sempre que o usuário acessa a tela de recorrências
 // ou a lista de transações, sem depender de nenhum job/cron rodando no servidor.
 model Recorrencia {
-  id          Int         @id @default(autoincrement())
-  usuarioId   Int
-  familiaId   Int
-  tipo        String
-  valor       Decimal     @db.Decimal(12, 2)
-  categoria   String
-  descricao   String      @default("")
-  diaDoMes    Int
-  dataInicio  String
-  dataFim     String?
-  ativa       Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  usuario     Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  familia     Familia     @relation(fields: [familiaId], references: [id], onDelete: Cascade)
-  transacoes  Transacao[]
-  contaId     Int
-  conta       Conta       @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  id         Int         @id @default(autoincrement())
+  usuarioId  Int
+  familiaId  Int
+  tipo       String
+  valor      Decimal     @db.Decimal(12, 2)
+  categoria  String
+  descricao  String      @default("")
+  diaDoMes   Int
+  dataInicio String
+  dataFim    String?
+  ativa      Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  // Posição manual na tela (arrastar e soltar) — menor = mais acima. Reordenar grava
+  // -n..-1 (ver utils/reorderLista.js), então registro novo (default 0) entra no fim sem
+  // ninguém calcular "próxima posição"; empates caem no createdAt asc (ordem de criação).
+  ordem      Int         @default(0)
+  usuario    Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  familia    Familia     @relation(fields: [familiaId], references: [id], onDelete: Cascade)
+  transacoes Transacao[]
+  contaId    Int
+  conta      Conta       @relation(fields: [contaId], references: [id], onDelete: Cascade)
 }
 
 model Meta {
@@ -260,6 +282,10 @@ model Meta {
   valorAlvo Decimal  @db.Decimal(12, 2)
   prazo     String?
   createdAt DateTime @default(now())
+  // Posição manual na tela (arrastar e soltar) — menor = mais acima. Reordenar grava
+  // -n..-1 (ver utils/reorderLista.js), então registro novo (default 0) entra no fim sem
+  // ninguém calcular "próxima posição"; empates caem no createdAt asc (ordem de criação).
+  ordem     Int      @default(0)
   usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   familia   Familia  @relation(fields: [familiaId], references: [id], onDelete: Cascade)
   aportes   Aporte[]
@@ -281,14 +307,18 @@ model Aporte {
 // registro por mês). O gasto do mês é sempre calculado a partir das Transacoes, nunca
 // guardado aqui.
 model Orcamento {
-  id          Int      @id @default(autoincrement())
-  usuarioId   Int
-  familiaId   Int
-  categoria   String
-  valorLimite Decimal  @db.Decimal(12, 2)
-  createdAt   DateTime @default(now())
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  familia     Familia  @relation(fields: [familiaId], references: [id], onDelete: Cascade)
+  id                   Int      @id @default(autoincrement())
+  usuarioId            Int
+  familiaId            Int
+  categoria            String
+  valorLimite          Decimal  @db.Decimal(12, 2)
+  createdAt            DateTime @default(now())
+  // Posição manual na tela (arrastar e soltar) — menor = mais acima. Reordenar grava
+  // -n..-1 (ver utils/reorderLista.js), então registro novo (default 0) entra no fim sem
+  // ninguém calcular "próxima posição"; empates caem no createdAt asc (ordem de criação).
+  ordem                Int      @default(0)
+  usuario              Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  familia              Familia  @relation(fields: [familiaId], references: [id], onDelete: Cascade)
   // Mês (YYYY-MM) do último aviso de orçamento estourado já enviado por e-mail — evita
   // mandar um e-mail novo a cada transação que continua estourando o mesmo orçamento no mês.
   ultimaNotificacaoMes String?
@@ -311,6 +341,10 @@ model Evento {
   // não desvincula as que já existem nem impede reabrir.
   status             String      @default("ativo")
   createdAt          DateTime    @default(now())
+  // Posição manual na tela (arrastar e soltar) — menor = mais acima. Reordenar grava
+  // -n..-1 (ver utils/reorderLista.js), então registro novo (default 0) entra no fim sem
+  // ninguém calcular "próxima posição"; empates caem no createdAt asc (ordem de criação).
+  ordem              Int         @default(0)
   usuario            Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   familia            Familia     @relation(fields: [familiaId], references: [id], onDelete: Cascade)
   transacoes         Transacao[]
@@ -323,13 +357,13 @@ model Evento {
 // Splitwise) — conceito bem diferente de Familia: um Usuario pode estar em vários grupos
 // (não em só um) e um grupo pode incluir convidados sem conta (ver GrupoMembro).
 model Grupo {
-  id               Int            @id @default(autoincrement())
+  id               Int              @id @default(autoincrement())
   nome             String
   // Código curto pra outra pessoa entrar, mesmo padrão de Familia.codigo.
-  codigo           String         @unique
+  codigo           String           @unique
   criadorUsuarioId Int
-  criador          Usuario        @relation("GrupoCriador", fields: [criadorUsuarioId], references: [id], onDelete: Restrict)
-  createdAt        DateTime       @default(now())
+  criador          Usuario          @relation("GrupoCriador", fields: [criadorUsuarioId], references: [id], onDelete: Restrict)
+  createdAt        DateTime         @default(now())
   membros          GrupoMembro[]
   despesas         DespesaGrupo[]
   pagamentos       PagamentoGrupo[]
@@ -341,18 +375,22 @@ model Grupo {
 // vários convidados (usuarioId null) convivem no mesmo grupo sem violar a constraint —
 // só um Usuario de verdade não pode entrar duas vezes no mesmo grupo.
 model GrupoMembro {
-  id            Int      @id @default(autoincrement())
-  grupoId       Int
-  grupo         Grupo    @relation(fields: [grupoId], references: [id], onDelete: Cascade)
-  usuarioId     Int?
-  usuario       Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
-  nomeConvidado String?
+  id                  Int              @id @default(autoincrement())
+  grupoId             Int
+  grupo               Grupo            @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  usuarioId           Int?
+  usuario             Usuario?         @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  nomeConvidado       String?
   // "admin" | "membro" — admin remove membros, exclui o grupo; qualquer membro lança
   // despesa e adiciona convidado.
-  papel         String   @default("membro")
-  createdAt     DateTime @default(now())
-  despesasPagas DespesaGrupo[]   @relation("PagoPor")
-  divisoes      DivisaoDespesa[]
+  papel               String           @default("membro")
+  createdAt           DateTime         @default(now())
+  // Posição do grupo na lista de Grupos DESTE usuário (arrastar e soltar) — fica na
+  // associação, não no Grupo, porque cada membro organiza a própria lista. Mesma regra de
+  // Conta.ordem: -n..-1 depois de reordenar, 0 = fim; empate cai no createdAt asc.
+  ordem               Int              @default(0)
+  despesasPagas       DespesaGrupo[]   @relation("PagoPor")
+  divisoes            DivisaoDespesa[]
   pagamentosFeitos    PagamentoGrupo[] @relation("PagamentoDe")
   pagamentosRecebidos PagamentoGrupo[] @relation("PagamentoPara")
 
@@ -423,6 +461,7 @@ model PagamentoGrupo {
   criadoPorUsuarioId Int
   criadoPor          Usuario     @relation("PagamentoGrupoCriador", fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict)
   createdAt          DateTime    @default(now())
+  transacoes         Transacao[]
 }
 
 // Cotação de câmbio pra converter contas em moeda estrangeira pro total consolidado em

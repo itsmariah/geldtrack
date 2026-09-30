@@ -3,6 +3,9 @@ import api from '../services/api'
 import Navbar from '../components/Navbar'
 import ContaModal from '../components/ContaModal'
 import ContaCard from '../components/ContaCard'
+import SortableGrid from '../components/SortableGrid'
+import BlocosSortable from '../components/BlocosSortable'
+import { salvarOrdem } from '../utils/salvarOrdem'
 import TransferModal from '../components/TransferModal'
 import ConectarBancoModal from '../components/ConectarBancoModal'
 import ConexaoBancariaCard from '../components/ConexaoBancariaCard'
@@ -153,17 +156,21 @@ export default function Contas() {
 
   // Sem nenhuma conta com instituição, a tela fica exatamente como sempre foi (grade única).
   const { grupos, semInstituicao } = agruparContasPorInstituicao(contas)
-  const renderGridContas = (lista) => (
-    <div className="goals-grid">
-      {lista.map(conta => (
-        <ContaCard
-          key={conta.id}
-          conta={conta}
-          onEdit={handleEdit}
-          onDelete={setDeleteConta}
-        />
-      ))}
-    </div>
+  // A ordem salva é uma lista só: bloco por bloco (na ordem dos blocos), contas de cada
+  // bloco na ordem delas, e as sem instituição no fim. Como agruparContasPorInstituicao
+  // ordena os blocos pela primeira conta de cada um, recarregar a tela mantém tudo igual.
+  const salvarOrdemContas = (novosGrupos, novasSemInstituicao) => salvarOrdem(
+    '/contas/reorder',
+    [...novosGrupos.flatMap(g => g.contas), ...novasSemInstituicao],
+    { setLista: setContas, recarregar: fetchData, setError },
+  )
+  const renderGridContas = (lista, onReorder) => (
+    <SortableGrid
+      items={lista}
+      onReorder={onReorder}
+      descricao="conta reordenável"
+      renderItem={conta => <ContaCard conta={conta} onEdit={handleEdit} onDelete={setDeleteConta} />}
+    />
   )
 
   return (
@@ -199,13 +206,17 @@ export default function Contas() {
         ) : (
           <>
             {grupos.length === 0 ? (
-              renderGridContas(contas)
+              renderGridContas(contas, novaLista => salvarOrdemContas([], novaLista))
             ) : (
               <>
-                {grupos.map(grupo => {
-                  const total = totalDoGrupo(grupo.contas, taxas)
-                  return (
-                    <section key={grupo.nome} className="contas-grupo">
+                {/* Blocos de instituição arrastam pelo cabeçalho; as contas, dentro do próprio bloco. */}
+                <BlocosSortable
+                  blocos={grupos.map(g => ({ ...g, id: g.nome.toLocaleLowerCase('pt-BR') }))}
+                  onReorder={novosGrupos => salvarOrdemContas(novosGrupos, semInstituicao)}
+                  className="contas-grupo"
+                  renderCabecalho={grupo => {
+                    const total = totalDoGrupo(grupo.contas, taxas)
+                    return (
                       <div className="contas-grupo-header">
                         <h3>🏦 {grupo.nome}</h3>
                         {grupo.contas.length > 1 && (
@@ -214,16 +225,19 @@ export default function Contas() {
                           </span>
                         )}
                       </div>
-                      {renderGridContas(grupo.contas)}
-                    </section>
-                  )
-                })}
+                    )
+                  }}
+                  renderConteudo={grupo => renderGridContas(grupo.contas, novasContas => salvarOrdemContas(
+                    grupos.map(g => (g.nome === grupo.nome ? { ...g, contas: novasContas } : g)),
+                    semInstituicao,
+                  ))}
+                />
                 {semInstituicao.length > 0 && (
                   <section className="contas-grupo">
                     <div className="contas-grupo-header">
                       <h3>Outras contas</h3>
                     </div>
-                    {renderGridContas(semInstituicao)}
+                    {renderGridContas(semInstituicao, novaLista => salvarOrdemContas(grupos, novaLista))}
                   </section>
                 )}
               </>

@@ -25,3 +25,7 @@ services:
         sync: false
       - key: EMAIL_FROM
         sync: false
+      # Segredo do resumo por e-mail — o mesmo valor vai no segredo CRON_SECRET do GitHub
+      # (ver .github/workflows/resumo-email.yml). Sem ele, o resumo fica desligado.
+      - key: CRON_SECRET
+        sync: false

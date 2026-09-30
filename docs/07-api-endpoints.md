@@ -123,9 +123,13 @@ Atualiza os dados do usuário logado. Todos os campos são opcionais.
 {
   "nome": "Jefferson F.",
   "email": "novo@email.com",
-  "senha": "novasenha456"
+  "senha": "novasenha456",
+  "resumoSemanal": true,
+  "resumoMensal": false
 }
 ```
+
+> `resumoSemanal` / `resumoMensal` (booleanos, desligados por padrão) ativam o resumo por e-mail — ver [Resumo por e-mail](#-resumo-por-e-mail). Ao **ligar** um deles, o período que acabou de fechar conta como já enviado: o primeiro e-mail chega no fim da próxima semana/mês. `GET /auth/me` e o login também devolvem os dois campos.
 
 **Resposta 200 OK:**
 ```json
@@ -574,6 +578,27 @@ Projeta o saldo até o fim do mês atual, combinando o que ainda vai acontecer c
 
 > Todas as rotas abaixo são 🔒 — requerem JWT.
 > Metas são escopadas por `familiaId`, igual Transações: qualquer membro da família vê e contribui com as metas da família inteira.
+
+> **Ordem na tela:** a listagem vem na ordem manual (arrastar e soltar) e, no empate, na ordem de criação. Ver `PUT /{recurso}/reorder` abaixo.
+
+### PUT /{recurso}/reorder 🔒
+
+Salva a nova ordem depois de arrastar e soltar. Mesmo formato em `/metas`, `/orcamentos`, `/recorrencias`, `/contas` e `/eventos`.
+
+**Body:** a lista **inteira** de ids da família, na nova ordem.
+```json
+{ "ids": [3, 1, 2] }
+```
+
+**Resposta 204 No Content**
+
+As posições são gravadas como `-n … -1` (o topo é o mais negativo). Assim, um registro criado depois fica com `ordem` 0, o default, e cai no fim da lista sem nenhuma rota de criação calcular a próxima posição.
+
+**Erros possíveis:**
+| Código | Mensagem | Causa |
+|--------|----------|-------|
+| 400 | "Envie a lista completa na nova ordem" / "Lista inválida" / "Lista com itens repetidos" | `ids` ausente, vazio, com valor não numérico ou repetido |
+| 400 | "A lista mudou desde que a tela foi carregada — recarregue e tente de novo" | Faltou algum id da família, ou veio um id de outra família |
 
 ---
 
@@ -1581,7 +1606,9 @@ Detalhe de um grupo: membros, despesas, pagamentos e o saldo "quem deve quem" ca
 
 > `noDashboard` é **por usuário**: indica se o usuário logado já adicionou a parte dele naquela despesa ao dashboard (ver `POST /grupos/:id/dashboard`).
 
-> `eventoIdDashboard` também é por usuário: o evento usado na importação mais recente deste grupo pro dashboard (só transações da família atual), ou `null`. O modal de importação abre com ele já selecionado.
+> `eventoIdDashboard` também é por usuário: o evento usado na importação mais recente deste grupo pro dashboard (despesas ou pagamentos, só transações da família atual), ou `null`. Os modais de importação abrem com ele já selecionado.
+>
+> `pagamentos[].noDashboard`: se o usuário logado já adicionou aquele pagamento (recebido por ele) como receita. `eventosNoDashboard`: um item por transação deste grupo no dashboard do usuário, com o `eventoId` atual de cada uma (ou `null`). É o que o "vincular ao evento" mostra antes de aplicar.
 
 ---
 
@@ -1618,7 +1645,11 @@ Cria um grupo novo. Quem cria já entra como `admin`.
 
 ### PUT /grupos/:id 🔒
 
-Renomeia o grupo. Só `admin` (mesma regra de excluir). Transações já adicionadas ao dashboard com o nome antigo entre parênteses na descrição não são alteradas.
+Renomeia o grupo. Só `admin` (mesma regra de excluir). Nas transações que os membros já adicionaram ao dashboard (despesas e receitas de pagamentos), o sufixo `(nome antigo)` da descrição passa a ser `(nome novo)`, com registro no histórico de edição. Descrições que o usuário já mudou no dashboard (que não terminam com o nome antigo entre parênteses) ficam como estão.
+
+### PUT /grupos/reorder 🔒
+
+Salva a ordem da lista de grupos **do usuário logado**. A posição fica em `GrupoMembro`, porque cada membro organiza a própria lista. Body: `{ "ids": [...] }` com os ids **dos grupos** de que ele é membro, todos, na nova ordem. Resposta e erros iguais aos de `PUT /{recurso}/reorder` (ver Metas).
 
 **Body:**
 ```json
@@ -1934,6 +1965,72 @@ Desfaz uma quitação lançada errado. Mesma regra de permissão da exclusão de
 |--------|----------|-------|
 | 404 | "Grupo não encontrado" / "Pagamento não encontrado" | `:id`/`:pagamentoId` inválidos |
 | 403 | "Só quem registrou o pagamento ou um admin do grupo pode excluí-lo" | Sem permissão |
+
+---
+
+### POST /grupos/:id/pagamentos/:pagamentoId/dashboard 🔒
+
+Adiciona ao dashboard, como **receita**, um pagamento que o usuário logado **recebeu** no grupo. É uma ação por pagamento, nunca automática: quem já adicionou a própria parte das despesas contaria o dinheiro duas vezes (o front avisa). Faz sentido quando o dashboard tem o valor total que a pessoa pagou (fatura do cartão, Open Finance) e o pagamento é o reembolso.
+
+O valor é o que de fato entrou: se a dívida foi quitada em outra moeda, `valorPagamento`/`moedaPagamento`. Numa conta de outra moeda, converte igual ao `POST /grupos/:id/dashboard` (câmbio informado em `taxa` ou cotação salva). A data é a do pagamento, e a descrição é `Pagamento de {quem pagou} ({grupo})`.
+
+**Body:**
+```json
+{ "contaId": 1, "categoria": "Outros", "eventoId": 3, "taxa": 5.42 }
+```
+`eventoId` e `taxa` são opcionais.
+
+**Resposta 201 Created:** `{ "id": 88 }` (a transação criada)
+
+**Erros possíveis:**
+| Código | Mensagem | Causa |
+|--------|----------|-------|
+| 400 | "Categoria é obrigatória" / "Conta inválida" / "Evento inválido" | Campo faltando, ou conta/evento de outra família |
+| 400 | "Sem cotação salva pra converter X em Y — informe o câmbio" | Conta em outra moeda, sem cotação e sem `taxa` |
+| 403 | "Só quem recebeu o pagamento pode adicioná-lo como receita" | O usuário não é o `paraMembro` do pagamento |
+| 404 | "Grupo não encontrado" / "Pagamento não encontrado" | `:id`/`:pagamentoId` inválidos |
+| 409 | "Esse pagamento já está no dashboard" | Já adicionado por este usuário (`@@unique([pagamentoGrupoId, usuarioId])`) |
+
+---
+
+### POST /grupos/:id/evento 🔒
+
+"Vincular ao evento": põe no evento escolhido, de uma vez, todas as transações que o usuário logado já levou deste grupo pro dashboard (despesas e receitas), na família atual dele. Serve pra quando o evento foi criado depois da importação. As que já estavam em outro evento também mudam. `eventoId: null` tira todas do evento. Cada mudança entra no histórico de edição.
+
+**Body:**
+```json
+{ "eventoId": 3 }
+```
+
+**Resposta 200 OK:** `{ "count": 5 }` (quantas mudaram; as que já estavam nesse evento não contam)
+
+**Erros possíveis:**
+| Código | Mensagem | Causa |
+|--------|----------|-------|
+| 400 | "Evento inválido" | Evento de outra família |
+| 400 | "Nenhuma transação deste grupo está no seu dashboard ainda" | Nada importado |
+| 404 | "Grupo não encontrado" | `:id` inválido ou usuário não é membro |
+
+---
+
+## 📧 Resumo por e-mail
+
+### POST /resumos/enviar
+
+Envia os resumos semanais/mensais pendentes. **Não é chamada pelo app:** quem chama é o workflow agendado `.github/workflows/resumo-email.yml`, uma vez por dia às 08:00 (Brasília). Não usa JWT. A proteção é o cabeçalho `x-cron-secret`, que precisa bater com a variável `CRON_SECRET` do backend. Sem `CRON_SECRET` configurado, a rota responde 503.
+
+Cada usuário que ativou o resumo (`resumoSemanal`/`resumoMensal`) recebe o da última semana (segunda a domingo) ou do último mês **completo** que ainda não recebeu (`ultimoResumoSemanal`/`ultimoResumoMensal`). Na prática, o semanal sai às segundas e o mensal no dia 1. Rodar de novo no mesmo dia não duplica nada, e um dia em que o workflow falhar é coberto no dia seguinte. Período sem transações é marcado como enviado sem mandar e-mail. O resumo é da família (valores convertidos pra R$): receitas, despesas, saldo, as 3 categorias com mais despesa e a variação das despesas em relação ao período anterior.
+
+**Resposta 200 OK:**
+```json
+{ "enviados": 3, "semMovimento": 1, "erros": 0 }
+```
+
+**Erros possíveis:**
+| Código | Mensagem | Causa |
+|--------|----------|-------|
+| 401 | "Não autorizado" | `x-cron-secret` ausente ou errado |
+| 503 | "Resumos por e-mail não configurados" | `CRON_SECRET` não definido no servidor |
 
 ---
 

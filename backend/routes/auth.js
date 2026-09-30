@@ -8,6 +8,7 @@ const authMiddleware = require('../middleware/auth');
 const { sendPasswordResetEmail } = require('../utils/mailer');
 const { hashResetToken } = require('../utils/resetToken');
 const { gerarCodigoUnico } = require('../utils/gerarCodigoFamilia');
+const { chavesAoAtivar } = require('../utils/enviarResumos');
 
 const USER_FAMILIA_SELECT = {
   id: true,
@@ -15,6 +16,8 @@ const USER_FAMILIA_SELECT = {
   email: true,
   foto: true,
   papelFamilia: true,
+  resumoSemanal: true,
+  resumoMensal: true,
   familia: { select: { id: true, nome: true, codigo: true } },
 };
 
@@ -207,7 +210,12 @@ router.get('/me', authMiddleware, async (req, res) => {
 // RF03 - Editar dados do usuário
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { nome, email, senha, foto } = req.body;
+    const { nome, email, senha, foto, resumoSemanal, resumoMensal } = req.body;
+    for (const flag of [resumoSemanal, resumoMensal]) {
+      if (flag !== undefined && typeof flag !== 'boolean') {
+        return res.status(400).json({ error: 'Preferência de resumo inválida' });
+      }
+    }
 
     if (email) {
       if (!EMAIL_REGEX.test(email)) {
@@ -232,6 +240,19 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (nome) data.nome = nome;
     if (email) data.email = email;
     if (foto !== undefined) data.foto = foto;
+    if (resumoSemanal !== undefined || resumoMensal !== undefined) {
+      const atual = await prisma.usuario.findUnique({ where: { id: req.userId }, select: { resumoSemanal: true, resumoMensal: true } });
+      const chaves = chavesAoAtivar();
+      // Só ao LIGAR (false -> true): marca o período que acabou de fechar como já enviado.
+      if (resumoSemanal !== undefined) {
+        data.resumoSemanal = resumoSemanal;
+        if (resumoSemanal && !atual.resumoSemanal) data.ultimoResumoSemanal = chaves.ultimoResumoSemanal;
+      }
+      if (resumoMensal !== undefined) {
+        data.resumoMensal = resumoMensal;
+        if (resumoMensal && !atual.resumoMensal) data.ultimoResumoMensal = chaves.ultimoResumoMensal;
+      }
+    }
     const trocandoSenha = Boolean(senha);
     if (trocandoSenha) {
       if (senha.length < 6) return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres' });

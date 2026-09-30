@@ -201,3 +201,38 @@ describe('DELETE /api/metas/:id/aportes/:aporteId', () => {
     expect(res.body.valorAtual).toBe(0);
   });
 });
+
+// O handler é o mesmo (utils/reorderLista.js) em contas, orçamentos, eventos e recorrências.
+describe('PUT /api/metas/reorder', () => {
+  it('lista por posição manual e, no empate, pela ordem de criação', async () => {
+    const findSpy = vi.spyOn(prisma.meta, 'findMany').mockResolvedValue([]);
+    await request(app).get('/api/metas').set('Authorization', `Bearer ${token}`);
+    expect(findSpy.mock.calls[0][0].orderBy).toEqual([{ ordem: 'asc' }, { createdAt: 'asc' }]);
+  });
+
+  it('grava -n..-1 na nova ordem, só com metas da família', async () => {
+    const findSpy = vi.spyOn(prisma.meta, 'findMany').mockResolvedValue([{ id: 1 }, { id: 2 }, { id: 3 }]);
+    const updateSpy = vi.spyOn(prisma.meta, 'update').mockResolvedValue({});
+    vi.spyOn(prisma, '$transaction').mockImplementation((arr) => Promise.all(arr));
+
+    const res = await request(app).put('/api/metas/reorder').set('Authorization', `Bearer ${token}`).send({ ids: [3, 1, 2] });
+
+    expect(res.status).toBe(204);
+    expect(findSpy.mock.calls[0][0].where).toEqual({ familiaId: 1 });
+    expect(updateSpy.mock.calls.map(c => c[0])).toEqual([
+      { where: { id: 3 }, data: { ordem: -3 } },
+      { where: { id: 1 }, data: { ordem: -2 } },
+      { where: { id: 2 }, data: { ordem: -1 } },
+    ]);
+  });
+
+  it('recusa (400) id de outra família ou lista incompleta, sem gravar nada', async () => {
+    vi.spyOn(prisma.meta, 'findMany').mockResolvedValue([{ id: 1 }, { id: 2 }]);
+    const updateSpy = vi.spyOn(prisma.meta, 'update');
+    const fora = await request(app).put('/api/metas/reorder').set('Authorization', `Bearer ${token}`).send({ ids: [1, 99] });
+    const incompleta = await request(app).put('/api/metas/reorder').set('Authorization', `Bearer ${token}`).send({ ids: [1] });
+    expect(fora.status).toBe(400);
+    expect(incompleta.status).toBe(400);
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+});

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import Navbar from '../components/Navbar'
 import GrupoModal from '../components/GrupoModal'
+import SortableGrid from '../components/SortableGrid'
+import { salvarOrdem } from '../utils/salvarOrdem'
 import GrupoCard from '../components/GrupoCard'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
@@ -36,6 +38,9 @@ export default function Grupos() {
       setLoading(false)
     }
   }, [])
+
+  // Cada membro organiza a própria lista de grupos (a posição fica no GrupoMembro).
+  const handleReorder = (novaLista) => salvarOrdem('/grupos/reorder', novaLista, { setLista: setGrupos, recarregar: fetchGrupos, setError })
 
   useEffect(() => { fetchGrupos() }, [fetchGrupos])
 
@@ -96,8 +101,13 @@ export default function Grupos() {
                 </button>
               </div>
             ) : (
-              <div className="goals-grid" style={{ marginBottom: 24 }}>
-                {grupos.map(grupo => <GrupoCard key={grupo.id} grupo={grupo} />)}
+              <div style={{ marginBottom: 24 }}>
+                <SortableGrid
+                  items={grupos}
+                  onReorder={handleReorder}
+                  descricao="grupo reordenável"
+                  renderItem={grupo => <GrupoCard grupo={grupo} />}
+                />
               </div>
             )}
 

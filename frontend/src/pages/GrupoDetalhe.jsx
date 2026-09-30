@@ -7,6 +7,8 @@ import DespesaGrupoModal from '../components/DespesaGrupoModal'
 import PagamentoGrupoModal from '../components/PagamentoGrupoModal'
 import DespesasGrupoDashboardModal from '../components/DespesasGrupoDashboardModal'
 import GrupoModal from '../components/GrupoModal'
+import PagamentoDashboardModal from '../components/PagamentoDashboardModal'
+import VincularEventoModal from '../components/VincularEventoModal'
 import SaldosGrupo from '../components/SaldosGrupo'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
@@ -49,6 +51,8 @@ export default function GrupoDetalhe() {
   const [confirmarSair, setConfirmarSair] = useState(false)
   const [confirmarExcluirGrupo, setConfirmarExcluirGrupo] = useState(false)
   const [showEditarGrupo, setShowEditarGrupo] = useState(false)
+  const [pagamentoDashboard, setPagamentoDashboard] = useState(null)
+  const [showVincularEvento, setShowVincularEvento] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
   useEffect(() => {
@@ -106,6 +110,11 @@ export default function GrupoDetalhe() {
     .map(d => ({ ...d, minhaParte: d.divisoes.find(x => x.membroId === meuMembro?.id)?.valorDevido ?? 0 }))
     .filter(d => d.minhaParte > 0)
   const despesasForaDoDashboard = minhasDespesas.filter(d => !d.noDashboard)
+  // Datas do que já está no dashboard — período sugerido pra um evento criado no "vincular".
+  const datasNoDashboard = [
+    ...minhasDespesas.filter(d => d.noDashboard).map(d => d.data),
+    ...grupo.pagamentos.filter(p => p.noDashboard).map(p => p.data),
+  ]
 
   // Moeda sugerida pra próxima despesa/pagamento: a da despesa lançada por último — num
   // grupo de viagem pra Europa, escolher € uma vez já deixa as seguintes em €.
@@ -208,6 +217,22 @@ export default function GrupoDetalhe() {
   const handleDashboardSaved = (count) => {
     setShowDashboardModal(false)
     setToast(count === 1 ? '1 despesa adicionada ao dashboard.' : `${count} despesas adicionadas ao dashboard.`)
+    fetchGrupo()
+  }
+
+  const handlePagamentoDashboardSaved = () => {
+    setPagamentoDashboard(null)
+    setToast('Pagamento adicionado ao dashboard como receita.')
+    fetchGrupo()
+  }
+
+  const handleVinculado = (count, eventoId) => {
+    setShowVincularEvento(false)
+    setToast(count === 0
+      ? (eventoId ? 'Tudo já estava nesse evento.' : 'Nenhuma transação estava em evento.')
+      : eventoId
+        ? `${count === 1 ? '1 transação vinculada' : `${count} transações vinculadas`} ao evento.`
+        : `${count === 1 ? '1 transação tirada' : `${count} transações tiradas`} do evento.`)
     fetchGrupo()
   }
 
@@ -366,6 +391,14 @@ export default function GrupoDetalhe() {
                     </span>
                   </div>
                   <div className="grupo-despesa-valor">{fmt(p.valor, p.moeda)}</div>
+                  {/* Receita no dashboard: só pra quem recebeu, e por escolha (nunca automático). */}
+                  {p.paraMembroId === meuMembro?.id && (p.noDashboard
+                    ? <span className="tx-evento-chip">✓ No dashboard</span>
+                    : (
+                      <button className="btn btn-outline btn-sm" onClick={() => setPagamentoDashboard(p)} title="Adicionar como receita no dashboard">
+                        + Dashboard
+                      </button>
+                    ))}
                   {(p.criadoPorUsuarioId === user?.id || souAdmin) && (
                     <div className="tx-actions">
                       <button className="btn-icon btn-danger" onClick={() => setDeletePagamentoId(p.id)} title="Excluir">🗑️</button>
@@ -381,6 +414,11 @@ export default function GrupoDetalhe() {
           <div className="section-header">
             <h3>Despesas</h3>
             <div className="header-actions">
+              {grupo.eventosNoDashboard?.length > 0 && (
+                <button className="btn btn-outline btn-sm" onClick={() => setShowVincularEvento(true)}>
+                  Vincular ao evento
+                </button>
+              )}
               {minhasDespesas.length > 0 && (
                 <button
                   className="btn btn-outline btn-sm"
@@ -455,6 +493,32 @@ export default function GrupoDetalhe() {
           eventoIdPadrao={grupo.eventoIdDashboard}
           onClose={() => setShowDashboardModal(false)}
           onSaved={handleDashboardSaved}
+        />
+      )}
+
+      {pagamentoDashboard && (
+        <PagamentoDashboardModal
+          grupoId={id}
+          pagamento={pagamentoDashboard}
+          nomeQuemPagou={membroPorId[pagamentoDashboard.deMembroId]?.nome ?? 'Alguém'}
+          nomeGrupo={grupo.nome}
+          eventoIdPadrao={grupo.eventoIdDashboard}
+          parteJaNoDashboard={minhasDespesas.some(d => d.noDashboard)}
+          moedas={moedas}
+          onClose={() => setPagamentoDashboard(null)}
+          onSaved={handlePagamentoDashboardSaved}
+        />
+      )}
+
+      {showVincularEvento && (
+        <VincularEventoModal
+          grupoId={id}
+          nomeGrupo={grupo.nome}
+          eventosNoDashboard={grupo.eventosNoDashboard}
+          eventoIdPadrao={grupo.eventoIdDashboard}
+          datas={datasNoDashboard}
+          onClose={() => setShowVincularEvento(false)}
+          onSaved={handleVinculado}
         />
       )}
 

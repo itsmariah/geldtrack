@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
+const { reorderHandler, ORDEM_MANUAL } = require('../utils/reorderLista');
 const { validateEventoInput } = require('../utils/validateEvento');
 const { serializeEvento, serializeEventos, withProgress } = require('../utils/serializeEvento');
 
@@ -40,11 +41,9 @@ async function gastoRecebidoPorEvento(familiaId, eventoIds) {
 // Listar eventos da família (ativos e encerrados), com gasto/recebido acumulados
 router.get('/', async (req, res) => {
   try {
-    // 'ativo' < 'encerrado' em ordem alfabética — é isso que faz status:'asc' trazer os
-    // eventos ativos primeiro, sem precisar de um campo de ordenação dedicado.
     const eventos = await prisma.evento.findMany({
       where: { familiaId: req.familiaId },
-      orderBy: [{ status: 'asc' }, { dataInicio: 'desc' }],
+      orderBy: ORDEM_MANUAL,
     });
     const somas = await gastoRecebidoPorEvento(req.familiaId, eventos.map(e => e.id));
     const result = serializeEventos(eventos).map(e => withProgress(e, somas[e.id] || { gasto: 0, recebido: 0 }));
@@ -67,6 +66,10 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar evento' });
   }
 });
+
+// Reordenar (arrastar e soltar na tela) — recebe { ids } com a lista inteira na nova
+// ordem. Declarado antes de /:id pra "reorder" não ser capturado como id.
+router.put('/reorder', reorderHandler('evento', 'Erro ao reordenar eventos'));
 
 // Criar evento — status sempre nasce "ativo", nunca aceito do cliente
 router.post('/', async (req, res) => {

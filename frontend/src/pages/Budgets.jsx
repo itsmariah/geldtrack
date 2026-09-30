@@ -3,6 +3,8 @@ import api from '../services/api'
 import Navbar from '../components/Navbar'
 import BudgetModal from '../components/BudgetModal'
 import BudgetCard from '../components/BudgetCard'
+import SortableGrid from '../components/SortableGrid'
+import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
@@ -44,6 +46,8 @@ export default function Budgets() {
       setLoading(false)
     }
   }, [month])
+
+  const handleReorder = (novaLista) => salvarOrdem('/orcamentos/reorder', novaLista, { setLista: setOrcamentos, recarregar: fetchOrcamentos, setError })
 
   useEffect(() => { fetchOrcamentos() }, [fetchOrcamentos])
 
@@ -121,16 +125,14 @@ export default function Budgets() {
             </button>
           </div>
         ) : (
-          <div className="goals-grid">
-            {orcamentos.map(orcamento => (
-              <BudgetCard
-                key={orcamento.id}
-                orcamento={orcamento}
-                onEdit={handleEdit}
-                onDelete={setDeleteId}
-              />
-            ))}
-          </div>
+          <SortableGrid
+            items={orcamentos}
+            onReorder={handleReorder}
+            descricao="orçamento reordenável"
+            renderItem={orcamento => (
+              <BudgetCard orcamento={orcamento} onEdit={handleEdit} onDelete={setDeleteId} />
+            )}
+          />
         )}
       </main>
 

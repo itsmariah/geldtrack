@@ -3,6 +3,8 @@ import api from '../services/api'
 import Navbar from '../components/Navbar'
 import EventoModal from '../components/EventoModal'
 import EventoCard from '../components/EventoCard'
+import SortableGrid from '../components/SortableGrid'
+import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
@@ -34,6 +36,8 @@ export default function Eventos() {
       setLoading(false)
     }
   }, [])
+
+  const handleReorder = (novaLista) => salvarOrdem('/eventos/reorder', novaLista, { setLista: setEventos, recarregar: fetchEventos, setError })
 
   useEffect(() => { fetchEventos() }, [fetchEventos])
 
@@ -107,17 +111,14 @@ export default function Eventos() {
             </button>
           </div>
         ) : (
-          <div className="goals-grid">
-            {eventos.map(evento => (
-              <EventoCard
-                key={evento.id}
-                evento={evento}
-                onEdit={handleEdit}
-                onDelete={setDeleteId}
-                onToggleStatus={handleToggleStatus}
-              />
-            ))}
-          </div>
+          <SortableGrid
+            items={eventos}
+            onReorder={handleReorder}
+            descricao="evento reordenável"
+            renderItem={evento => (
+              <EventoCard evento={evento} onEdit={handleEdit} onDelete={setDeleteId} onToggleStatus={handleToggleStatus} />
+            )}
+          />
         )}
       </main>
 
