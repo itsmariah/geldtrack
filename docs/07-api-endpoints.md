@@ -237,10 +237,13 @@ Exporta as transações filtradas em CSV (delimitado por `;`, com vírgula decim
 
 **Resposta 200 OK** — `Content-Type: text/csv; charset=utf-8`, `Content-Disposition: attachment; filename="geldtrack-transacoes.csv"`:
 ```
-Data;Tipo;Categoria;Descrição;Valor;Moeda
-2026-05-21;Despesa;Alimentação;Almoço restaurante;45,90;BRL
-2026-05-01;Receita;Salário;Salário maio;3000,00;BRL
+Data;Tipo;Categoria;Descrição;Valor;Moeda;Valor original;Moeda original;Câmbio;Data da cotação
+2026-05-21;Despesa;Alimentação;Almoço restaurante;45,90;BRL;;;;
+2026-05-01;Receita;Salário;Salário maio;3000,00;BRL;;;;
+2026-09-30;Despesa;Lazer;Jantar (Viagem EUA);103,62;BRL;20,00;USD;5,181;2026-09-30
 ```
+
+As quatro últimas colunas só são preenchidas em transações convertidas de outra moeda; "Data da cotação" traz `câmbio informado` quando o usuário digitou a taxa.
 
 ---
 
@@ -1860,6 +1863,12 @@ Registra uma quitação: `deMembroId` pagou `paraMembroId` **fora do app** (Pix,
 
 `moeda` é opcional (padrão `BRL`) e o pagamento abate só a dívida nessa moeda.
 
+**Quitação em outra moeda** (ex: devia € 40 e pagou R$ 250 por Pix): envie também `moedaPagamento` e `valorPagamento` (sempre juntos; moeda diferente de `moeda`). O saldo abate `valor` em `moeda` (os € 40); o valor pago em R$ é só registrado, nunca calculado pelo app:
+```json
+{ "deMembroId": 2, "paraMembroId": 1, "valor": 40.00, "moeda": "EUR", "moedaPagamento": "BRL", "valorPagamento": 250.00, "data": "2026-09-30" }
+```
+A resposta (e o `GET /grupos/:id`) traz `moedaPagamento`/`valorPagamento`, `null` nos pagamentos na mesma moeda.
+
 **Resposta 201 Created:**
 ```json
 {
@@ -1998,7 +2007,7 @@ Gera o token de conexão que o widget "Pluggy Connect" usa no frontend para abri
 
 ### POST /open-finance/conexoes 🔒
 
-Registra a conexão bancária depois que o widget termina (callback `onSuccess` no frontend) e já dispara a primeira sincronização (importa as contas e até 90 dias de transações).
+Registra a conexão bancária depois que o widget termina (callback `onSuccess` no frontend) e já dispara a primeira sincronização (importa as contas e até 90 dias de transações). As contas criadas já vêm com `instituicao` = nome do banco (`nomeConector`), agrupadas em Contas — só na criação; depois o usuário pode mudar ou limpar.
 
 **Body:**
 ```json

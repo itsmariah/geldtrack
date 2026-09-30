@@ -347,7 +347,10 @@ export default function GrupoDetalhe() {
                       <Avatar nome={membroPorId[p.paraMembroId]?.nome} foto={membroPorId[p.paraMembroId]?.foto} size="xs" />
                       {membroPorId[p.paraMembroId]?.nome ?? '—'}
                     </span>
-                    <span className="tx-meta">{fmtDate(p.data)}</span>
+                    <span className="tx-meta">
+                      {fmtDate(p.data)}
+                      {p.moedaPagamento && ` · pago em ${fmt(p.valorPagamento, p.moedaPagamento)}`}
+                    </span>
                   </div>
                   <div className="grupo-despesa-valor">{fmt(p.valor, p.moeda)}</div>
                   {(p.criadoPorUsuarioId === user?.id || souAdmin) && (

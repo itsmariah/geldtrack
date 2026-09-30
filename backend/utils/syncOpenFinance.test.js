@@ -71,6 +71,7 @@ describe('sincronizarConexao', () => {
     // saldo real 1000, transações importadas somam +300 (500-200) -> saldoInicial = 700
     expect(createContaSpy.mock.calls[0][0].data).toMatchObject({
       usuarioId: 7, conexaoId: 1, pluggyAccountId: 'acc-1', nome: 'Conta Corrente', tipo: 'corrente', saldoInicial: 700,
+      instituicao: 'Pluggy Bank',
     });
     expect(createManySpy.mock.calls[0][0].data).toHaveLength(2);
     expect(createManySpy.mock.calls[0][0].skipDuplicates).toBe(true);

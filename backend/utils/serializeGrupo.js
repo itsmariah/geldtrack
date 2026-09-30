@@ -53,6 +53,8 @@ function serializePagamentoGrupo(pagamento) {
     paraMembroId: pagamento.paraMembroId,
     valor: Number(pagamento.valor),
     moeda: pagamento.moeda || 'BRL',
+    moedaPagamento: pagamento.moedaPagamento ?? null,
+    valorPagamento: pagamento.valorPagamento == null ? null : Number(pagamento.valorPagamento),
     data: pagamento.data,
     criadoPorUsuarioId: pagamento.criadoPorUsuarioId,
     createdAt: pagamento.createdAt,

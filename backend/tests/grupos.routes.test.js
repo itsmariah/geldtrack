@@ -684,9 +684,27 @@ describe('POST /api/grupos/:id/pagamentos', () => {
 
     expect(res.status).toBe(201);
     expect(createSpy.mock.calls[0][0].data).toEqual({
-      grupoId: 1, deMembroId: 2, paraMembroId: 1, valor: 45, moeda: 'BRL', data: '2026-08-11', criadoPorUsuarioId: 7,
+      grupoId: 1, deMembroId: 2, paraMembroId: 1, valor: 45, moeda: 'BRL', moedaPagamento: null, valorPagamento: null, data: '2026-08-11', criadoPorUsuarioId: 7,
     });
     expect(res.body.valor).toBe(45);
+  });
+});
+
+describe('POST /api/grupos/:id/pagamentos em outra moeda', () => {
+  it('abate a dívida em € e registra o que foi pago em R$', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro());
+    vi.spyOn(prisma.grupoMembro, 'findMany').mockResolvedValue([{ id: 1 }, { id: 2 }]);
+    const createSpy = vi.spyOn(prisma.pagamentoGrupo, 'create').mockResolvedValue({
+      id: 9, grupoId: 1, deMembroId: 2, paraMembroId: 1, valor: new Prisma.Decimal('40.00'), moeda: 'EUR',
+      moedaPagamento: 'BRL', valorPagamento: new Prisma.Decimal('250.00'), data: '2026-09-30', criadoPorUsuarioId: 7, createdAt: new Date(),
+    });
+
+    const res = await request(app).post('/api/grupos/1/pagamentos').set('Authorization', `Bearer ${token}`)
+      .send({ deMembroId: 2, paraMembroId: 1, valor: 40, moeda: 'EUR', moedaPagamento: 'BRL', valorPagamento: 250, data: '2026-09-30' });
+
+    expect(res.status).toBe(201);
+    expect(createSpy.mock.calls[0][0].data).toMatchObject({ valor: 40, moeda: 'EUR', moedaPagamento: 'BRL', valorPagamento: 250 });
+    expect(res.body).toMatchObject({ valor: 40, moeda: 'EUR', moedaPagamento: 'BRL', valorPagamento: 250 });
   });
 });
 

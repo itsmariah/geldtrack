@@ -68,6 +68,10 @@ async function sincronizarConexao(conexaoId) {
           conexaoId: conexao.id,
           pluggyAccountId: account.id,
           nome: account.name || conexao.nomeConector,
+          // Agrupa as contas do mesmo banco na tela de Contas (conta corrente + cartão do
+          // Nubank sob "Nubank"). Só na criação — depois é do usuário, que pode renomear ou
+          // limpar, e um novo sync não pode desfazer isso.
+          instituicao: conexao.nomeConector || null,
           tipo: tipoConta,
           saldoInicial: Number(account.balance || 0) - deltaImportado,
         },

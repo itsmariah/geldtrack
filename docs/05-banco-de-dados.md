@@ -256,7 +256,7 @@ Ver a seção "O modelo de dados, em duas camadas" acima para a explicação arq
 
 **PagamentoGrupo** — quitação registrada entre dois membros (`deMembroId` pagou `paraMembroId`, fora do app), que abate o saldo calculado.
 
-**Moeda nos grupos** — `DespesaGrupo.moeda` e `PagamentoGrupo.moeda` (padrão `BRL`): cada despesa tem sua moeda, e o saldo "quem deve quem" é calculado separado por moeda, sem conversão. Na importação pro dashboard, a parte de cada despesa vai pra uma conta da mesma moeda.
+**Moeda nos grupos** — `DespesaGrupo.moeda` e `PagamentoGrupo.moeda` (padrão `BRL`): cada despesa tem sua moeda, e o saldo "quem deve quem" é calculado separado por moeda, sem conversão. Uma dívida pode ser quitada em outra moeda: `PagamentoGrupo.moedaPagamento`/`valorPagamento` (opcionais) registram o que foi pago de fato, enquanto `valor`/`moeda` continuam sendo o que é abatido. Na importação pro dashboard, a parte de cada despesa vai pra uma conta da mesma moeda.
 
 **Grupo → Dashboard** — "Adicionar despesas ao dashboard" cria uma `Transacao` por despesa em que o usuário participa, com `despesaGrupoId` apontando pra ela, valor = parte dele e a mesma data da despesa. Editar a despesa no grupo depois atualiza data/descrição/valor dessas transações. `SetNull`: excluir a despesa ou o grupo não apaga o que já foi pro dashboard.
 

@@ -580,7 +580,7 @@ router.post('/:id/pagamentos', async (req, res) => {
     const meuMembro = await getMembroAtual(grupoId, req.userId);
     if (!meuMembro) return res.status(404).json({ error: 'Grupo não encontrado' });
 
-    const { deMembroId, paraMembroId, valor, data } = req.body;
+    const { deMembroId, paraMembroId, valor, data, moedaPagamento, valorPagamento } = req.body;
     const membrosDoGrupo = await prisma.grupoMembro.findMany({ where: { grupoId }, select: { id: true } });
     const membrosValidosIds = new Set(membrosDoGrupo.map(m => m.id));
 
@@ -594,6 +594,8 @@ router.post('/:id/pagamentos', async (req, res) => {
         paraMembroId: Number(paraMembroId),
         valor: Number(valor),
         moeda: req.body.moeda || 'BRL',
+        moedaPagamento: moedaPagamento || null,
+        valorPagamento: moedaPagamento ? Number(valorPagamento) : null,
         data,
         criadoPorUsuarioId: req.userId,
       },

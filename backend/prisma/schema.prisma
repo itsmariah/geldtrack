@@ -414,6 +414,11 @@ model PagamentoGrupo {
   valor              Decimal     @db.Decimal(12, 2)
   // Abate o saldo "quem deve quem" só dessa moeda.
   moeda              String      @default("BRL")
+  // Só quando a dívida foi quitada em outra moeda (ex: devia € 40, pagou R$ 250 por Pix):
+  // o que de fato mudou de mão. Informado pelo usuário, nunca calculado — o saldo continua
+  // abatendo "valor" em "moeda"; isto é só o registro do pagamento real.
+  moedaPagamento     String?
+  valorPagamento     Decimal?    @db.Decimal(12, 2)
   data               String
   criadoPorUsuarioId Int
   criadoPor          Usuario     @relation("PagamentoGrupoCriador", fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict)
