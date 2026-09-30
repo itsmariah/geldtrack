@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Alert from '../components/Alert'
+import PasswordInput from '../components/PasswordInput'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', senha: '' })
@@ -55,9 +56,8 @@ export default function Login() {
           </div>
           <div className="form-group">
             <label htmlFor="login-senha">Senha</label>
-            <input
+            <PasswordInput
               id="login-senha"
-              type="password"
               value={form.senha}
               onChange={e => setForm({ ...form, senha: e.target.value })}
               placeholder="••••••••"

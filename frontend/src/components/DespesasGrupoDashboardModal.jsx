@@ -13,7 +13,11 @@ const converterValor = (valor, taxa) => Math.max(0.01, Math.round(valor * taxa *
 // Cada uma vira uma transação com a data original da despesa, não a data de hoje. Pra cada
 // moeda o usuário escolhe uma conta: na mesma moeda, a parte entra como está; em outra, é
 // convertida pela cotação salva (ou pelo câmbio que ele informar, ex: o do cartão com IOF).
-export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas, onClose, onSaved }) {
+// Tudo pode ir pra um evento — um existente (abre com o da última importação deste grupo,
+// eventoIdPadrao) ou um novo criado aqui mesmo, com o nome do grupo e o período das despesas.
+const NOVO_EVENTO = 'novo'
+
+export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas, nomeGrupo, eventoIdPadrao, onClose, onSaved }) {
   const { categoriasPorTipo } = useCategorias()
   const categoriasDespesa = categoriasPorTipo('despesa')
   const [contas, setContas] = useState([])
@@ -21,6 +25,10 @@ export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas,
   const [cambio, setCambio] = useState({ taxas: { BRL: 1 }, atualizadoEm: {} })
   const [categoria, setCategoria] = useState(categoriasDespesa.includes('Lazer') ? 'Lazer' : (categoriasDespesa[0] ?? 'Outros'))
   const [eventoId, setEventoId] = useState('')
+  const [nomeNovoEvento, setNomeNovoEvento] = useState(nomeGrupo || '')
+  // Evento criado numa tentativa anterior que falhou na importação — reaproveitado no
+  // próximo envio, pra não criar o mesmo evento duas vezes.
+  const [eventoCriado, setEventoCriado] = useState(null)
   // { moeda: contaId | '' } — '' = não adicionar as despesas dessa moeda agora.
   const [contaPorMoeda, setContaPorMoeda] = useState({})
   // { moeda: texto } — só pras moedas em que o usuário mexeu no câmbio sugerido.
@@ -43,7 +51,9 @@ export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas,
     Promise.all([api.get('/contas'), api.get('/eventos'), api.get('/cambio').catch(() => null)])
       .then(([contasRes, eventosRes, cambioRes]) => {
         setContas(contasRes.data)
-        setEventos(eventosRes.data.filter(ev => ev.status === 'ativo'))
+        const ativos = eventosRes.data.filter(ev => ev.status === 'ativo')
+        setEventos(ativos)
+        if (ativos.some(ev => ev.id === eventoIdPadrao)) setEventoId(String(eventoIdPadrao))
         if (cambioRes) setCambio(cambioRes.data)
         // Padrão: uma conta na mesma moeda; sem nenhuma, converte pra primeira conta em R$.
         const inicial = {}
@@ -94,15 +104,29 @@ export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas,
   const faltaTaxa = planoPorMoeda.some(p => p.conta && !p.taxaValida)
   const quantidadeSelecionada = planoPorMoeda.filter(p => p.conta).reduce((soma, p) => soma + p.lista.length, 0)
 
+  // Período do evento novo: da despesa mais antiga à mais recente desta importação.
+  const datas = despesas.map(d => d.data).sort()
+  const periodoNovoEvento = { dataInicio: datas[0], dataFim: datas.length > 1 && datas.at(-1) !== datas[0] ? datas.at(-1) : null }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
+      let eventoFinal = eventoId === '' ? null : Number(eventoId)
+      if (eventoId === NOVO_EVENTO) {
+        let criado = eventoCriado
+        if (!criado || criado.nome !== nomeNovoEvento.trim()) {
+          const res = await api.post('/eventos', { nome: nomeNovoEvento.trim(), ...periodoNovoEvento })
+          criado = res.data
+          setEventoCriado(criado)
+        }
+        eventoFinal = criado.id
+      }
       const { data } = await api.post(`/grupos/${grupoId}/dashboard`, {
         destinos,
         categoria,
-        eventoId: eventoId === '' ? null : Number(eventoId),
+        eventoId: eventoFinal,
       })
       onSaved(data.count)
     } catch (err) {
@@ -212,15 +236,33 @@ export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas,
           </select>
         </div>
 
-        {eventos.length > 0 && (
-          <div className="form-group">
-            <label htmlFor="grupo-dash-evento">Evento (opcional)</label>
-            <select id="grupo-dash-evento" value={eventoId} onChange={e => setEventoId(e.target.value)}>
-              <option value="">Nenhum</option>
-              {eventos.map(ev => <option key={ev.id} value={ev.id}>{ev.nome}</option>)}
-            </select>
-          </div>
-        )}
+        <div className="form-group">
+          <label htmlFor="grupo-dash-evento">Evento (opcional)</label>
+          <select id="grupo-dash-evento" value={eventoId} onChange={e => setEventoId(e.target.value)} disabled={carregando}>
+            <option value="">Nenhum</option>
+            {eventos.map(ev => <option key={ev.id} value={ev.id}>{ev.nome}</option>)}
+            <option value={NOVO_EVENTO}>+ Criar novo evento</option>
+          </select>
+          {eventoId === NOVO_EVENTO && (
+            <div style={{ marginTop: 8 }}>
+              <label htmlFor="grupo-dash-evento-nome" style={{ fontWeight: 400 }}>Nome do evento</label>
+              <input
+                id="grupo-dash-evento-nome"
+                type="text"
+                value={nomeNovoEvento}
+                onChange={e => setNomeNovoEvento(e.target.value)}
+                placeholder="Ex: Viagem Rio 2026"
+                required
+              />
+              <span className="form-hint">
+                {periodoNovoEvento.dataFim
+                  ? `De ${fmtDate(periodoNovoEvento.dataInicio)} a ${fmtDate(periodoNovoEvento.dataFim)}, o período das despesas.`
+                  : `Começando em ${fmtDate(periodoNovoEvento.dataInicio)}, a data das despesas.`}
+                {' '}Dá pra ajustar datas e orçamento depois em Eventos.
+              </span>
+            </div>
+          )}
+        </div>
 
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>

@@ -4,6 +4,7 @@ import { resizeImage } from '../utils/resizeImage'
 import Modal from './Modal'
 import Alert from './Alert'
 import PasswordMatchHint from './PasswordMatchHint'
+import PasswordInput from './PasswordInput'
 
 export default function ProfileModal({ onClose }) {
   const { user, updateProfile } = useAuth()
@@ -137,9 +138,8 @@ export default function ProfileModal({ onClose }) {
           </div>
           <div className="form-group">
             <label htmlFor="profile-senha">Nova senha (deixe vazio para manter)</label>
-            <input
+            <PasswordInput
               id="profile-senha"
-              type="password"
               value={form.senha}
               onChange={e => setForm({ ...form, senha: e.target.value })}
               placeholder="Mínimo 6 caracteres"
@@ -149,9 +149,8 @@ export default function ProfileModal({ onClose }) {
           {form.senha && (
             <div className="form-group">
               <label htmlFor="profile-confirmar">Confirmar nova senha</label>
-              <input
+              <PasswordInput
                 id="profile-confirmar"
-                type="password"
                 value={form.confirmar}
                 onChange={e => setForm({ ...form, confirmar: e.target.value })}
                 aria-describedby={form.confirmar ? 'profile-confirmar-hint' : undefined}

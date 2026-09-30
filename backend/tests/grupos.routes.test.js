@@ -78,6 +78,27 @@ describe('GET /api/grupos/:id', () => {
     expect(res.status).toBe(200);
     expect(txSpy.mock.calls[0][0].where).toEqual({ usuarioId: 7, despesaGrupoId: { in: [1, 2] } });
     expect(res.body.despesas.map(d => d.noDashboard)).toEqual([false, true]);
+    expect(res.body.eventoIdDashboard).toBeNull();
+  });
+
+  it('eventoIdDashboard: evento da importação mais recente, ignorando transações de outra família', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro());
+    const despesa = (id) => ({
+      id, grupoId: 1, descricao: 'Jantar', valorTotal: new Prisma.Decimal('90.00'), data: '2026-08-10', pagoPorMembroId: 1, criadoPorUsuarioId: 7, createdAt: new Date(),
+      divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('90.00') }],
+    });
+    vi.spyOn(prisma.grupo, 'findUnique').mockResolvedValue({ ...rawGrupo(), membros: [rawMembro()], despesas: [despesa(1), despesa(2), despesa(3)], pagamentos: [] });
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([
+      { despesaGrupoId: 1, eventoId: 4, familiaId: 1, createdAt: new Date('2026-08-11') },
+      { despesaGrupoId: 2, eventoId: 5, familiaId: 1, createdAt: new Date('2026-08-12') },
+      // Importada numa família antiga do usuário — o evento dela não é visível mais.
+      { despesaGrupoId: 3, eventoId: 9, familiaId: 2, createdAt: new Date('2026-08-13') },
+    ]);
+
+    const res = await request(app).get('/api/grupos/1').set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.eventoIdDashboard).toBe(5);
   });
 
   it('retorna 404 quando o usuário não é membro do grupo (proteção contra IDOR)', async () => {
@@ -295,6 +316,40 @@ describe('DELETE /api/grupos/:id/membros/:membroId', () => {
 
     expect(res.status).toBe(204);
     expect(deleteSpy).toHaveBeenCalledWith({ where: { id: 2 } });
+  });
+});
+
+describe('PUT /api/grupos/:id', () => {
+  it('retorna 404 quando o usuário não é membro do grupo', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(null);
+    const res = await request(app).put('/api/grupos/1').set('Authorization', `Bearer ${token}`).send({ nome: 'Novo' });
+    expect(res.status).toBe(404);
+  });
+
+  it('retorna 403 quando quem chama não é admin', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ papel: 'membro' }));
+    const updateSpy = vi.spyOn(prisma.grupo, 'update');
+    const res = await request(app).put('/api/grupos/1').set('Authorization', `Bearer ${token}`).send({ nome: 'Novo' });
+    expect(res.status).toBe(403);
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejeita nome vazio (400)', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ papel: 'admin' }));
+    const res = await request(app).put('/api/grupos/1').set('Authorization', `Bearer ${token}`).send({ nome: '   ' });
+    expect(res.status).toBe(400);
+  });
+
+  it('renomeia o grupo (com trim) quando quem chama é admin', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ papel: 'admin' }));
+    const updateSpy = vi.spyOn(prisma.grupo, 'update').mockResolvedValue(rawGrupo({ nome: 'Viagem Sul', membros: [rawMembro()] }));
+
+    const res = await request(app).put('/api/grupos/1').set('Authorization', `Bearer ${token}`).send({ nome: '  Viagem Sul ' });
+
+    expect(res.status).toBe(200);
+    expect(updateSpy.mock.calls[0][0].where).toEqual({ id: 1 });
+    expect(updateSpy.mock.calls[0][0].data).toEqual({ nome: 'Viagem Sul' });
+    expect(res.body.nome).toBe('Viagem Sul');
   });
 });
 

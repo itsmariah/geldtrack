@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar'
 import DespesaGrupoModal from '../components/DespesaGrupoModal'
 import PagamentoGrupoModal from '../components/PagamentoGrupoModal'
 import DespesasGrupoDashboardModal from '../components/DespesasGrupoDashboardModal'
+import GrupoModal from '../components/GrupoModal'
 import SaldosGrupo from '../components/SaldosGrupo'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
@@ -47,6 +48,7 @@ export default function GrupoDetalhe() {
   const [removendoMembro, setRemovendoMembro] = useState(null)
   const [confirmarSair, setConfirmarSair] = useState(false)
   const [confirmarExcluirGrupo, setConfirmarExcluirGrupo] = useState(false)
+  const [showEditarGrupo, setShowEditarGrupo] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
   useEffect(() => {
@@ -169,6 +171,12 @@ export default function GrupoDetalhe() {
     }
   }
 
+  const handleGrupoRenomeado = () => {
+    setShowEditarGrupo(false)
+    setToast('Nome do grupo atualizado.')
+    fetchGrupo()
+  }
+
   const handleEditDespesa = (despesa) => {
     setEditingDespesa(despesa)
     setShowDespesaModal(true)
@@ -241,9 +249,14 @@ export default function GrupoDetalhe() {
             <h2 style={{ marginTop: 6 }}>{grupo.nome}</h2>
           </div>
           {souAdmin && (
-            <button className="btn btn-outline btn-sm" onClick={() => setConfirmarExcluirGrupo(true)}>
-              Excluir grupo
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-outline btn-sm" onClick={() => setShowEditarGrupo(true)}>
+                Editar nome
+              </button>
+              <button className="btn btn-outline btn-sm" onClick={() => setConfirmarExcluirGrupo(true)}>
+                Excluir grupo
+              </button>
+            </div>
           )}
         </div>
 
@@ -438,9 +451,15 @@ export default function GrupoDetalhe() {
           grupoId={id}
           despesas={despesasForaDoDashboard}
           moedas={moedas}
+          nomeGrupo={grupo.nome}
+          eventoIdPadrao={grupo.eventoIdDashboard}
           onClose={() => setShowDashboardModal(false)}
           onSaved={handleDashboardSaved}
         />
+      )}
+
+      {showEditarGrupo && (
+        <GrupoModal grupo={grupo} onClose={() => setShowEditarGrupo(false)} onSaved={handleGrupoRenomeado} />
       )}
 
       {removendoMembro && (

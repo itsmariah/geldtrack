@@ -3,8 +3,9 @@ import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
 
-export default function GrupoModal({ onClose, onSaved }) {
-  const [nome, setNome] = useState('')
+// Sem "grupo": cria um grupo novo. Com "grupo": renomeia (só admin chega aqui).
+export default function GrupoModal({ grupo, onClose, onSaved }) {
+  const [nome, setNome] = useState(grupo?.nome || '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -13,10 +14,14 @@ export default function GrupoModal({ onClose, onSaved }) {
     setError('')
     setLoading(true)
     try {
-      await api.post('/grupos', { nome })
+      if (grupo) {
+        await api.put(`/grupos/${grupo.id}`, { nome })
+      } else {
+        await api.post('/grupos', { nome })
+      }
       onSaved()
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao criar grupo')
+      setError(err.response?.data?.error || (grupo ? 'Erro ao renomear grupo' : 'Erro ao criar grupo'))
     } finally {
       setLoading(false)
     }
@@ -25,7 +30,7 @@ export default function GrupoModal({ onClose, onSaved }) {
   return (
     <Modal onClose={onClose}>
       <div className="modal-header">
-        <h3>Novo Grupo</h3>
+        <h3>{grupo ? 'Editar Grupo' : 'Novo Grupo'}</h3>
         <button className="modal-close" onClick={onClose}>✕</button>
       </div>
 
@@ -48,7 +53,9 @@ export default function GrupoModal({ onClose, onSaved }) {
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Criando...' : 'Criar grupo'}
+            {grupo
+              ? (loading ? 'Salvando...' : 'Salvar')
+              : (loading ? 'Criando...' : 'Criar grupo')}
           </button>
         </div>
       </form>

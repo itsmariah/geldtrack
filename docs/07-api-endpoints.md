@@ -1569,7 +1569,8 @@ Detalhe de um grupo: membros, despesas, pagamentos e o saldo "quem deve quem" ca
   "pagamentos": [],
   "saldos": [
     { "deMembroId": 2, "paraMembroId": 1, "valor": 300.00, "moeda": "BRL" }
-  ]
+  ],
+  "eventoIdDashboard": null
 }
 ```
 
@@ -1579,6 +1580,8 @@ Detalhe de um grupo: membros, despesas, pagamentos e o saldo "quem deve quem" ca
 | 404 | "Grupo não encontrado" | `:id` não existe ou o usuário logado não é membro dele (mesmo 404 para os dois casos, para não vazar a existência do grupo) |
 
 > `noDashboard` é **por usuário**: indica se o usuário logado já adicionou a parte dele naquela despesa ao dashboard (ver `POST /grupos/:id/dashboard`).
+
+> `eventoIdDashboard` também é por usuário: o evento usado na importação mais recente deste grupo pro dashboard (só transações da família atual), ou `null`. O modal de importação abre com ele já selecionado.
 
 ---
 
@@ -1610,6 +1613,27 @@ Cria um grupo novo. Quem cria já entra como `admin`.
 |--------|----------|-------|
 | 400 | "Nome do grupo é obrigatório" | Campo faltando |
 | 400 | "Nome muito longo (máximo 60 caracteres)" | `nome` acima do limite |
+
+---
+
+### PUT /grupos/:id 🔒
+
+Renomeia o grupo. Só `admin` (mesma regra de excluir). Transações já adicionadas ao dashboard com o nome antigo entre parênteses na descrição não são alteradas.
+
+**Body:**
+```json
+{ "nome": "Viagem Sul 2026" }
+```
+
+**Resposta 200 OK:** o grupo atualizado (mesmo formato do POST /grupos, sem `papel`/`totalMembros`).
+
+**Erros possíveis:**
+| Código | Mensagem | Causa |
+|--------|----------|-------|
+| 400 | "Nome do grupo é obrigatório" | Campo faltando |
+| 400 | "Nome muito longo (máximo 60 caracteres)" | `nome` acima do limite |
+| 403 | "Só um admin pode renomear o grupo" | Quem chamou é `membro` |
+| 404 | "Grupo não encontrado" | `:id` não existe ou o usuário logado não é membro dele |
 
 ---
 

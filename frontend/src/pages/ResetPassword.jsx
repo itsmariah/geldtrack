@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import Alert from '../components/Alert'
 import PasswordMatchHint from '../components/PasswordMatchHint'
+import PasswordInput from '../components/PasswordInput'
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -50,9 +51,8 @@ export default function ResetPassword() {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="reset-senha">Nova senha</label>
-                <input
+                <PasswordInput
                   id="reset-senha"
-                  type="password"
                   value={form.senha}
                   onChange={e => setForm({ ...form, senha: e.target.value })}
                   placeholder="Mínimo 6 caracteres"
@@ -62,9 +62,8 @@ export default function ResetPassword() {
               </div>
               <div className="form-group">
                 <label htmlFor="reset-confirmar">Confirmar nova senha</label>
-                <input
+                <PasswordInput
                   id="reset-confirmar"
-                  type="password"
                   value={form.confirmar}
                   onChange={e => setForm({ ...form, confirmar: e.target.value })}
                   placeholder="Repita a senha"

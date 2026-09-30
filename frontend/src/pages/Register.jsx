@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Alert from '../components/Alert'
 import PasswordMatchHint from '../components/PasswordMatchHint'
+import PasswordInput from '../components/PasswordInput'
 
 export default function Register() {
   const [form, setForm] = useState({ nome: '', email: '', senha: '', confirmar: '' })
@@ -66,9 +67,8 @@ export default function Register() {
           </div>
           <div className="form-group">
             <label htmlFor="register-senha">Senha</label>
-            <input
+            <PasswordInput
               id="register-senha"
-              type="password"
               value={form.senha}
               onChange={e => setForm({ ...form, senha: e.target.value })}
               placeholder="Mínimo 6 caracteres"
@@ -78,9 +78,8 @@ export default function Register() {
           </div>
           <div className="form-group">
             <label htmlFor="register-confirmar">Confirmar senha</label>
-            <input
+            <PasswordInput
               id="register-confirmar"
-              type="password"
               value={form.confirmar}
               onChange={e => setForm({ ...form, confirmar: e.target.value })}
               placeholder="Repita a senha"

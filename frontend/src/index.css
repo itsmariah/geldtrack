@@ -122,6 +122,18 @@ select:focus-visible,
 .form-group input:focus,
 .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
 .form-group select option { background: var(--bg2); }
+.password-field { position: relative; }
+.form-group .password-field input { padding-right: 44px; }
+/* Edge desenha o próprio "olho" em campos de senha — some pra não ficar dois botões. */
+.password-field input::-ms-reveal { display: none; }
+.password-toggle {
+  position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px;
+  color: var(--text-muted); transition: color 0.2s, background 0.2s;
+}
+.password-toggle:hover { color: var(--text); background: var(--bg3); }
+.password-toggle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 input[type="date"]::-webkit-calendar-picker-indicator { filter: var(--picker-invert); }
 input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-invert); }
 

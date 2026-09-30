@@ -165,13 +165,26 @@ router.get('/:id', async (req, res) => {
     // (é por usuário, não por grupo — cada membro importa a própria parte).
     const importadas = await prisma.transacao.findMany({
       where: { usuarioId: req.userId, despesaGrupoId: { in: grupo.despesas.map(d => d.id) } },
-      select: { despesaGrupoId: true },
+      select: { despesaGrupoId: true, eventoId: true, familiaId: true, createdAt: true },
     });
     const importadasIds = new Set(importadas.map(t => t.despesaGrupoId));
 
+    // eventoIdDashboard: o evento da importação mais recente deste grupo pro dashboard (só
+    // na família atual do usuário) — o modal já abre com ele, pra viagem inteira cair no
+    // mesmo evento sem escolher de novo a cada importação.
+    const ultimaComEvento = importadas
+      .filter(t => t.eventoId && t.familiaId === req.familiaId)
+      .reduce((ultima, t) => (!ultima || t.createdAt > ultima.createdAt ? t : ultima), null);
+
     const despesas = serializeDespesasGrupo(grupo.despesas).map(d => ({ ...d, noDashboard: importadasIds.has(d.id) }));
     const pagamentos = serializePagamentosGrupo(grupo.pagamentos);
-    res.json({ ...serializeGrupo(grupo), despesas, pagamentos, saldos: calcularSaldosGrupo(despesas, pagamentos) });
+    res.json({
+      ...serializeGrupo(grupo),
+      despesas,
+      pagamentos,
+      saldos: calcularSaldosGrupo(despesas, pagamentos),
+      eventoIdDashboard: ultimaComEvento?.eventoId ?? null,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar grupo' });
   }
@@ -198,6 +211,27 @@ router.post('/', async (req, res) => {
     res.status(201).json({ ...serializeGrupo(grupo), papel: 'admin', totalMembros: grupo.membros.length });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar grupo' });
+  }
+});
+
+// Renomeia o grupo — só admin, mesma regra de excluir. Transações que já foram pro
+// dashboard com "(nome antigo)" na descrição não mudam aqui: são dados da família de cada
+// membro (só uma edição posterior da despesa leva a descrição nova pra elas).
+router.put('/:id', async (req, res) => {
+  try {
+    const grupoId = Number(req.params.id);
+    const meuMembro = await getMembroAtual(grupoId, req.userId);
+    if (!meuMembro) return res.status(404).json({ error: 'Grupo não encontrado' });
+    if (meuMembro.papel !== 'admin') return res.status(403).json({ error: 'Só um admin pode renomear o grupo' });
+
+    const { nome } = req.body;
+    const validationError = validateNomeGrupo(nome);
+    if (validationError) return res.status(400).json({ error: validationError });
+
+    const grupo = await prisma.grupo.update({ where: { id: grupoId }, data: { nome: nome.trim() }, include: membrosInclude });
+    res.json(serializeGrupo(grupo));
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao renomear grupo' });
   }
 });
 
