@@ -1494,6 +1494,8 @@ Remove outro membro da família. Só o dono pode. O removido recebe uma família
 >
 > O saldo "quem deve quem" (`saldos`, retornado por `GET /grupos/:id`) **nunca é persistido** — é recalculado a cada leitura a partir de todas as `DespesaGrupo` (com o rateio em `DivisaoDespesa`) menos todos os `PagamentoGrupo` já registrados. Para cada despesa, quem pagou (`pagoPorMembroId`) é credor de cada participante do rateio pelo valor devido (`divisoes[].valorDevido`); um `PagamentoGrupo` registra uma quitação feita **fora do app** (Pix, dinheiro...) e abate esse saldo na mesma proporção, com sinal invertido. O cálculo acumula em centavos (não em ponto flutuante) para não sofrer drift ao longo de muitas despesas, e não há simplificação de dívida nesta fase — se A deve a B e B deve a C, isso aparece como duas arestas separadas, não uma só.
 >
+> **Moedas:** cada despesa e cada pagamento tem sua própria `moeda` (padrão `BRL`) — uma viagem mistura moedas (passagem em R$, jantar em €). O saldo é **separado por moeda e nunca convertido**: "Ana deve €40 e R$ 300 a Bruno" são duas entradas em `saldos`, e um pagamento só abate a dívida da própria moeda. Converter criaria discussão sobre qual cotação usar, e o saldo mudaria sozinho todo dia com o câmbio.
+>
 > Um membro com qualquer despesa ou pagamento associado (como pagador, participante, ou como quem pagou/recebeu uma quitação) não pode ser removido nem sair sozinho — perderia o histórico de quem gastou/pagou o quê. Seria preciso excluir/editar essas despesas e pagamentos primeiro, ou excluir o grupo inteiro.
 
 ---
@@ -1547,6 +1549,7 @@ Detalhe de um grupo: membros, despesas, pagamentos e o saldo "quem deve quem" ca
       "grupoId": 1,
       "descricao": "Hospedagem Airbnb",
       "valorTotal": 600.00,
+      "moeda": "BRL",
       "data": "2026-05-02",
       "pagoPorMembroId": 1,
       "criadoPorUsuarioId": 1,
@@ -1560,7 +1563,7 @@ Detalhe de um grupo: membros, despesas, pagamentos e o saldo "quem deve quem" ca
   ],
   "pagamentos": [],
   "saldos": [
-    { "deMembroId": 2, "paraMembroId": 1, "valor": 300.00 }
+    { "deMembroId": 2, "paraMembroId": 1, "valor": 300.00, "moeda": "BRL" }
   ]
 }
 ```
@@ -1713,11 +1716,14 @@ Registra uma despesa do grupo, dividida **igualmente** entre os participantes es
 {
   "descricao": "Hospedagem Airbnb",
   "valorTotal": 600.00,
+  "moeda": "BRL",
   "data": "2026-05-02",
   "pagoPorMembroId": 1,
   "participanteIds": [1, 2]
 }
 ```
+
+`moeda` é opcional: padrão `BRL` na criação; na edição, ausente mantém a atual.
 
 **Resposta 201 Created:**
 ```json
@@ -1726,6 +1732,7 @@ Registra uma despesa do grupo, dividida **igualmente** entre os participantes es
   "grupoId": 1,
   "descricao": "Hospedagem Airbnb",
   "valorTotal": 600.00,
+  "moeda": "BRL",
   "data": "2026-05-02",
   "pagoPorMembroId": 1,
   "criadoPorUsuarioId": 1,
@@ -1743,6 +1750,7 @@ Registra uma despesa do grupo, dividida **igualmente** entre os participantes es
 | 404 | "Grupo não encontrado" | `:id` não existe ou usuário não é membro dele |
 | 400 | "Descrição é obrigatória" | Campo faltando |
 | 400 | "Valor deve ser maior que zero" | `valorTotal` ausente ou ≤ 0 |
+| 400 | "Moeda não suportada" | `moeda` fora da lista de `/cambio` |
 | 400 | "Data deve estar no formato YYYY-MM-DD" | `data` inválida |
 | 400 | "Selecione quem pagou a despesa" | `pagoPorMembroId` ausente/inválido |
 | 400 | "Selecione ao menos um participante" | `participanteIds` vazio ou ausente |
@@ -1781,8 +1789,17 @@ Edita uma despesa — substitui completamente descrição, valor, data, pagador 
 
 **Body:**
 ```json
-{ "contaId": 3, "categoria": "Lazer", "eventoId": null }
+{
+  "categoria": "Lazer",
+  "eventoId": null,
+  "destinos": [
+    { "moeda": "BRL", "contaId": 3 },
+    { "moeda": "EUR", "contaId": 7 }
+  ]
+}
 ```
+
+`destinos` tem uma conta por moeda das despesas, sempre **na mesma moeda** (a parte em € vai pra uma conta em €). Despesas numa moeda sem destino ficam de fora e podem ser importadas depois. O formato antigo `{ "contaId": 3 }` ainda é aceito e vale como destino das despesas em R$.
 
 **Resposta 201 Created:**
 ```json
@@ -1794,10 +1811,13 @@ Edita uma despesa — substitui completamente descrição, valor, data, pagador 
 |--------|----------|-------|
 | 404 | "Grupo não encontrado" | `:id` não existe ou usuário não é membro dele |
 | 400 | "Categoria é obrigatória" | `categoria` ausente/vazia |
-| 400 | "Conta inválida" | `contaId` ausente ou de outra família (IDOR) |
-| 400 | "Escolha uma conta em reais (R$)" | Conta em moeda estrangeira — despesas de grupo são sempre em R$ |
+| 400 | "Escolha a conta de destino" | `destinos` vazio (e sem `contaId`) |
+| 400 | "Escolha só uma conta por moeda" | Moeda repetida em `destinos` |
+| 400 | "Conta inválida" | Conta de outra família (IDOR) |
+| 400 | "Escolha uma conta em EUR para as despesas em EUR" | Moeda da conta ≠ moeda do destino |
 | 400 | "Evento inválido" | `eventoId` de outra família |
 | 400 | "Todas as suas despesas deste grupo já estão no dashboard" | Nada pendente pra importar |
+| 400 | "Nenhuma das despesas pendentes está na moeda das contas escolhidas" | Há pendentes, mas nenhuma numa moeda com destino |
 | 409 | "Essas despesas já foram adicionadas ao dashboard" | Importação paralela (duplo clique/duas abas) barrada pela constraint única |
 
 ---
@@ -1830,9 +1850,12 @@ Registra uma quitação: `deMembroId` pagou `paraMembroId` **fora do app** (Pix,
   "deMembroId": 2,
   "paraMembroId": 1,
   "valor": 300.00,
+  "moeda": "BRL",
   "data": "2026-05-10"
 }
 ```
+
+`moeda` é opcional (padrão `BRL`) e o pagamento abate só a dívida nessa moeda.
 
 **Resposta 201 Created:**
 ```json
@@ -1842,6 +1865,7 @@ Registra uma quitação: `deMembroId` pagou `paraMembroId` **fora do app** (Pix,
   "deMembroId": 2,
   "paraMembroId": 1,
   "valor": 300.00,
+  "moeda": "BRL",
   "data": "2026-05-10",
   "criadoPorUsuarioId": 1,
   "createdAt": "2026-05-10T14:00:00.000Z"
@@ -1855,6 +1879,7 @@ Registra uma quitação: `deMembroId` pagou `paraMembroId` **fora do app** (Pix,
 | 400 | "Selecione quem pagou" / "Selecione quem recebeu" | `deMembroId`/`paraMembroId` ausente |
 | 400 | "Quem pagou e quem recebeu não podem ser a mesma pessoa" | `deMembroId` === `paraMembroId` |
 | 400 | "Valor deve ser maior que zero" | `valor` ausente ou ≤ 0 |
+| 400 | "Moeda não suportada" | `moeda` fora da lista de `/cambio` |
 | 400 | "Data deve estar no formato YYYY-MM-DD" | `data` inválida |
 | 400 | "Quem pagou não é membro deste grupo" / "Quem recebeu não é membro deste grupo" | IDOR: id de membro de outro grupo |
 

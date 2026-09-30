@@ -2,7 +2,8 @@ import { fmt } from '../utils/format'
 import Avatar from './Avatar'
 
 // saldos já vem bruto (sem simplificação) do backend — cada par que se deve algo é uma
-// aresta própria. Colore em relação ao membro logado: verde quando é a favor dele
+// aresta própria, e separado por moeda (a mesma dupla pode aparecer uma vez em R$ e outra
+// em €, nunca convertido). Colore em relação ao membro logado: verde quando é a favor dele
 // (alguém deve a ele), vermelho quando é contra (ele deve a alguém), neutro pro resto.
 export default function SaldosGrupo({ saldos, membros, meuMembroId, onQuitar }) {
   const membroPorId = Object.fromEntries(membros.map(m => [m.id, m]))
@@ -19,7 +20,7 @@ export default function SaldosGrupo({ saldos, membros, meuMembroId, onQuitar }) 
           <li key={i} className="grupo-saldo-item">
             <span className="grupo-pessoas">
               <Avatar nome={membroPorId[s.deMembroId]?.nome} foto={membroPorId[s.deMembroId]?.foto} size="xs" />
-              {membroPorId[s.deMembroId]?.nome ?? '—'} deve <strong className={classe}>{fmt(s.valor)}</strong> a
+              {membroPorId[s.deMembroId]?.nome ?? '—'} deve <strong className={classe}>{fmt(s.valor, s.moeda)}</strong> a
               <Avatar nome={membroPorId[s.paraMembroId]?.nome} foto={membroPorId[s.paraMembroId]?.foto} size="xs" />
               {membroPorId[s.paraMembroId]?.nome ?? '—'}
             </span>

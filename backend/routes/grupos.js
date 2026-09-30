@@ -78,7 +78,10 @@ async function promoverProximoAdminSeNecessario(grupoId, membroSaindoId, papelSa
 // transação). Categoria/conta/evento escolhidos no dashboard não são tocados. Cada mudança
 // entra no histórico de edição, igual a uma edição feita pelo próprio dashboard.
 async function sincronizarTransacoesDaDespesa(despesa, membrosDoGrupo) {
-  const transacoes = await prisma.transacao.findMany({ where: { despesaGrupoId: despesa.id } });
+  const transacoes = await prisma.transacao.findMany({
+    where: { despesaGrupoId: despesa.id },
+    include: { conta: { select: { moeda: true } } },
+  });
   if (transacoes.length === 0) return;
 
   const grupo = await prisma.grupo.findUnique({ where: { id: despesa.grupoId }, select: { nome: true } });
@@ -86,10 +89,13 @@ async function sincronizarTransacoesDaDespesa(despesa, membrosDoGrupo) {
 
   for (const t of transacoes) {
     const parte = parteDoMembro(despesa.divisoes, membroIdPorUsuario.get(t.usuarioId));
+    // Se a moeda da despesa mudou e não bate mais com a da conta, a parte nova não pode ir
+    // pra transação como está (seria € gravado como R$) — só data/descrição acompanham.
+    const mesmaMoeda = (t.conta?.moeda || 'BRL') === (despesa.moeda || 'BRL');
     const novos = {
       data: despesa.data,
       descricao: descricaoTransacaoGrupo(despesa.descricao, grupo.nome),
-      valor: parte > 0 ? parte : Number(t.valor),
+      valor: parte > 0 && mesmaMoeda ? parte : Number(t.valor),
     };
     const alteracoes = buildTransactionDiff(t, { ...t, ...novos });
     if (alteracoes.length === 0) continue;
@@ -338,6 +344,7 @@ router.post('/:id/despesas', async (req, res) => {
         grupoId,
         descricao: descricao.trim(),
         valorTotal: Number(valorTotal),
+        moeda: req.body.moeda || 'BRL',
         data,
         pagoPorMembroId: Number(pagoPorMembroId),
         criadoPorUsuarioId: req.userId,
@@ -356,6 +363,10 @@ router.post('/:id/despesas', async (req, res) => {
 // e com a mesma data da despesa (não a data de hoje), pra cada gasto cair no dia/mês certo
 // do dashboard. Pode ser chamado de novo depois de lançar mais despesas: só as que ainda
 // não foram importadas por este usuário entram (garantido também pelo @@unique no banco).
+//
+// destinos: [{ moeda, contaId }] — uma conta por moeda das despesas, sempre na mesma moeda
+// da despesa (€ vai pra uma conta em €). Moeda sem destino fica de fora dessa importação e
+// pode entrar numa próxima. contaId solto (formato antigo) = destino só pras despesas em R$.
 router.post('/:id/dashboard', async (req, res) => {
   try {
     const grupoId = Number(req.params.id);
@@ -366,11 +377,24 @@ router.post('/:id/dashboard', async (req, res) => {
     if (typeof categoria !== 'string' || !categoria.trim()) {
       return res.status(400).json({ error: 'Categoria é obrigatória' });
     }
-    // Despesas de grupo são sempre em R$ — importar pra uma conta em outra moeda gravaria
-    // o valor em reais como se fosse dólar/euro.
-    const conta = contaId ? await prisma.conta.findFirst({ where: { id: Number(contaId), familiaId: req.familiaId } }) : null;
-    if (!conta) return res.status(400).json({ error: 'Conta inválida' });
-    if (conta.moeda !== 'BRL') return res.status(400).json({ error: 'Escolha uma conta em reais (R$)' });
+    const destinos = Array.isArray(req.body.destinos) ? req.body.destinos : (contaId ? [{ moeda: 'BRL', contaId }] : []);
+    if (destinos.length === 0) return res.status(400).json({ error: 'Escolha a conta de destino' });
+    if (new Set(destinos.map(d => d.moeda)).size !== destinos.length) {
+      return res.status(400).json({ error: 'Escolha só uma conta por moeda' });
+    }
+    const contas = await prisma.conta.findMany({
+      where: { familiaId: req.familiaId, id: { in: destinos.map(d => Number(d.contaId)) } },
+    });
+    const contaPorMoeda = new Map();
+    for (const destino of destinos) {
+      const conta = contas.find(c => c.id === Number(destino.contaId));
+      if (!conta) return res.status(400).json({ error: 'Conta inválida' });
+      // Gravar a parte em € numa conta em R$ leria o valor como se fosse real.
+      if (conta.moeda !== destino.moeda) {
+        return res.status(400).json({ error: `Escolha uma conta em ${destino.moeda} para as despesas em ${destino.moeda}` });
+      }
+      contaPorMoeda.set(destino.moeda, conta);
+    }
     if (eventoId) {
       const evento = await prisma.evento.findFirst({ where: { id: Number(eventoId), familiaId: req.familiaId } });
       if (!evento) return res.status(400).json({ error: 'Evento inválido' });
@@ -387,10 +411,13 @@ router.post('/:id/dashboard', async (req, res) => {
       select: { despesaGrupoId: true },
     });
     const jaImportadasIds = new Set(jaImportadas.map(t => t.despesaGrupoId));
-    const pendentes = minhasDespesas.filter(d => !jaImportadasIds.has(d.id) && parteDoMembro(d.divisoes, meuMembro.id) > 0);
-
-    if (pendentes.length === 0) {
+    const naoImportadas = minhasDespesas.filter(d => !jaImportadasIds.has(d.id) && parteDoMembro(d.divisoes, meuMembro.id) > 0);
+    if (naoImportadas.length === 0) {
       return res.status(400).json({ error: 'Todas as suas despesas deste grupo já estão no dashboard' });
+    }
+    const pendentes = naoImportadas.filter(d => contaPorMoeda.has(d.moeda || 'BRL'));
+    if (pendentes.length === 0) {
+      return res.status(400).json({ error: 'Nenhuma das despesas pendentes está na moeda das contas escolhidas' });
     }
 
     // Várias despesas no mesmo dia: cada uma entra acima da anterior, sem repetir "ordem".
@@ -402,7 +429,7 @@ router.post('/:id/dashboard', async (req, res) => {
       dados.push({
         usuarioId: req.userId,
         familiaId: req.familiaId,
-        contaId: conta.id,
+        contaId: contaPorMoeda.get(d.moeda || 'BRL').id,
         eventoId: eventoId ? Number(eventoId) : null,
         despesaGrupoId: d.id,
         tipo: 'despesa',
@@ -470,6 +497,8 @@ router.put('/:id/despesas/:despesaId', async (req, res) => {
       data: {
         descricao: descricao.trim(),
         valorTotal: Number(valorTotal),
+        // Ausente no body (cliente antigo) mantém a moeda atual.
+        moeda: req.body.moeda || existente.moeda,
         data,
         pagoPorMembroId: Number(pagoPorMembroId),
         divisoes: { deleteMany: {}, create: splits.map(s => ({ membroId: s.membroId, valorDevido: s.valorDevido })) },
@@ -526,6 +555,7 @@ router.post('/:id/pagamentos', async (req, res) => {
         deMembroId: Number(deMembroId),
         paraMembroId: Number(paraMembroId),
         valor: Number(valor),
+        moeda: req.body.moeda || 'BRL',
         data,
         criadoPorUsuarioId: req.userId,
       },

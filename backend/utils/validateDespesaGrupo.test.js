@@ -9,6 +9,11 @@ describe('validateDespesaGrupoInput', () => {
     expect(validateDespesaGrupoInput(base, membros)).toBeNull();
   });
 
+  it('aceita moeda ausente ou suportada, rejeita não suportada', () => {
+    expect(validateDespesaGrupoInput({ ...base, moeda: 'EUR' }, membros)).toBeNull();
+    expect(validateDespesaGrupoInput({ ...base, moeda: 'JPY' }, membros)).toMatch(/Moeda/);
+  });
+
   it('exige descrição', () => {
     expect(validateDespesaGrupoInput({ ...base, descricao: '' }, membros)).toMatch(/Descrição/);
   });

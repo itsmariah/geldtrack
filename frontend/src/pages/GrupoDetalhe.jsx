@@ -31,6 +31,13 @@ export default function GrupoDetalhe() {
   const [deletePagamentoId, setDeletePagamentoId] = useState(null)
 
   const [showDashboardModal, setShowDashboardModal] = useState(false)
+  // Lista de moedas suportadas (código/símbolo/nome) pros seletores de moeda — se o
+  // /cambio falhar, só R$ fica disponível, e tudo continua funcionando como antes.
+  const [moedas, setMoedas] = useState([{ codigo: 'BRL', simbolo: 'R$', nome: 'Real' }])
+
+  useEffect(() => {
+    api.get('/cambio').then(res => setMoedas(res.data.moedas)).catch(() => {})
+  }, [])
 
   const [showConvidadoForm, setShowConvidadoForm] = useState(false)
   const [nomeConvidado, setNomeConvidado] = useState('')
@@ -97,6 +104,11 @@ export default function GrupoDetalhe() {
     .map(d => ({ ...d, minhaParte: d.divisoes.find(x => x.membroId === meuMembro?.id)?.valorDevido ?? 0 }))
     .filter(d => d.minhaParte > 0)
   const despesasForaDoDashboard = minhasDespesas.filter(d => !d.noDashboard)
+
+  // Moeda sugerida pra próxima despesa/pagamento: a da despesa lançada por último — num
+  // grupo de viagem pra Europa, escolher € uma vez já deixa as seguintes em €.
+  const ultimaDespesa = grupo.despesas.reduce((ultima, d) => (!ultima || d.createdAt > ultima.createdAt ? d : ultima), null)
+  const moedaPadrao = ultimaDespesa?.moeda || 'BRL'
 
   const handleCopiarCodigo = async () => {
     try {
@@ -337,7 +349,7 @@ export default function GrupoDetalhe() {
                     </span>
                     <span className="tx-meta">{fmtDate(p.data)}</span>
                   </div>
-                  <div className="grupo-despesa-valor">{fmt(p.valor)}</div>
+                  <div className="grupo-despesa-valor">{fmt(p.valor, p.moeda)}</div>
                   {(p.criadoPorUsuarioId === user?.id || souAdmin) && (
                     <div className="tx-actions">
                       <button className="btn-icon btn-danger" onClick={() => setDeletePagamentoId(p.id)} title="Excluir">🗑️</button>
@@ -391,7 +403,7 @@ export default function GrupoDetalhe() {
                       {membroPorId[d.pagoPorMembroId]?.nome ?? '—'} · {fmtDate(d.data)}
                     </span>
                   </div>
-                  <div className="grupo-despesa-valor">{fmt(d.valorTotal)}</div>
+                  <div className="grupo-despesa-valor">{fmt(d.valorTotal, d.moeda)}</div>
                   {(d.criadoPorUsuarioId === user?.id || souAdmin) && (
                     <div className="tx-actions">
                       <button className="btn-icon" onClick={() => handleEditDespesa(d)} title="Editar">✏️</button>
@@ -410,6 +422,8 @@ export default function GrupoDetalhe() {
           grupoId={id}
           despesa={editingDespesa}
           membros={grupo.membros}
+          moedas={moedas}
+          moedaPadrao={moedaPadrao}
           defaultPagoPorMembroId={meuMembro?.id}
           onClose={handleDespesaModalClose}
           onSaved={handleDespesaSaved}
@@ -420,6 +434,7 @@ export default function GrupoDetalhe() {
         <DespesasGrupoDashboardModal
           grupoId={id}
           despesas={despesasForaDoDashboard}
+          moedas={moedas}
           onClose={() => setShowDashboardModal(false)}
           onSaved={handleDashboardSaved}
         />
@@ -469,6 +484,8 @@ export default function GrupoDetalhe() {
         <PagamentoGrupoModal
           grupoId={id}
           membros={grupo.membros}
+          moedas={moedas}
+          moedaPadrao={moedaPadrao}
           prefill={pagamentoPrefill}
           onClose={handlePagamentoModalClose}
           onSaved={handlePagamentoSaved}

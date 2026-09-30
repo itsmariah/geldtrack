@@ -25,10 +25,11 @@ function splitPreview(valorTotal, participanteIds) {
   return result
 }
 
-export default function DespesaGrupoModal({ grupoId, despesa, membros, defaultPagoPorMembroId, onClose, onSaved }) {
+export default function DespesaGrupoModal({ grupoId, despesa, membros, moedas, moedaPadrao = 'BRL', defaultPagoPorMembroId, onClose, onSaved }) {
   const [form, setForm] = useState({
     descricao: despesa?.descricao || '',
     valorTotal: despesa?.valorTotal ?? '',
+    moeda: despesa?.moeda || moedaPadrao,
     data: despesa?.data || todayLocal(),
     pagoPorMembroId: despesa?.pagoPorMembroId ?? defaultPagoPorMembroId ?? (membros[0]?.id ?? ''),
   })
@@ -93,7 +94,18 @@ export default function DespesaGrupoModal({ grupoId, despesa, membros, defaultPa
         </div>
 
         <div className="form-group">
-          <label htmlFor="despesa-valor">Valor total (R$)</label>
+          <label htmlFor="despesa-moeda">Moeda</label>
+          <select
+            id="despesa-moeda"
+            value={form.moeda}
+            onChange={e => setForm({ ...form, moeda: e.target.value })}
+          >
+            {moedas.map(m => <option key={m.codigo} value={m.codigo}>{m.simbolo} {m.nome}</option>)}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="despesa-valor">Valor total ({moedas.find(m => m.codigo === form.moeda)?.simbolo || form.moeda})</label>
           <input
             id="despesa-valor"
             type="number"
@@ -141,7 +153,7 @@ export default function DespesaGrupoModal({ grupoId, despesa, membros, defaultPa
                   <input type="checkbox" checked={participanteIds.includes(m.id)} onChange={() => toggleParticipante(m.id)} />
                   <span className="despesa-participante-nome">{m.nome}</span>
                   {participanteIds.includes(m.id) && preview[m.id] != null && (
-                    <span className="despesa-participante-valor">{fmt(preview[m.id])}</span>
+                    <span className="despesa-participante-valor">{fmt(preview[m.id], form.moeda)}</span>
                   )}
                 </label>
               </li>

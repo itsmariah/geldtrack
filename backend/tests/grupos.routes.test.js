@@ -103,7 +103,7 @@ describe('GET /api/grupos/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.membros).toHaveLength(2);
     expect(res.body.despesas[0].valorTotal).toBe(90);
-    expect(res.body.saldos).toEqual([{ deMembroId: 2, paraMembroId: 1, valor: 45 }]);
+    expect(res.body.saldos).toEqual([{ deMembroId: 2, paraMembroId: 1, valor: 45, moeda: 'BRL' }]);
   });
 
   it('abate os saldos com os pagamentos já registrados', async () => {
@@ -124,7 +124,7 @@ describe('GET /api/grupos/:id', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.pagamentos[0].valor).toBe(20);
-    expect(res.body.saldos).toEqual([{ deMembroId: 2, paraMembroId: 1, valor: 25 }]);
+    expect(res.body.saldos).toEqual([{ deMembroId: 2, paraMembroId: 1, valor: 25, moeda: 'BRL' }]);
   });
 });
 
@@ -454,7 +454,7 @@ describe('POST /api/grupos/:id/dashboard', () => {
 
   beforeEach(() => {
     vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ id: 1, papel: 'membro' }));
-    vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue({ id: 3, familiaId: 1, moeda: 'BRL' });
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([{ id: 3, familiaId: 1, moeda: 'BRL' }]);
     vi.spyOn(prisma.grupo, 'findUnique').mockResolvedValue({ nome: 'Viagem Nordeste' });
   });
 
@@ -465,16 +465,40 @@ describe('POST /api/grupos/:id/dashboard', () => {
   });
 
   it('rejeita conta de outra família (proteção contra IDOR)', async () => {
-    const contaSpy = vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue(null);
+    const contaSpy = vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([]);
     const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
     expect(res.status).toBe(400);
-    expect(contaSpy.mock.calls[0][0].where).toEqual({ id: 3, familiaId: 1 });
+    expect(contaSpy.mock.calls[0][0].where).toEqual({ familiaId: 1, id: { in: [3] } });
   });
 
-  it('rejeita conta em moeda estrangeira', async () => {
-    vi.spyOn(prisma.conta, 'findFirst').mockResolvedValue({ id: 3, familiaId: 1, moeda: 'USD' });
+  it('rejeita conta numa moeda diferente da das despesas do destino', async () => {
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([{ id: 3, familiaId: 1, moeda: 'USD' }]);
     const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`).send(body);
     expect(res.status).toBe(400);
+  });
+
+  it('manda cada despesa pra conta da própria moeda e deixa de fora moedas sem destino', async () => {
+    vi.spyOn(prisma.conta, 'findMany').mockResolvedValue([
+      { id: 3, familiaId: 1, moeda: 'BRL' },
+      { id: 9, familiaId: 1, moeda: 'EUR' },
+    ]);
+    vi.spyOn(prisma.despesaGrupo, 'findMany').mockResolvedValue([
+      despesa({ id: 4, moeda: 'BRL' }),
+      despesa({ id: 5, moeda: 'EUR', divisoes: [{ membroId: 1, valorDevido: new Prisma.Decimal('20.00') }] }),
+      despesa({ id: 6, moeda: 'USD' }),
+    ]);
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([]);
+    vi.spyOn(prisma.transacao, 'aggregate').mockResolvedValue({ _max: { ordem: null } });
+    const createSpy = vi.spyOn(prisma.transacao, 'create').mockImplementation(args => args);
+    vi.spyOn(prisma, '$transaction').mockResolvedValue([]);
+    vi.spyOn(prisma.orcamento, 'findUnique').mockResolvedValue(null);
+
+    const res = await request(app).post('/api/grupos/1/dashboard').set('Authorization', `Bearer ${token}`)
+      .send({ categoria: 'Lazer', destinos: [{ moeda: 'BRL', contaId: 3 }, { moeda: 'EUR', contaId: 9 }] });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ count: 2 });
+    expect(createSpy.mock.calls.map(c => [c[0].data.despesaGrupoId, c[0].data.contaId, c[0].data.valor])).toEqual([[4, 3, 45], [5, 9, 20]]);
   });
 
   it('cria uma despesa por despesa do grupo, com a parte do usuário e a data da despesa, pulando as já importadas', async () => {
@@ -590,7 +614,7 @@ describe('POST /api/grupos/:id/pagamentos', () => {
 
     expect(res.status).toBe(201);
     expect(createSpy.mock.calls[0][0].data).toEqual({
-      grupoId: 1, deMembroId: 2, paraMembroId: 1, valor: 45, data: '2026-08-11', criadoPorUsuarioId: 7,
+      grupoId: 1, deMembroId: 2, paraMembroId: 1, valor: 45, moeda: 'BRL', data: '2026-08-11', criadoPorUsuarioId: 7,
     });
     expect(res.body.valor).toBe(45);
   });

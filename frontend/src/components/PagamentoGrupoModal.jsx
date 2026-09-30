@@ -10,14 +10,15 @@ function todayLocal() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
-// prefill vem de um saldo clicado em "Quem deve quem" ({ deMembroId, paraMembroId, valor })
+// prefill vem de um saldo clicado em "Quem deve quem" ({ deMembroId, paraMembroId, valor, moeda })
 // — a maioria das quitações é "paguei exatamente o que eu devia", então já chega pronto
 // pra só confirmar; os campos continuam editáveis pra pagamento parcial ou lançamento manual.
-export default function PagamentoGrupoModal({ grupoId, membros, prefill, onClose, onSaved }) {
+export default function PagamentoGrupoModal({ grupoId, membros, moedas, moedaPadrao = 'BRL', prefill, onClose, onSaved }) {
   const [form, setForm] = useState({
     deMembroId: prefill?.deMembroId ?? (membros[0]?.id ?? ''),
     paraMembroId: prefill?.paraMembroId ?? (membros[1]?.id ?? membros[0]?.id ?? ''),
     valor: prefill?.valor ?? '',
+    moeda: prefill?.moeda || moedaPadrao,
     data: todayLocal(),
   })
   const [error, setError] = useState('')
@@ -78,7 +79,19 @@ export default function PagamentoGrupoModal({ grupoId, membros, prefill, onClose
         </div>
 
         <div className="form-group">
-          <label htmlFor="pagamento-valor">Valor (R$)</label>
+          <label htmlFor="pagamento-moeda">Moeda</label>
+          <select
+            id="pagamento-moeda"
+            value={form.moeda}
+            onChange={e => setForm({ ...form, moeda: e.target.value })}
+          >
+            {moedas.map(m => <option key={m.codigo} value={m.codigo}>{m.simbolo} {m.nome}</option>)}
+          </select>
+          <span className="form-hint">Abate só a dívida nessa moeda.</span>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="pagamento-valor">Valor ({moedas.find(m => m.codigo === form.moeda)?.simbolo || form.moeda})</label>
           <input
             id="pagamento-valor"
             type="number"

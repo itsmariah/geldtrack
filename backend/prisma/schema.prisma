@@ -355,6 +355,10 @@ model DespesaGrupo {
   grupo              Grupo            @relation(fields: [grupoId], references: [id], onDelete: Cascade)
   descricao          String
   valorTotal         Decimal          @db.Decimal(12, 2)
+  // Moeda em que a despesa foi paga (ver utils/moedas.js) — cada despesa tem a sua, porque
+  // uma viagem mistura moedas (passagem em R$, jantar em €). O "quem deve quem" nunca
+  // converte entre moedas: é separado por moeda (ver utils/calcularSaldosGrupo.js).
+  moeda              String           @default("BRL")
   data               String
   // Restrict (não Cascade/SetNull): impede apagar um GrupoMembro que já pagou alguma
   // despesa — perderia o histórico de quem realmente desembolsou o dinheiro.
@@ -398,6 +402,8 @@ model PagamentoGrupo {
   paraMembroId       Int
   para               GrupoMembro @relation("PagamentoPara", fields: [paraMembroId], references: [id], onDelete: Restrict)
   valor              Decimal     @db.Decimal(12, 2)
+  // Abate o saldo "quem deve quem" só dessa moeda.
+  moeda              String      @default("BRL")
   data               String
   criadoPorUsuarioId Int
   criadoPor          Usuario     @relation("PagamentoGrupoCriador", fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict)
