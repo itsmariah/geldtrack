@@ -1,15 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ProfileModal from './ProfileModal'
 import ThemeToggle from './ThemeToggle'
+import Avatar from './Avatar'
+
+const LINKS = [
+  ['/dashboard', 'Dashboard'],
+  ['/contas', 'Contas'],
+  ['/relatorios', 'Relatórios'],
+  ['/metas', 'Metas'],
+  ['/orcamentos', 'Orçamentos'],
+  ['/eventos', 'Eventos'],
+  ['/recorrencias', 'Recorrências'],
+  ['/categorias', 'Categorias'],
+  ['/familia', 'Família'],
+  ['/grupos', 'Grupos'],
+]
 
 export default function Navbar() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [showProfile, setShowProfile] = useState(false)
+  // Só tem efeito abaixo do breakpoint do menu (ver .navbar-menu-btn no CSS) — acima
+  // dele os links ficam sempre visíveis em linha e esse estado é ignorado.
+  const [menuOpen, setMenuOpen] = useState(false)
 
-  const isActive = (path) => location.pathname === path ? 'active' : ''
+  useEffect(() => { setMenuOpen(false) }, [location.pathname])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleKeyDown = (e) => { if (e.key === 'Escape') setMenuOpen(false) }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [menuOpen])
+
+  // Rotas de detalhe (/eventos/3, /grupos/5) marcam o item da lista como ativo.
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`) ? 'active' : ''
 
   return (
     <header className="navbar">
@@ -17,29 +44,33 @@ export default function Navbar() {
         <span className="logo-coin">💰</span> <span className="navbar-brand-text">GeldTrack</span>
       </Link>
 
-      <nav className="navbar-nav">
-        <Link to="/dashboard" className={isActive('/dashboard')}>Dashboard</Link>
-        <Link to="/contas" className={isActive('/contas')}>Contas</Link>
-        <Link to="/relatorios" className={isActive('/relatorios')}>Relatórios</Link>
-        <Link to="/metas" className={isActive('/metas')}>Metas</Link>
-        <Link to="/orcamentos" className={isActive('/orcamentos')}>Orçamentos</Link>
-        <Link to="/eventos" className={isActive('/eventos')}>Eventos</Link>
-        <Link to="/recorrencias" className={isActive('/recorrencias')}>Recorrências</Link>
-        <Link to="/categorias" className={isActive('/categorias')}>Categorias</Link>
-        <Link to="/familia" className={isActive('/familia')}>Família</Link>
-        <Link to="/grupos" className={isActive('/grupos')}>Grupos</Link>
+      <nav id="app-nav" className={`navbar-nav${menuOpen ? ' navbar-nav--open' : ''}`}>
+        {LINKS.map(([path, label]) => (
+          <Link key={path} to={path} className={isActive(path)}>{label}</Link>
+        ))}
+        <button className="btn btn-outline btn-sm navbar-nav-logout" onClick={logout}>Sair</button>
       </nav>
 
       <div className="navbar-user">
         <ThemeToggle />
-        <button className="user-btn" onClick={() => setShowProfile(true)}>
-          <div className="avatar">
-            {user?.foto ? <img src={user.foto} alt="" /> : user?.nome?.[0]?.toUpperCase()}
-          </div>
-          <span>{user?.nome?.split(' ')[0]}</span>
+        <button className="user-btn" onClick={() => setShowProfile(true)} aria-label="Meu perfil">
+          <Avatar nome={user?.nome} foto={user?.foto} size="sm" />
+          <span className="user-btn-nome">{user?.nome?.split(' ')[0]}</span>
         </button>
-        <button className="btn btn-outline btn-sm" onClick={logout}>Sair</button>
+        <button className="btn btn-outline btn-sm navbar-logout" onClick={logout}>Sair</button>
+        <button
+          type="button"
+          className="navbar-menu-btn"
+          onClick={() => setMenuOpen(v => !v)}
+          aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={menuOpen}
+          aria-controls="app-nav"
+        >
+          {menuOpen ? '✕' : '☰'}
+        </button>
       </div>
+
+      {menuOpen && <div className="navbar-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
 
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
     </header>

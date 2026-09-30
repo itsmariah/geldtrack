@@ -158,7 +158,7 @@ export default function Reports() {
       <main className="main-content">
         <div className="dashboard-header">
           <h2>Relatórios</h2>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="header-actions">
             <input
               type="month"
               value={month}

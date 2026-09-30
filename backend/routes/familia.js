@@ -19,8 +19,10 @@ const dataLimiter = rateLimit({
 });
 router.use(dataLimiter);
 
+// foto é a imagem já redimensionada no upload (256px, ver frontend/src/utils/resizeImage.js),
+// então dá pra mandar junto com a lista de membros sem pesar a resposta.
 const familiaInclude = {
-  membros: { select: { id: true, nome: true, email: true, papelFamilia: true }, orderBy: { createdAt: 'asc' } },
+  membros: { select: { id: true, nome: true, email: true, foto: true, papelFamilia: true }, orderBy: { createdAt: 'asc' } },
 };
 
 // Dados da família atual: nome, código (pra compartilhar) e lista de membros com papel

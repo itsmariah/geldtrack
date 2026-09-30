@@ -4,6 +4,7 @@ import api from '../services/api'
 import Navbar from '../components/Navbar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
+import Avatar from '../components/Avatar'
 import { SkeletonList } from '../components/Skeleton'
 
 export default function Familia() {
@@ -221,7 +222,7 @@ export default function Familia() {
               <ul className="familia-membros-list">
                 {familia.membros.map(m => (
                   <li key={m.id} className="familia-membro-item">
-                    <div className="avatar">{m.nome[0]?.toUpperCase()}</div>
+                    <Avatar nome={m.nome} foto={m.foto} size="lg" />
                     <div className="familia-membro-info">
                       <span className="familia-membro-nome">{m.nome}{m.id === user?.id ? ' (você)' : ''}</span>
                       <span className="familia-membro-email">{m.email}</span>

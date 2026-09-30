@@ -8,6 +8,7 @@ import PagamentoGrupoModal from '../components/PagamentoGrupoModal'
 import SaldosGrupo from '../components/SaldosGrupo'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
+import Avatar from '../components/Avatar'
 import { SkeletonList } from '../components/Skeleton'
 import { fmt, fmtDate } from '../utils/format'
 
@@ -268,7 +269,7 @@ export default function GrupoDetalhe() {
           <ul className="familia-membros-list">
             {grupo.membros.map(m => (
               <li key={m.id} className="familia-membro-item">
-                <div className="avatar">{m.nome[0]?.toUpperCase()}</div>
+                <Avatar nome={m.nome} foto={m.foto} size="lg" />
                 <div className="familia-membro-info">
                   <span className="familia-membro-nome">
                     {m.nome}{m.usuarioId === user?.id ? ' (você)' : ''}{m.isConvidado ? ' (convidado)' : ''}
@@ -313,8 +314,11 @@ export default function GrupoDetalhe() {
               {grupo.pagamentos.map(p => (
                 <li key={p.id} className="grupo-despesa-item">
                   <div className="grupo-despesa-info">
-                    <span className="grupo-despesa-desc">
-                      {membroPorId[p.deMembroId]?.nome ?? '—'} pagou {membroPorId[p.paraMembroId]?.nome ?? '—'}
+                    <span className="grupo-despesa-desc grupo-pessoas">
+                      <Avatar nome={membroPorId[p.deMembroId]?.nome} foto={membroPorId[p.deMembroId]?.foto} size="xs" />
+                      {membroPorId[p.deMembroId]?.nome ?? '—'} pagou
+                      <Avatar nome={membroPorId[p.paraMembroId]?.nome} foto={membroPorId[p.paraMembroId]?.foto} size="xs" />
+                      {membroPorId[p.paraMembroId]?.nome ?? '—'}
                     </span>
                     <span className="tx-meta">{fmtDate(p.data)}</span>
                   </div>
@@ -349,8 +353,10 @@ export default function GrupoDetalhe() {
                 <li key={d.id} className="grupo-despesa-item">
                   <div className="grupo-despesa-info">
                     <span className="grupo-despesa-desc">{d.descricao}</span>
-                    <span className="tx-meta">
-                      Pago por {membroPorId[d.pagoPorMembroId]?.nome ?? '—'} · {fmtDate(d.data)}
+                    <span className="tx-meta grupo-pessoas">
+                      Pago por
+                      <Avatar nome={membroPorId[d.pagoPorMembroId]?.nome} foto={membroPorId[d.pagoPorMembroId]?.foto} size="xs" />
+                      {membroPorId[d.pagoPorMembroId]?.nome ?? '—'} · {fmtDate(d.data)}
                     </span>
                   </div>
                   <div className="grupo-despesa-valor">{fmt(d.valorTotal)}</div>

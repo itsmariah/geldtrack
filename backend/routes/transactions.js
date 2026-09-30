@@ -12,6 +12,7 @@ const { ensureOccurrences } = require('../utils/materializeRecorrencias');
 const { TRANSACAO_SELECT_SEM_ANEXO } = require('../utils/transactionSelect');
 const { buildTransactionDiff } = require('../utils/buildTransactionDiff');
 const { notifyOrcamentoEstouradoSeNecessario } = require('../utils/notifyOrcamentoEstourado');
+const { reorderDia } = require('../utils/reorderDia');
 
 // Fire-and-forget (mesmo padrão do e-mail de reset de senha em auth.js): a resposta da
 // rota não deve esperar o envio de e-mail, e uma falha aqui não pode derrubar a requisição.
@@ -26,6 +27,17 @@ const router = express.Router();
 router.use(authMiddleware);
 
 const MAX_BULK_ITEMS = 500;
+
+// Mesma ordem em toda listagem (Dashboard, export, evento): dia mais recente primeiro;
+// dentro do dia, a ordem manual (drag-and-drop) e, no empate, a mais recente primeiro.
+const ORDEM_LISTAGEM = [{ data: 'desc' }, { ordem: 'desc' }, { createdAt: 'desc' }];
+
+// Transação nova (ou que mudou de dia) entra no topo do dia — sem isso ela cairia abaixo
+// de qualquer transação que o usuário já tivesse arrastado pra cima naquele dia.
+async function proximaOrdemDoDia(familiaId, data) {
+  const agg = await prisma.transacao.aggregate({ where: { familiaId, data }, _max: { ordem: true } });
+  return (agg?._max?.ordem ?? -1) + 1;
+}
 
 // Confere que a conta existe e pertence à família do token (evita atribuir uma
 // transação a uma conta de outra família via IDOR) — qualquer membro pode usar qualquer
@@ -81,7 +93,7 @@ router.get('/', async (req, res) => {
       prisma.transacao.findMany({
         where,
         select: TRANSACAO_SELECT_SEM_ANEXO,
-        orderBy: [{ data: 'desc' }, { createdAt: 'desc' }],
+        orderBy: ORDEM_LISTAGEM,
         skip,
         take: pageSize,
       }),
@@ -103,7 +115,7 @@ router.get('/export', async (req, res) => {
     const rawTransactions = await prisma.transacao.findMany({
       where,
       select: TRANSACAO_SELECT_SEM_ANEXO,
-      orderBy: [{ data: 'desc' }, { createdAt: 'desc' }],
+      orderBy: ORDEM_LISTAGEM,
     });
 
     const csv = buildTransactionsCsv(serializeTransactions(rawTransactions));
@@ -175,6 +187,7 @@ router.post('/', async (req, res) => {
         categoria,
         descricao: descricao || '',
         data,
+        ordem: await proximaOrdemDoDia(req.familiaId, data),
         anexo: anexo || null,
         anexoNome: anexo ? anexoNome : null,
       },
@@ -184,6 +197,35 @@ router.post('/', async (req, res) => {
     res.status(201).json(serializeTransaction(created));
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar transação' });
+  }
+});
+
+// Reordena (drag-and-drop) transações de um mesmo dia. Declarada antes de PUT /:id pra
+// "reorder" não ser capturado como id. Recebe { data, ids } com ids na nova ordem (de cima
+// pra baixo) — ver utils/reorderDia.js pro caso de só parte do dia estar na tela.
+router.put('/reorder', async (req, res) => {
+  try {
+    const { data, ids } = req.body;
+    if (typeof data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      return res.status(400).json({ error: 'Data inválida' });
+    }
+
+    const doDia = await prisma.transacao.findMany({
+      where: { familiaId: req.familiaId, data },
+      select: { id: true },
+      orderBy: ORDEM_LISTAGEM,
+    });
+    const { erro, ordem } = reorderDia(doDia.map(t => t.id), ids);
+    if (erro) return res.status(400).json({ error: erro });
+
+    // Renumera o dia inteiro (topo = maior ordem), não só os itens movidos — evita empates
+    // com transações que ainda estavam com ordem 0.
+    await prisma.$transaction(ordem.map((id, i) =>
+      prisma.transacao.update({ where: { id }, data: { ordem: ordem.length - i } })
+    ));
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao reordenar transações' });
   }
 });
 
@@ -221,11 +263,13 @@ router.put('/:id', async (req, res) => {
 
     const novosValores = { tipo, valor: Number(valor), categoria, descricao: descricao || '', data, contaId: Number(contaId), eventoId: eventoIdFinal };
     const alteracoes = buildTransactionDiff(existing, novosValores);
+    // Fora de novosValores de propósito: posição na lista não é campo financeiro, não entra no histórico.
+    const ordemData = data !== existing.data ? { ordem: await proximaOrdemDoDia(req.familiaId, data) } : {};
 
     const [updated] = await prisma.$transaction([
       prisma.transacao.update({
         where: { id },
-        data: { ...novosValores, ...anexoData },
+        data: { ...novosValores, ...anexoData, ...ordemData },
         select: TRANSACAO_SELECT_SEM_ANEXO,
       }),
       ...(alteracoes.length > 0

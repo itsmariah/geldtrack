@@ -12,11 +12,14 @@ import OFXImportModal from '../components/OFXImportModal'
 import InsightsPanel from '../components/InsightsPanel'
 import ProjectionCard from '../components/ProjectionCard'
 import ConfirmDialog from '../components/ConfirmDialog'
+import Pagination from '../components/Pagination'
 import Alert from '../components/Alert'
 import { SkeletonCards, SkeletonList, SkeletonChart } from '../components/Skeleton'
 import { useCategorias } from '../context/CategoriasContext'
 
-const PAGE_SIZE = 50
+// 20 por página: a lista cresce todo dia e, no celular, 50 itens de uma vez já é uma
+// rolagem longa — a paginação numerada deixa pular direto pra qualquer página.
+const PAGE_SIZE = 20
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -42,6 +45,8 @@ export default function Dashboard() {
   const [exporting, setExporting] = useState(false)
   const [anexoTransactionId, setAnexoTransactionId] = useState(null)
   const [historicoTransactionId, setHistoricoTransactionId] = useState(null)
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false)
+  const transactionsRef = useRef(null)
 
   useEffect(() => {
     if (!toast) return
@@ -115,6 +120,28 @@ export default function Dashboard() {
     }
   }
 
+  // Otimista: a lista já muda na hora (sem esperar a API), e só volta ao estado do servidor
+  // se a reordenação falhar. Os itens do dia são contíguos na página (ordenada por data).
+  const handleReorder = async (data, novaOrdem) => {
+    setTransactions(prev => {
+      const inicio = prev.findIndex(t => t.data === data)
+      const resto = prev.filter(t => t.data !== data)
+      return [...resto.slice(0, inicio), ...novaOrdem, ...resto.slice(inicio)]
+    })
+    try {
+      await api.put('/transactions/reorder', { data, ids: novaOrdem.map(t => t.id) })
+    } catch (err) {
+      console.error(err)
+      setError(err.response?.data?.error || 'Não foi possível salvar a nova ordem. Tente novamente.')
+      fetchData()
+    }
+  }
+
+  const handlePageChange = (novaPagina) => {
+    setPage(novaPagina)
+    transactionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction)
     setShowModal(true)
@@ -178,6 +205,8 @@ export default function Dashboard() {
   }, [buscaInput])
 
   const hasFilters = filters.tipo || filters.categoria || filters.conta || filters.data_inicio || filters.data_fim || filters.busca
+  const temDiaComVarias = transactions.some((t, i) => i > 0 && transactions[i - 1].data === t.data)
+  const extraFiltersCount = [filters.tipo, filters.categoria, filters.conta, filters.data_inicio, filters.data_fim].filter(Boolean).length
   const clearFilters = () => {
     setFilters({ tipo: '', categoria: '', conta: '', data_inicio: '', data_fim: '', busca: '' })
     setBuscaInput('')
@@ -198,7 +227,7 @@ export default function Dashboard() {
       <main className="main-content">
         <div className="dashboard-header">
           <h2>Olá, {user?.nome?.split(' ')[0]} 👋</h2>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="header-actions">
             <button className="btn btn-outline" onClick={handleExportCsv} disabled={exporting}>
               {exporting ? 'Exportando...' : '↓ Exportar CSV'}
             </button>
@@ -225,7 +254,7 @@ export default function Dashboard() {
         {!loading && <InsightsPanel insights={insights} />}
 
         <div className="dashboard-grid">
-          <div className="transactions-section">
+          <div className="transactions-section" ref={transactionsRef}>
             <div className="section-header">
               <h3>Transações</h3>
               <div className="filters">
@@ -237,40 +266,56 @@ export default function Dashboard() {
                   placeholder="Buscar por descrição ou categoria..."
                   aria-label="Buscar transações"
                 />
-                <select value={filters.tipo} onChange={e => updateFilters({ tipo: e.target.value })}>
-                  <option value="">Todos os tipos</option>
-                  <option value="receita">Receitas</option>
-                  <option value="despesa">Despesas</option>
-                </select>
-                <select value={filters.categoria} onChange={e => updateFilters({ categoria: e.target.value })}>
-                  <option value="">Todas as categorias</option>
-                  {todasCategorias.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                {contas.length > 1 && (
-                  <select value={filters.conta} onChange={e => updateFilters({ conta: e.target.value })}>
-                    <option value="">Todas as contas</option>
-                    {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                {/* Só aparece no celular — lá os filtros ficam recolhidos pra lista não
+                    começar depois de uma tela inteira de selects. */}
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm filters-toggle"
+                  onClick={() => setShowFiltersMobile(v => !v)}
+                  aria-expanded={showFiltersMobile}
+                  aria-controls="dashboard-filters-extra"
+                >
+                  Filtros{extraFiltersCount > 0 ? ` (${extraFiltersCount})` : ''} {showFiltersMobile ? '▴' : '▾'}
+                </button>
+                <div id="dashboard-filters-extra" className={`filters-extra${showFiltersMobile ? ' filters-extra--open' : ''}`}>
+                  <select value={filters.tipo} onChange={e => updateFilters({ tipo: e.target.value })}>
+                    <option value="">Todos os tipos</option>
+                    <option value="receita">Receitas</option>
+                    <option value="despesa">Despesas</option>
                   </select>
-                )}
-                <input
-                  type="date"
-                  value={filters.data_inicio}
-                  onChange={e => updateFilters({ data_inicio: e.target.value })}
-                  title="Data início"
-                />
-                <input
-                  type="date"
-                  value={filters.data_fim}
-                  onChange={e => updateFilters({ data_fim: e.target.value })}
-                  title="Data fim"
-                />
+                  <select value={filters.categoria} onChange={e => updateFilters({ categoria: e.target.value })}>
+                    <option value="">Todas as categorias</option>
+                    {todasCategorias.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  {contas.length > 1 && (
+                    <select value={filters.conta} onChange={e => updateFilters({ conta: e.target.value })}>
+                      <option value="">Todas as contas</option>
+                      {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                    </select>
+                  )}
+                  <input
+                    type="date"
+                    value={filters.data_inicio}
+                    onChange={e => updateFilters({ data_inicio: e.target.value })}
+                    title="Data início"
+                  />
+                  <input
+                    type="date"
+                    value={filters.data_fim}
+                    onChange={e => updateFilters({ data_fim: e.target.value })}
+                    title="Data fim"
+                  />
+                </div>
                 {hasFilters && (
-                  <button className="btn btn-outline btn-sm" onClick={clearFilters}>
+                  <button className="btn btn-outline btn-sm filters-clear" onClick={clearFilters}>
                     Limpar filtros
                   </button>
                 )}
               </div>
             </div>
+            {temDiaComVarias && !loading && !error && (
+              <p className="transactions-hint">Dica: segure e arraste transações do mesmo dia para mudar a ordem.</p>
+            )}
 
             {loading ? (
               <SkeletonList rows={5} />
@@ -282,35 +327,22 @@ export default function Dashboard() {
                   onDelete={handleDelete}
                   onViewAnexo={(t) => setAnexoTransactionId(t.id)}
                   onViewHistorico={(t) => setHistoricoTransactionId(t.id)}
+                  onReorder={handleReorder}
                   hasFilters={hasFilters}
                   onCreateClick={() => setShowModal(true)}
                 />
-                {pagination.totalPages > 1 && (
-                  <div className="pagination">
-                    <button
-                      className="btn btn-sm btn-outline"
-                      disabled={page <= 1}
-                      onClick={() => setPage(p => p - 1)}
-                    >
-                      ← Anterior
-                    </button>
-                    <span className="pagination-info">
-                      Página {page} de {pagination.totalPages} · {pagination.total} transação(ões)
-                    </span>
-                    <button
-                      className="btn btn-sm btn-outline"
-                      disabled={page >= pagination.totalPages}
-                      onClick={() => setPage(p => p + 1)}
-                    >
-                      Próxima →
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  page={page}
+                  totalPages={pagination.totalPages}
+                  total={pagination.total}
+                  itemLabel={pagination.total === 1 ? 'transação' : 'transações'}
+                  onChange={handlePageChange}
+                />
               </>
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="dashboard-side">
             <div className="chart-section">
               <h3>Gastos por Categoria</h3>
               {loading ? <SkeletonChart /> : <ExpensePieChart data={despesasByCategory} emptyMessage="Nenhuma despesa registrada" />}

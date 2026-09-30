@@ -97,6 +97,10 @@ model Transacao {
   // Atualizado automaticamente pelo Prisma em todo update() — usado só pra sinalizar "editada"
   // na lista; o que mudou de fato fica no histórico (TransacaoHistorico).
   updatedAt     DateTime     @default(now()) @updatedAt
+  // Posição manual dentro do mesmo dia (maior = mais acima na lista) — definida quando o
+  // usuário arrasta transações do mesmo dia no Dashboard. Empates (ex: tudo 0, o default
+  // de transações antigas/importadas) caem no createdAt desc, a ordem de sempre.
+  ordem         Int          @default(0)
   usuario       Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   recorrenciaId Int?
   // SetNull (não Cascade): apagar a regra de recorrência não deve apagar o histórico

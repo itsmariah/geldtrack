@@ -37,7 +37,7 @@ describe('GET /api/familia', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       id: 1, nome: 'Família de Mariah', codigo: 'WM2BST',
-      membros: [{ id: 7, nome: 'Mariah', email: 'mariah@example.com', papel: 'dono' }],
+      membros: [{ id: 7, nome: 'Mariah', email: 'mariah@example.com', foto: null, papel: 'dono' }],
     });
   });
 });

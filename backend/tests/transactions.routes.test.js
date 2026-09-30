@@ -29,6 +29,8 @@ beforeEach(() => {
   vi.spyOn(prisma.orcamento, 'findUnique').mockResolvedValue(null);
   // eventoPertenceAFamilia: por padrão nenhum evento é enviado nos testes que não mencionam.
   vi.spyOn(prisma.evento, 'findFirst').mockResolvedValue({ id: 1, familiaId: 1 });
+  // POST (e PUT que muda a data) calcula a próxima "ordem" do dia — por padrão, dia vazio.
+  vi.spyOn(prisma.transacao, 'aggregate').mockResolvedValue({ _max: { ordem: null } });
 });
 
 // O disparo do aviso de orçamento é fire-and-forget (a rota não espera): dá um respiro
@@ -210,6 +212,60 @@ describe('POST /api/transactions', () => {
     await flushPromises();
 
     expect(orcamentoSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/transactions — ordem no dia', () => {
+  it('coloca a transação nova no topo do dia (maior ordem + 1)', async () => {
+    vi.spyOn(prisma.transacao, 'aggregate').mockResolvedValue({ _max: { ordem: 4 } });
+    const createSpy = vi.spyOn(prisma.transacao, 'create').mockResolvedValue({
+      id: 10, usuarioId: 7, tipo: 'receita', valor: new Prisma.Decimal('50.00'), categoria: 'Salário', descricao: '', data: '2026-08-10',
+    });
+
+    await request(app)
+      .post('/api/transactions')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tipo: 'receita', valor: 50, categoria: 'Salário', data: '2026-08-10', contaId: 1 });
+
+    expect(createSpy.mock.calls[0][0].data.ordem).toBe(5);
+  });
+});
+
+describe('PUT /api/transactions/reorder', () => {
+  it('rejeita data inválida (400)', async () => {
+    const res = await request(app)
+      .put('/api/transactions/reorder')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ data: 'ontem', ids: [1, 2] });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejeita id que não é do dia/família (400) e não atualiza nada', async () => {
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([{ id: 1 }, { id: 2 }]);
+    const updateSpy = vi.spyOn(prisma.transacao, 'update');
+
+    const res = await request(app)
+      .put('/api/transactions/reorder')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ data: '2026-08-10', ids: [2, 999] });
+
+    expect(res.status).toBe(400);
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+
+  it('busca o dia escopado pela família do token e renumera o dia inteiro', async () => {
+    const findSpy = vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([{ id: 1 }, { id: 2 }, { id: 3 }]);
+    const updateSpy = vi.spyOn(prisma.transacao, 'update').mockResolvedValue({});
+
+    const res = await request(app)
+      .put('/api/transactions/reorder')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ data: '2026-08-10', ids: [3, 1] });
+
+    expect(res.status).toBe(204);
+    expect(findSpy.mock.calls[0][0].where).toEqual({ familiaId: 1, data: '2026-08-10' });
+    // [1, 2, 3] com 3 e 1 trocados de lugar -> [3, 2, 1]; topo recebe a maior ordem.
+    expect(updateSpy.mock.calls.map(c => [c[0].where.id, c[0].data.ordem])).toEqual([[3, 3], [2, 2], [1, 1]]);
   });
 });
 

@@ -3,7 +3,7 @@ function serializeFamilia(familia) {
     id: familia.id,
     nome: familia.nome,
     codigo: familia.codigo,
-    membros: familia.membros.map(m => ({ id: m.id, nome: m.nome, email: m.email, papel: m.papelFamilia })),
+    membros: familia.membros.map(m => ({ id: m.id, nome: m.nome, email: m.email, foto: m.foto ?? null, papel: m.papelFamilia })),
   };
 }
 

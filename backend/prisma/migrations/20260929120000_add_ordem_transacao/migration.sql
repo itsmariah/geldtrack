@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Transacao" ADD COLUMN "ordem" INTEGER NOT NULL DEFAULT 0;

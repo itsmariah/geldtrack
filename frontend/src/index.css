@@ -53,6 +53,8 @@ body {
   color: var(--text);
   min-height: 100vh;
   line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── TIPOGRAFIA DE DESTAQUE ── */
@@ -130,7 +132,26 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .alert-with-action { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
 /* ── PAGINATION ── */
-.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; }
+.pagination { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 20px; }
+.pagination-pages { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; }
+.pagination-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.pagination-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary-light); }
+.pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination-btn--active,
+.pagination-btn--active:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: #fff; }
+.pagination-gap { min-width: 20px; text-align: center; color: var(--text-muted); }
 .pagination-info { font-size: 13px; color: var(--text-muted); }
 
 /* ── TOAST ── */
@@ -376,7 +397,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .footer-credits a:hover { color: var(--primary); }
 
 /* ── APP LAYOUT ── */
-.app-layout { display: flex; flex-direction: column; min-height: 100vh; }
+.app-layout { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
 .main-content { flex: 1; padding: 28px 32px; max-width: 1200px; width: 100%; margin: 0 auto; }
 
 /* ── NAVBAR ── */
@@ -422,13 +443,34 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   .navbar-brand-text { transition: none; }
 }
 .navbar-nav { display: flex; gap: 4px; }
+/* Botão de menu e "Sair" dentro do menu só existem no layout recolhido (ver RESPONSIVE). */
+.navbar-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+}
+.navbar-menu-btn:hover { border-color: var(--primary); }
+.navbar-nav-logout { display: none; }
+.navbar-backdrop { display: none; }
 .navbar-nav a { padding: 6px 14px; border-radius: 8px; font-size: 14px; color: var(--text-muted); font-weight: 500; transition: all 0.2s; }
 .navbar-nav a:hover, .navbar-nav a.active { background: var(--bg3); color: var(--text); }
 .navbar-user { display: flex; align-items: center; gap: 12px; }
 .user-btn { display: flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; color: var(--text); cursor: pointer; font-size: 14px; transition: border-color 0.2s; }
 .user-btn:hover { border-color: var(--primary); }
-.avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; overflow: hidden; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; overflow: hidden; flex-shrink: 0; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar--xs { width: 20px; height: 20px; font-size: 10px; }
+.avatar--lg { width: 40px; height: 40px; font-size: 16px; }
+/* Linha de texto com avatares no meio ("[foto] Ana deve R$ 10 a [foto] Beto"). */
+.grupo-pessoas { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
 
 /* ── THEME TOGGLE ── */
 .theme-toggle {
@@ -467,8 +509,10 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .profile-photo-actions { display: flex; gap: 8px; }
 
 /* ── DASHBOARD ── */
-.dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.dashboard-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
 .dashboard-header h2 { font-size: 22px; }
+.header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.dashboard-side { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 
 /* ── SUMMARY CARDS ── */
 .summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
@@ -553,11 +597,26 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   cursor: pointer;
 }
 .filters input[type="search"] { cursor: text; min-width: 220px; flex: 1 1 220px; }
+/* No desktop o wrapper "some" e os filtros ficam em linha como sempre; no celular vira
+   um bloco recolhível aberto pelo botão .filters-toggle. */
+.filters-extra { display: contents; }
+.filters-toggle { display: none; }
 .filters select:focus,
 .filters input:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
 
 /* ── TRANSACTION LIST ── */
 .transaction-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.transactions-hint { font-size: 12px; color: var(--text-muted); margin: -8px 0 16px; }
+.transaction-days { display: flex; flex-direction: column; gap: 18px; }
+.transaction-day-header {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+}
 .transaction-item {
   display: flex;
   align-items: center;
@@ -569,6 +628,30 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   transition: border-color 0.2s;
 }
 .transaction-item:hover { border-color: var(--border); }
+.transaction-item--sortable { cursor: grab; touch-action: manipulation; position: relative; }
+.transaction-item--sortable:active { cursor: grabbing; }
+.transaction-item--dragging {
+  z-index: 2;
+  cursor: grabbing;
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+  /* Sem isso o texto é selecionado junto enquanto arrasta com o mouse. */
+  user-select: none;
+}
+.tx-grip {
+  flex-shrink: 0;
+  width: 10px;
+  margin-right: -4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: -3px;
+  line-height: 1;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+  user-select: none;
+}
+.transaction-item--sortable:hover .tx-grip,
+.transaction-item--dragging .tx-grip { opacity: 0.9; }
 .tx-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
 .transaction-item.receita .tx-icon { background: rgba(34,197,94,0.15); color: var(--green); }
 .transaction-item.despesa .tx-icon { background: rgba(239,68,68,0.15); color: var(--red); }
@@ -998,6 +1081,40 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
 /* ── RESPONSIVE ── */
+/* Dispositivos de toque não têm hover de verdade — o "levantar" do card no hover ficava
+   preso depois do toque até tocar em outro lugar. */
+@media (hover: none) {
+  .card:hover, .meta-card:hover, .budget-card:hover, .recurring-card:hover,
+  .conta-card:hover, .categoria-chip:hover, .feature-card:hover { transform: none; box-shadow: none; }
+  .btn-primary:hover:not(:disabled) { transform: none; }
+  /* Sem hover pra revelar a alça de arraste — deixa sempre visível. */
+  .tx-grip { opacity: 0.6; }
+}
+
+/* A navbar do app recolhe num menu bem antes do resto do layout: são 10 links em linha. */
+@media (max-width: 1180px) {
+  .navbar-menu-btn { display: flex; }
+  .navbar-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 4px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px 16px;
+    box-shadow: var(--shadow);
+    max-height: calc(100dvh - 64px);
+    overflow-y: auto;
+  }
+  .navbar-nav--open { display: grid; }
+  .navbar-nav a { padding: 12px 14px; font-size: 15px; }
+  .navbar-backdrop { display: block; position: fixed; inset: 64px 0 0 0; z-index: 1; background: rgba(0,0,0,0.35); }
+}
+
 @media (max-width: 900px) {
   .dashboard-grid { grid-template-columns: 1fr; }
   .reports-charts { grid-template-columns: 1fr; }
@@ -1010,11 +1127,115 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   .about, .download-section { grid-template-columns: 1fr; padding: 20px 20px 60px; gap: 32px; }
   .about .browser-frame, .download-section .browser-frame { order: -1; }
 }
+
 @media (max-width: 600px) {
-  .section-header { flex-direction: column; }
-  .filters { flex-direction: column; }
-  .filters select, .filters input { width: 100%; }
-  .dashboard-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  /* O iOS dá zoom automático ao focar qualquer campo com fonte menor que 16px. */
+  input, select, textarea { font-size: 16px !important; }
+
+  .main-content { padding: 16px 12px calc(24px + env(safe-area-inset-bottom)); }
+  .navbar { padding: 0 12px; gap: 8px; height: 56px; }
+  .navbar-backdrop { top: 56px; }
+  .navbar-nav { max-height: calc(100dvh - 56px); grid-template-columns: 1fr 1fr; padding: 12px; }
+  .navbar-brand { font-size: 16px; }
+  .navbar-user { gap: 8px; }
+  .user-btn { padding: 3px; border-radius: 50%; }
+  .user-btn .avatar { width: 30px; height: 30px; }
+  .user-btn-nome { display: none; }
+  .navbar-logout { display: none; }
+  .navbar-nav-logout { display: inline-flex; grid-column: 1 / -1; justify-content: center; margin-top: 8px; padding: 10px; }
+
+  .dashboard-header { flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 16px; }
+  .dashboard-header h2 { font-size: 20px; }
+  .header-actions { width: 100%; }
+  .header-actions .btn { flex: 1 1 auto; justify-content: center; padding: 10px 12px; }
+  /* Ação principal primeiro e ocupando a linha toda — é a mais usada no celular. */
+  .header-actions .btn-primary { order: -1; flex-basis: 100%; }
+  .header-actions .month-picker { flex: 1 1 100%; }
+
+  .summary-cards { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .summary-cards .card-balance, .card-por-moeda { grid-column: 1 / -1; }
+  .card { padding: 14px 16px; }
+  .card-label { font-size: 11px; margin-bottom: 4px; }
+  .card-value { font-size: 18px; overflow-wrap: anywhere; }
+  .card-balance .card-value { font-size: 24px; }
+  .por-moeda-linha { flex-wrap: wrap; gap: 4px 12px; }
+  .por-moeda-linha span { min-width: 0; }
+
+  .projection-card { padding: 14px 16px; margin-bottom: 16px; }
+  .projection-value { font-size: 20px; }
+  .insights-row { margin-bottom: 16px; }
+  .insight-card { flex-basis: 100%; }
+
+  .dashboard-grid { gap: 16px; }
+  .dashboard-side { gap: 16px; }
+  .transactions-section, .chart-section { padding: 16px 12px; }
+  .section-header { flex-direction: column; align-items: stretch; margin-bottom: 16px; }
+
+  .filters { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .filters input[type="search"] { min-width: 0; width: 100%; }
+  .filters-toggle { display: inline-flex; white-space: nowrap; }
+  .filters-extra { display: none; }
+  .filters-extra--open { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .filters-extra select, .filters-extra input { width: 100%; min-width: 0; }
+  .filters-clear { grid-column: 1 / -1; justify-content: center; }
+
+  /* Item de transação com valor em cima e ações embaixo, à direita — numa linha só a
+     descrição ficava espremida em poucos caracteres. */
+  .transaction-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "icon info amount" "icon info actions";
+    column-gap: 10px;
+    row-gap: 2px;
+    padding: 10px 12px;
+  }
+  .transaction-item--sortable {
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas: "grip icon info amount" "grip icon info actions";
+  }
+  .tx-grip { grid-area: grip; align-self: center; margin-right: 0; }
+  .tx-icon { grid-area: icon; align-self: center; width: 32px; height: 32px; font-size: 14px; }
+  .tx-info { grid-area: info; align-self: center; }
+  .tx-amount { grid-area: amount; justify-self: end; font-size: 14px; }
+  .tx-actions { grid-area: actions; justify-self: end; gap: 2px; }
+  .tx-desc-row { flex-wrap: wrap; row-gap: 2px; }
+  .tx-meta { display: block; line-height: 1.4; }
+  .btn-icon { padding: 6px 8px; font-size: 15px; }
+
+  .pagination-btn { min-width: 34px; height: 34px; padding: 0 6px; font-size: 13px; }
+
+  .goals-grid, .categoria-grid { grid-template-columns: 1fr; }
+  .familia-membro-item { padding: 10px 12px; gap: 10px; }
+  .familia-codigo-box > div:last-child { width: 100%; flex-wrap: wrap; }
+  .familia-codigo-box .btn { flex: 1 1 auto; justify-content: center; }
+  .grupo-saldo-item { flex-wrap: wrap; }
+  .grupo-despesa-item { padding: 12px; }
+
+  .reports-filters { padding: 12px; }
+  .filter-group { width: 100%; }
+  .filter-btn { flex: 1; padding: 8px 6px; }
+  .filter-select { min-width: 0; width: 100%; }
+
+  /* Modais viram "bottom sheet": colados embaixo, largura toda, rolagem interna. */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    max-width: none !important;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    max-height: 92vh;
+    max-height: 92dvh;
+    animation: sheet-in 0.2s ease-out;
+  }
+  .modal-header { margin-bottom: 16px; }
+  .modal-footer .btn { flex: 1; justify-content: center; }
+  .ofx-dropzone { padding: 32px 16px; }
+
+  .toast { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+
+  .auth-page { padding: 64px 16px 24px; }
+  .auth-card { padding: 28px 20px; border-radius: 16px; }
+  .back-link { top: 16px; left: 16px; }
+
   .mobile-menu-btn { display: flex; }
   .nav-links {
     display: none;
@@ -1034,4 +1255,11 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   .nav-link { display: block; padding: 10px 4px; }
   .nav-links .theme-toggle { align-self: flex-start; margin: 4px 0; }
   .nav-links .btn { width: 100%; justify-content: center; }
+}
+@keyframes sheet-in {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal { animation: none; }
 }

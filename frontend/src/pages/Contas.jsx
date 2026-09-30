@@ -151,7 +151,7 @@ export default function Contas() {
       <main className="main-content">
         <div className="dashboard-header">
           <h2>Contas</h2>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="header-actions">
             {contas.length > 1 && (
               <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
                 ⇄ Transferir
