@@ -3,6 +3,7 @@ import api from '../services/api'
 import { TIPOS_CONTA } from '../utils/contaTipos'
 import Modal from './Modal'
 import Alert from './Alert'
+import { X } from 'lucide-react'
 
 // instituicoes: as já usadas em outras contas da família, sugeridas no campo pra ninguém
 // criar "Wise" e "wise " como grupos separados sem querer.
@@ -47,7 +48,7 @@ export default function ContaModal({ conta, instituicoes = [], onClose, onSaved 
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>{conta ? 'Editar Conta' : 'Nova Conta'}</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

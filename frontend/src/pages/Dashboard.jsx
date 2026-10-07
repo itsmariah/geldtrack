@@ -16,6 +16,7 @@ import Pagination from '../components/Pagination'
 import Alert from '../components/Alert'
 import { SkeletonCards, SkeletonList, SkeletonChart } from '../components/Skeleton'
 import { useCategorias } from '../context/CategoriasContext'
+import { ChevronDown, Download } from 'lucide-react'
 
 // 20 por página: a lista cresce todo dia e, no celular, 50 itens de uma vez já é uma
 // rolagem longa — a paginação numerada deixa pular direto pra qualquer página.
@@ -229,7 +230,7 @@ export default function Dashboard() {
           <h2>Olá, {user?.nome?.split(' ')[0]} 👋</h2>
           <div className="header-actions">
             <button className="btn btn-outline" onClick={handleExportCsv} disabled={exporting}>
-              {exporting ? 'Exportando...' : '↓ Exportar CSV'}
+              <Download size={16} /> {exporting ? 'Exportando...' : 'Exportar CSV'}
             </button>
             <button className="btn btn-outline" onClick={() => setShowOFXModal(true)} disabled={contas.length === 0}>
               ↓ Importar OFX
@@ -275,7 +276,7 @@ export default function Dashboard() {
                   aria-expanded={showFiltersMobile}
                   aria-controls="dashboard-filters-extra"
                 >
-                  Filtros{extraFiltersCount > 0 ? ` (${extraFiltersCount})` : ''} {showFiltersMobile ? '▴' : '▾'}
+                  Filtros{extraFiltersCount > 0 ? ` (${extraFiltersCount})` : ''} <ChevronDown size={16} className={`icon-chevron${showFiltersMobile ? ' icon-chevron--open' : ''}`} />
                 </button>
                 <div id="dashboard-filters-extra" className={`filters-extra${showFiltersMobile ? ' filters-extra--open' : ''}`}>
                   <select value={filters.tipo} onChange={e => updateFilters({ tipo: e.target.value })}>

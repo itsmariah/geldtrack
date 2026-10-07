@@ -3,6 +3,7 @@ import api from '../services/api'
 import { useCategorias } from '../context/CategoriasContext'
 import Modal from './Modal'
 import Alert from './Alert'
+import { X } from 'lucide-react'
 
 // new Date().toISOString() é UTC — perto da meia-noite no Brasil (UTC-3) isso adianta
 // a data em um dia. Aqui montamos a data local manualmente para evitar esse desvio.
@@ -52,7 +53,7 @@ export default function RecurringModal({ recorrencia, contas, onClose, onSaved }
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>{recorrencia ? 'Editar Recorrência' : 'Nova Recorrência'}</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

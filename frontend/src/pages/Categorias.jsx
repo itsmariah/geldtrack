@@ -7,6 +7,7 @@ import CategoriaChip from '../components/CategoriaChip'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
+import { Plus } from 'lucide-react'
 
 export default function Categorias() {
   const { categorias, loading, refetch } = useCategorias()
@@ -79,7 +80,7 @@ export default function Categorias() {
             <div className="transactions-section" style={{ marginBottom: 24 }}>
               <div className="section-header">
                 <h3>↓ Despesas</h3>
-                <button className="btn btn-outline btn-sm" onClick={() => abrirNovaCategoria('despesa')}>+ Adicionar</button>
+                <button className="btn btn-outline btn-sm" onClick={() => abrirNovaCategoria('despesa')}><Plus size={16} /> Adicionar</button>
               </div>
               {despesas.length === 0 ? (
                 <p style={{ color: 'var(--text-muted)' }}>Nenhuma categoria de despesa ainda.</p>
@@ -95,7 +96,7 @@ export default function Categorias() {
             <div className="transactions-section">
               <div className="section-header">
                 <h3>↑ Receitas</h3>
-                <button className="btn btn-outline btn-sm" onClick={() => abrirNovaCategoria('receita')}>+ Adicionar</button>
+                <button className="btn btn-outline btn-sm" onClick={() => abrirNovaCategoria('receita')}><Plus size={16} /> Adicionar</button>
               </div>
               {receitas.length === 0 ? (
                 <p style={{ color: 'var(--text-muted)' }}>Nenhuma categoria de receita ainda.</p>

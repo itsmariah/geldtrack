@@ -10,6 +10,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
 import { fmt, fmtDate } from '../utils/format'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const PAGE_SIZE = 50
 
@@ -138,7 +139,7 @@ export default function EventoDetalhe() {
       <main className="main-content">
         <div className="dashboard-header">
           <div>
-            <Link to="/eventos" className="btn-link">← Voltar pra Eventos</Link>
+            <Link to="/eventos" className="btn-link"><ArrowLeft size={16} /> Voltar pra Eventos</Link>
             <h2 style={{ marginTop: 6 }}>
               {evento.nome} <span className={`evento-badge evento-badge--${evento.status}`}>{encerrado ? 'Encerrado' : 'Ativo'}</span>
             </h2>
@@ -191,9 +192,9 @@ export default function EventoDetalhe() {
 
         {pagination.totalPages > 1 && (
           <div className="pagination">
-            <button className="btn btn-sm btn-outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Anterior</button>
+            <button className="btn btn-sm btn-outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={16} /> Anterior</button>
             <span className="pagination-info">Página {page} de {pagination.totalPages} · {pagination.total} transação(ões)</span>
-            <button className="btn btn-sm btn-outline" disabled={page >= pagination.totalPages} onClick={() => setPage(p => p + 1)}>Próxima →</button>
+            <button className="btn btn-sm btn-outline" disabled={page >= pagination.totalPages} onClick={() => setPage(p => p + 1)}>Próxima <ChevronRight size={16} /></button>
           </div>
         )}
       </main>

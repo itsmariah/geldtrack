@@ -3,6 +3,7 @@ import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
 import EventoSelect, { useEventoSelecao } from './EventoSelect'
+import { X } from 'lucide-react'
 
 // "Vincular ao evento": põe num evento, de uma vez, tudo o que o usuário já levou deste grupo
 // pro dashboard (despesas e receitas) — pra quando o evento foi criado depois da importação.
@@ -35,7 +36,7 @@ export default function VincularEventoModal({ grupoId, nomeGrupo, eventosNoDashb
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>Vincular ao evento</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

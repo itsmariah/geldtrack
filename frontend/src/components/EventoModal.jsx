@@ -2,6 +2,7 @@ import { useState } from 'react'
 import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
+import { X } from 'lucide-react'
 
 export default function EventoModal({ evento, onClose, onSaved }) {
   const [form, setForm] = useState({
@@ -41,7 +42,7 @@ export default function EventoModal({ evento, onClose, onSaved }) {
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>{evento ? 'Editar Evento' : 'Novo Evento'}</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

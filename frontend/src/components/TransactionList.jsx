@@ -10,6 +10,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { fmt, fmtDate, fmtDayHeader, descreverConversao } from '../utils/format'
 import { useAuth } from '../context/AuthContext'
 import { useSortSensors, listenersSemTeclaDosFilhos } from '../hooks/useSortSensors'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, GripVertical, History, Paperclip, Pencil, Repeat, Tag, Trash2 } from 'lucide-react'
 
 // updatedAt e createdAt vêm do mesmo INSERT (mesmo now() do Postgres), mas usamos uma
 // margem pra não depender de igualdade exata de timestamp entre as duas colunas.
@@ -43,16 +44,16 @@ function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHist
       {...attributes}
       {...listeners}
     >
-      {sortable && <span className="tx-grip" aria-hidden="true">⋮⋮</span>}
-      <div className="tx-icon">{t.tipo === 'receita' ? '↑' : '↓'}</div>
+      {sortable && <span className="tx-grip" aria-hidden="true"><GripVertical size={16} /></span>}
+      <div className="tx-icon">{t.tipo === 'receita' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}</div>
       <div className="tx-info">
         <span className="tx-desc-row">
           <span className="tx-desc">
-            {t.recorrenciaId && <span title="Gerada automaticamente por uma recorrência">🔁 </span>}
+            {t.recorrenciaId && <span className="tx-desc-icon" title="Gerada automaticamente por uma recorrência"><Repeat size={13} aria-label="Recorrente" /></span>}
             {t.descricao || t.categoria}
           </span>
           {t.evento?.nome && (
-            <span className="tx-evento-chip" title={t.evento.nome}>🏷️ {t.evento.nome}</span>
+            <span className="tx-evento-chip" title={t.evento.nome}><Tag size={11} /> {t.evento.nome}</span>
           )}
           {t.anexoNome && (
             <button
@@ -61,7 +62,7 @@ function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHist
               onClick={() => onViewAnexo(t)}
               title={`Ver comprovante: ${t.anexoNome}`}
             >
-              📎
+              <Paperclip size={14} aria-label="Comprovante" />
             </button>
           )}
           {foiEditada(t) && (
@@ -71,7 +72,7 @@ function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHist
               onClick={() => onViewHistorico(t)}
               title="Ver histórico de edições"
             >
-              🕓
+              <History size={14} aria-label="Histórico de edições" />
             </button>
           )}
         </span>
@@ -83,7 +84,7 @@ function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHist
         </span>
         {t.moedaOriginal && (
           <span className="tx-meta tx-conversao">
-            💱 {descreverConversao({ ...t, moeda: t.conta?.moeda || 'BRL' })}
+            <ArrowLeftRight size={12} /> {descreverConversao({ ...t, moeda: t.conta?.moeda || 'BRL' })}
           </span>
         )}
       </div>
@@ -91,8 +92,8 @@ function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHist
         {t.tipo === 'receita' ? '+' : '-'}{fmt(t.valor, t.conta?.moeda)}
       </div>
       <div className="tx-actions">
-        <button className="btn-icon" onClick={() => onEdit(t)} title="Editar" aria-label="Editar">✏️</button>
-        <button className="btn-icon btn-danger" onClick={() => onDelete(t.id)} title="Excluir" aria-label="Excluir">🗑️</button>
+        <button className="btn-icon" onClick={() => onEdit(t)} title="Editar" aria-label="Editar"><Pencil size={16} /></button>
+        <button className="btn-icon btn-danger" onClick={() => onDelete(t.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
       </div>
     </li>
   )

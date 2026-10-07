@@ -3,6 +3,7 @@ import api from '../services/api'
 import { fmt } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
+import { X } from 'lucide-react'
 
 function todayLocal() {
   const now = new Date()
@@ -75,7 +76,7 @@ export default function TransferModal({ contas, onClose, onSaved }) {
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>Nova Transferência</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

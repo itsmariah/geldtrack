@@ -8,6 +8,7 @@ import { salvarOrdem } from '../utils/salvarOrdem'
 import GrupoCard from '../components/GrupoCard'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
+import { Plus } from 'lucide-react'
 
 export default function Grupos() {
   const navigate = useNavigate()
@@ -77,7 +78,7 @@ export default function Grupos() {
       <main className="main-content">
         <div className="dashboard-header">
           <h2>Grupos</h2>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Novo grupo</button>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={16} /> Novo grupo</button>
         </div>
 
         {error && (

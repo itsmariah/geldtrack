@@ -1,3 +1,5 @@
+import { ArrowLeft } from 'lucide-react'
+
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -35,7 +37,7 @@ export default function Register() {
 
   return (
     <div className="auth-page">
-      <Link to="/" className="back-link">← Voltar para o início</Link>
+      <Link to="/" className="back-link"><ArrowLeft size={16} /> Voltar para o início</Link>
       <div className="auth-card">
         <h1>💰 GeldTrack</h1>
         <h2>Criar conta grátis</h2>

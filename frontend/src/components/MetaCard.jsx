@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { fmt, fmtDate } from '../utils/format'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 
 export default function MetaCard({ meta, onEdit, onDelete, onAddAporte, onDeleteAporte }) {
   const [showHistory, setShowHistory] = useState(false)
@@ -11,8 +12,8 @@ export default function MetaCard({ meta, onEdit, onDelete, onAddAporte, onDelete
       <div className="meta-card-header">
         <h3>{meta.titulo}</h3>
         <div className="tx-actions">
-          <button className="btn-icon" onClick={() => onEdit(meta)} title="Editar">✏️</button>
-          <button className="btn-icon btn-danger" onClick={() => onDelete(meta.id)} title="Excluir">🗑️</button>
+          <button className="btn-icon" onClick={() => onEdit(meta)} title="Editar" aria-label="Editar"><Pencil size={16} /></button>
+          <button className="btn-icon btn-danger" onClick={() => onDelete(meta.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
         </div>
       </div>
 
@@ -33,7 +34,7 @@ export default function MetaCard({ meta, onEdit, onDelete, onAddAporte, onDelete
       </div>
 
       <div className="meta-card-actions">
-        <button className="btn btn-outline btn-sm" onClick={() => onAddAporte(meta)}>+ Aporte</button>
+        <button className="btn btn-outline btn-sm" onClick={() => onAddAporte(meta)}><Plus size={16} /> Aporte</button>
         {meta.aportes.length > 0 && (
           <button type="button" className="btn-link" onClick={() => setShowHistory(s => !s)}>
             {showHistory ? 'Ocultar histórico' : `Ver histórico (${meta.aportes.length})`}
@@ -47,7 +48,7 @@ export default function MetaCard({ meta, onEdit, onDelete, onAddAporte, onDelete
             <li key={a.id}>
               <span className="meta-aporte-info">{fmtDate(a.data)}{a.descricao ? ` · ${a.descricao}` : ''}</span>
               <span className="meta-aporte-valor">+{fmt(a.valor)}</span>
-              <button className="btn-icon btn-danger" onClick={() => onDeleteAporte(meta, a.id)} title="Remover aporte">🗑️</button>
+              <button className="btn-icon btn-danger" onClick={() => onDeleteAporte(meta, a.id)} title="Remover aporte" aria-label="Remover aporte"><Trash2 size={16} /></button>
             </li>
           ))}
         </ul>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
+import { X } from 'lucide-react'
 
 export default function MetaModal({ meta, onClose, onSaved }) {
   const [form, setForm] = useState({
@@ -35,7 +36,7 @@ export default function MetaModal({ meta, onClose, onSaved }) {
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>{meta ? 'Editar Meta' : 'Nova Meta'}</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

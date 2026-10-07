@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { PluggyConnect } from 'react-pluggy-connect'
 import api from '../services/api'
 import Alert from './Alert'
+import { X } from 'lucide-react'
 
 const POLL_INTERVAL_MS = 3000
 const POLL_MAX_TENTATIVAS = 40 // ~2 minutos, tempo recomendado pela Pluggy pra sincronização inicial
@@ -76,7 +77,7 @@ export default function ConectarBancoModal({ onClose, onConnected }) {
         <div className="modal" onClick={e => e.stopPropagation()}>
           <div className="modal-header">
             <h3>Conectar banco</h3>
-            <button className="modal-close" onClick={onClose}>✕</button>
+            <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
           </div>
           <Alert type="error">{error}</Alert>
           <div className="modal-footer">

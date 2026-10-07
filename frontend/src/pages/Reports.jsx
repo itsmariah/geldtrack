@@ -13,6 +13,7 @@ import { useTheme } from '../context/ThemeContext'
 import { getChartTheme } from '../utils/chartTheme'
 import { SkeletonCards, SkeletonList, SkeletonChart } from '../components/Skeleton'
 import Alert from '../components/Alert'
+import { ArrowDownLeft, ArrowUpRight, FileDown, Repeat } from 'lucide-react'
 
 // new Date().toISOString() é UTC — perto da virada do mês no Brasil (UTC-3) isso pode
 // adiantar o mês padrão exibido. Aqui montamos o mês local manualmente para evitar isso.
@@ -166,7 +167,7 @@ export default function Reports() {
               className="month-picker"
             />
             <button className="btn btn-outline" onClick={handleDownloadPdf} disabled={generatingPdf || loading || !report}>
-              {generatingPdf ? 'Gerando PDF...' : '📄 Baixar PDF'}
+              <FileDown size={16} /> {generatingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
             </button>
           </div>
         </div>
@@ -330,10 +331,10 @@ export default function Reports() {
                 <ul className="transaction-list">
                   {filtered.map(t => (
                     <li key={t.id} className={`transaction-item ${t.tipo}`}>
-                      <div className="tx-icon">{t.tipo === 'receita' ? '↑' : '↓'}</div>
+                      <div className="tx-icon">{t.tipo === 'receita' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}</div>
                       <div className="tx-info">
                         <span className="tx-desc">
-                          {t.recorrenciaId && <span title="Gerada automaticamente por uma recorrência">🔁 </span>}
+                          {t.recorrenciaId && <span className="tx-desc-icon" title="Gerada automaticamente por uma recorrência"><Repeat size={13} aria-label="Recorrente" /></span>}
                           {t.descricao || t.categoria}
                         </span>
                         <span className="tx-meta">

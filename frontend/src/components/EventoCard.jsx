@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { fmt, fmtDate } from '../utils/format'
+import { Pencil, Trash2 } from 'lucide-react'
 
 function progressLevel(percentual, estourado) {
   if (estourado) return 'over'
@@ -35,8 +36,8 @@ export default function EventoCard({ evento, onEdit, onDelete, onToggleStatus })
           </div>
         </div>
         <div className="tx-actions">
-          <button className="btn-icon" onClick={stop(() => onEdit(evento))} title="Editar">✏️</button>
-          <button className="btn-icon btn-danger" onClick={stop(() => onDelete(evento.id))} title="Excluir">🗑️</button>
+          <button className="btn-icon" onClick={stop(() => onEdit(evento))} title="Editar" aria-label="Editar"><Pencil size={16} /></button>
+          <button className="btn-icon btn-danger" onClick={stop(() => onDelete(evento.id))} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
         </div>
       </div>
 

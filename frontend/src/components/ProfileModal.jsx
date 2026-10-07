@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+
 import { useState, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { resizeImage } from '../utils/resizeImage'
@@ -82,7 +84,7 @@ export default function ProfileModal({ onClose }) {
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>Editar Perfil</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
         {error && <Alert type="error">{error}</Alert>}

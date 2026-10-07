@@ -1,3 +1,5 @@
+import { Paperclip, X } from 'lucide-react'
+
 import { useState, useEffect, useRef } from 'react'
 import api from '../services/api'
 import { useCategorias } from '../context/CategoriasContext'
@@ -120,7 +122,7 @@ export default function TransactionModal({ transaction, contas, eventos = [], de
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>{transaction ? 'Editar Transação' : 'Nova Transação'}</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
         {error && <Alert type="error">{error}</Alert>}
@@ -243,7 +245,7 @@ export default function TransactionModal({ transaction, contas, eventos = [], de
             {anexoError && <Alert type="error">{anexoError}</Alert>}
             {anexoNomeExibido ? (
               <div className="anexo-field">
-                <span className="anexo-field-nome" title={anexoNomeExibido}>📎 {anexoNomeExibido}</span>
+                <span className="anexo-field-nome" title={anexoNomeExibido}><Paperclip size={14} /> {anexoNomeExibido}</span>
                 <div className="anexo-field-actions">
                   {podeVerAnexoAtual && (
                     <button type="button" className="btn btn-sm btn-outline" onClick={() => setShowAnexoViewer(true)}>Ver</button>

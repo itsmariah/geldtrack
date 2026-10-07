@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import ProfileModal from './ProfileModal'
 import ThemeToggle from './ThemeToggle'
 import Avatar from './Avatar'
+import { Menu, X } from 'lucide-react'
 
 const LINKS = [
   ['/dashboard', 'Dashboard'],
@@ -66,7 +67,7 @@ export default function Navbar() {
           aria-expanded={menuOpen}
           aria-controls="app-nav"
         >
-          {menuOpen ? '✕' : '☰'}
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 

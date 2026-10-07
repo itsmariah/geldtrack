@@ -1,4 +1,5 @@
 import { fmtDate } from '../utils/format'
+import { Trash2 } from 'lucide-react'
 
 const STATUS_INFO = {
   UPDATED: { label: 'Conectado', tom: 'ativa' },
@@ -15,7 +16,7 @@ export default function ConexaoBancariaCard({ conexao, onSincronizar, onDelete, 
       <div className="meta-card-header">
         <h3>🏦 {conexao.nomeConector}</h3>
         <div className="tx-actions">
-          <button className="btn-icon btn-danger" onClick={() => onDelete(conexao)} title="Remover conexão">🗑️</button>
+          <button className="btn-icon btn-danger" onClick={() => onDelete(conexao)} title="Remover conexão" aria-label="Remover conexão"><Trash2 size={16} /></button>
         </div>
       </div>
 

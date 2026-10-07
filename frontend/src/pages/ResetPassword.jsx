@@ -1,3 +1,5 @@
+import { ArrowLeft } from 'lucide-react'
+
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
@@ -33,7 +35,7 @@ export default function ResetPassword() {
 
   return (
     <div className="auth-page">
-      <Link to="/" className="back-link">← Voltar para o início</Link>
+      <Link to="/" className="back-link"><ArrowLeft size={16} /> Voltar para o início</Link>
       <div className="auth-card">
         <h1>💰 GeldTrack</h1>
         <h2>Criar nova senha</h2>

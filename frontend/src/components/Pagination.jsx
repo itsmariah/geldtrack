@@ -1,4 +1,5 @@
 import { pageItems } from '../utils/pageItems'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function Pagination({ page, totalPages, total, itemLabel = 'item(ns)', onChange }) {
   if (totalPages <= 1) return null
@@ -13,7 +14,7 @@ export default function Pagination({ page, totalPages, total, itemLabel = 'item(
           onClick={() => onChange(page - 1)}
           aria-label="Página anterior"
         >
-          ‹
+          <ChevronLeft size={18} />
         </button>
         {pageItems(page, totalPages).map((p, i) => (
           p === '…' ? (
@@ -38,7 +39,7 @@ export default function Pagination({ page, totalPages, total, itemLabel = 'item(
           onClick={() => onChange(page + 1)}
           aria-label="Próxima página"
         >
-          ›
+          <ChevronRight size={18} />
         </button>
       </div>
       {total !== undefined && <span className="pagination-info">{total} {itemLabel}</span>}

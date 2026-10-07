@@ -6,6 +6,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import Avatar from '../components/Avatar'
 import { SkeletonList } from '../components/Skeleton'
+import { Trash2 } from 'lucide-react'
 
 export default function Familia() {
   const { user, refreshUser } = useAuth()
@@ -231,7 +232,7 @@ export default function Familia() {
                       {m.papel === 'dono' ? 'Dono' : 'Membro'}
                     </span>
                     {souDono && m.id !== user?.id && (
-                      <button className="btn-icon btn-danger" title="Remover da família" onClick={() => setRemovendoMembro(m)}>🗑️</button>
+                      <button className="btn-icon btn-danger" title="Remover da família" aria-label="Remover da família" onClick={() => setRemovendoMembro(m)}><Trash2 size={16} /></button>
                     )}
                   </li>
                 ))}

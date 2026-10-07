@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { readOFXFile, parseOFX } from '../utils/ofxParser'
@@ -89,7 +91,7 @@ export default function OFXImportModal({ contas, onClose, onImported }) {
     <Modal onClose={onClose} wide>
       <div className="modal-header">
         <h3>Importar OFX</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
         {error && <Alert type="error">{error}</Alert>}

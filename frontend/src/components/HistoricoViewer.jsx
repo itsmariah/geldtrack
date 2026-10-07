@@ -3,6 +3,7 @@ import api from '../services/api'
 import { fmt, fmtDate } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
+import { X } from 'lucide-react'
 
 const CAMPO_LABELS = {
   tipo: 'Tipo',
@@ -44,7 +45,7 @@ export default function HistoricoViewer({ transactionId, contas, onClose }) {
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>Histórico de edições</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

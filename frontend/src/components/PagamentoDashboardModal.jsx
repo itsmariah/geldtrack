@@ -5,6 +5,7 @@ import { fmt, fmtDate, descreverConversao } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
 import EventoSelect, { useEventoSelecao } from './EventoSelect'
+import { X } from 'lucide-react'
 
 // Mesmo arredondamento do backend (utils/currency.js): centavos exatos, nunca zero.
 const converterValor = (valor, taxa) => Math.max(0.01, Math.round(valor * taxa * 100) / 100)
@@ -82,7 +83,7 @@ export default function PagamentoDashboardModal({ grupoId, pagamento, nomeQuemPa
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>Adicionar pagamento ao dashboard</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

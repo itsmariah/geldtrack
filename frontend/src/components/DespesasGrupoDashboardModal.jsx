@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { useCategorias } from '../context/CategoriasContext'
@@ -114,7 +116,7 @@ export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas,
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>Adicionar despesas ao dashboard</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

@@ -1,4 +1,5 @@
 import { fmt } from '../utils/format'
+import { Pencil, Trash2 } from 'lucide-react'
 
 function progressLevel(percentual, estourado) {
   if (estourado) return 'over'
@@ -15,8 +16,8 @@ export default function BudgetCard({ orcamento, onEdit, onDelete }) {
       <div className="meta-card-header">
         <h3>{orcamento.categoria}</h3>
         <div className="tx-actions">
-          <button className="btn-icon" onClick={() => onEdit(orcamento)} title="Editar">✏️</button>
-          <button className="btn-icon btn-danger" onClick={() => onDelete(orcamento.id)} title="Excluir">🗑️</button>
+          <button className="btn-icon" onClick={() => onEdit(orcamento)} title="Editar" aria-label="Editar"><Pencil size={16} /></button>
+          <button className="btn-icon btn-danger" onClick={() => onDelete(orcamento.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
         </div>
       </div>
 

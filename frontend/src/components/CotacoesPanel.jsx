@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { fmt } from '../utils/format'
+import { RefreshCw } from 'lucide-react'
 
 // Só faz sentido mostrar esse painel pra quem tem conta em moeda estrangeira —
 // pra quem só usa BRL, cotação de câmbio não é informação relevante.
@@ -38,7 +39,7 @@ export default function CotacoesPanel({ contas }) {
       <div className="section-header">
         <h3>Cotações</h3>
         <button className="btn btn-sm btn-outline" onClick={handleAtualizar} disabled={atualizando}>
-          {atualizando ? 'Atualizando...' : '🔄 Atualizar cotações'}
+          <RefreshCw size={16} className={atualizando ? 'icon-spin' : ''} /> {atualizando ? 'Atualizando...' : 'Atualizar cotações'}
         </button>
       </div>
       {error && <p className="form-hint" style={{ color: 'var(--danger)' }}>{error}</p>}

@@ -1,3 +1,5 @@
+import { ArrowUp, Download, Menu, X } from 'lucide-react'
+
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -49,7 +51,7 @@ export default function Landing() {
           aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
           aria-expanded={mobileMenuOpen}
         >
-          {mobileMenuOpen ? '✕' : '☰'}
+          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
 
         <div className={`nav-links${mobileMenuOpen ? ' nav-links--open' : ''}`}>
@@ -67,7 +69,7 @@ export default function Landing() {
         <p>Registre receitas e despesas, sincronize com seu banco, acompanhe insights automáticos e compartilhe a carteira com sua família — na web, no desktop ou instalado no celular.</p>
         <div className="hero-actions">
           <Link to="/cadastro" className="btn btn-primary btn-lg">Usar a versão web</Link>
-          {!isDesktopApp && <a href="#desktop" className="btn btn-outline btn-lg">⬇ Baixar para desktop</a>}
+          {!isDesktopApp && <a href="#desktop" className="btn btn-outline btn-lg"><Download size={18} /> Baixar para desktop</a>}
         </div>
       </section>
 
@@ -281,7 +283,7 @@ export default function Landing() {
                 rel="noopener noreferrer"
                 className="btn btn-primary btn-lg"
               >
-                ⬇ Baixar instalador
+                <Download size={18} /> Baixar instalador
               </a>
               {canInstall && (
                 <button type="button" className="btn btn-outline btn-lg" onClick={promptInstall}>
@@ -313,7 +315,7 @@ export default function Landing() {
           className="back-to-top"
           aria-label="Voltar ao início"
         >
-          ↑
+          <ArrowUp size={20} />
         </button>
       )}
     </div>

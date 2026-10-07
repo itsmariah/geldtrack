@@ -3,6 +3,7 @@ import api from '../services/api'
 import { useCategorias } from '../context/CategoriasContext'
 import Modal from './Modal'
 import Alert from './Alert'
+import { X } from 'lucide-react'
 
 export default function BudgetModal({ orcamento, existingCategorias, onClose, onSaved }) {
   const { categoriasDespesa } = useCategorias()
@@ -38,7 +39,7 @@ export default function BudgetModal({ orcamento, existingCategorias, onClose, on
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>{orcamento ? 'Editar Orçamento' : 'Novo Orçamento'}</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

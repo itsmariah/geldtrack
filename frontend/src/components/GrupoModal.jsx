@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+
 import { useState } from 'react'
 import api from '../services/api'
 import Modal from './Modal'
@@ -31,7 +33,7 @@ export default function GrupoModal({ grupo, onClose, onSaved }) {
     <Modal onClose={onClose}>
       <div className="modal-header">
         <h3>{grupo ? 'Editar Grupo' : 'Novo Grupo'}</h3>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}

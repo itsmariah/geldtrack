@@ -15,6 +15,7 @@ import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
 import { fmt, fmtDate } from '../utils/format'
 import { agruparContasPorInstituicao, totalDoGrupo, instituicoesUsadas } from '../utils/agruparContas'
+import { ArrowLeftRight, Trash2 } from 'lucide-react'
 
 export default function Contas() {
   const [contas, setContas] = useState([])
@@ -182,7 +183,7 @@ export default function Contas() {
           <div className="header-actions">
             {contas.length > 1 && (
               <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
-                ⇄ Transferir
+                <ArrowLeftRight size={16} /> Transferir
               </button>
             )}
             <button className="btn btn-outline" onClick={() => setShowConectarBanco(true)}>
@@ -270,7 +271,7 @@ export default function Contas() {
                 <ul className="transaction-list">
                   {transferencias.map(t => (
                     <li key={t.id} className="transaction-item">
-                      <div className="tx-icon">⇄</div>
+                      <div className="tx-icon"><ArrowLeftRight size={16} /></div>
                       <div className="tx-info">
                         <span className="tx-desc">{t.contaOrigemNome} → {t.contaDestinoNome}{t.descricao ? ` · ${t.descricao}` : ''}</span>
                         <span className="tx-meta">{fmtDate(t.data)}</span>
@@ -281,7 +282,7 @@ export default function Contas() {
                           : fmt(t.valor, t.moeda)}
                       </div>
                       <div className="tx-actions">
-                        <button className="btn-icon btn-danger" onClick={() => setDeleteTransferId(t.id)} title="Desfazer">🗑️</button>
+                        <button className="btn-icon btn-danger" onClick={() => setDeleteTransferId(t.id)} title="Desfazer" aria-label="Desfazer"><Trash2 size={16} /></button>
                       </div>
                     </li>
                   ))}

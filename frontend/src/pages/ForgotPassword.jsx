@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import Alert from '../components/Alert'
+import { ArrowLeft } from 'lucide-react'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -26,7 +27,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="auth-page">
-      <Link to="/" className="back-link">← Voltar para o início</Link>
+      <Link to="/" className="back-link"><ArrowLeft size={16} /> Voltar para o início</Link>
       <div className="auth-card">
         <h1>💰 GeldTrack</h1>
         <h2>Esqueceu a senha?</h2>
