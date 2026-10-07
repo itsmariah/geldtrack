@@ -4,7 +4,9 @@ import api from '../services/api'
 import Alert from '../components/Alert'
 import PasswordMatchHint from '../components/PasswordMatchHint'
 import PasswordInput from '../components/PasswordInput'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import AuthLayout from '../components/AuthLayout'
+import PasswordStrength from '../components/PasswordStrength'
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -33,54 +35,53 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="auth-page">
-      <Link to="/" className="back-link"><ArrowLeft size={16} /> Voltar para o início</Link>
-      <div className="auth-card">
-        <h1>💰 GeldTrack</h1>
-        <h2>Criar nova senha</h2>
+    <AuthLayout>
+      <h1>💰 GeldTrack</h1>
+      <h2>Criar nova senha</h2>
 
-        {!token ? (
-          <>
-            <Alert type="error">Link de redefinição inválido.</Alert>
-            <p className="auth-link">
-              <Link to="/esqueci-senha">Solicitar um novo link</Link>
-            </p>
-          </>
-        ) : (
-          <>
-            {error && <Alert type="error">{error}</Alert>}
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="reset-senha">Nova senha</label>
-                <PasswordInput
-                  id="reset-senha"
-                  value={form.senha}
-                  onChange={e => setForm({ ...form, senha: e.target.value })}
-                  placeholder="Mínimo 6 caracteres"
-                  minLength={6}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="reset-confirmar">Confirmar nova senha</label>
-                <PasswordInput
-                  id="reset-confirmar"
-                  value={form.confirmar}
-                  onChange={e => setForm({ ...form, confirmar: e.target.value })}
-                  placeholder="Repita a senha"
-                  aria-describedby={form.confirmar ? 'reset-confirmar-hint' : undefined}
-                  required
-                />
-                <PasswordMatchHint id="reset-confirmar-hint" senha={form.senha} confirmar={form.confirmar} />
-              </div>
-              <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-                {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
-                {loading ? 'Salvando...' : 'Redefinir senha'}
-              </button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
+      {!token ? (
+        <>
+          <Alert type="error">Link de redefinição inválido.</Alert>
+          <p className="auth-link">
+            <Link to="/esqueci-senha">Solicitar um novo link</Link>
+          </p>
+        </>
+      ) : (
+        <>
+          {error && <Alert type="error">{error}</Alert>}
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="reset-senha">Nova senha</label>
+              <PasswordInput
+                id="reset-senha"
+                aria-describedby={form.senha ? 'reset-senha-forca' : undefined}
+                value={form.senha}
+                onChange={e => setForm({ ...form, senha: e.target.value })}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+                required
+              />
+              <PasswordStrength id="reset-senha-forca" senha={form.senha} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="reset-confirmar">Confirmar nova senha</label>
+              <PasswordInput
+                id="reset-confirmar"
+                value={form.confirmar}
+                onChange={e => setForm({ ...form, confirmar: e.target.value })}
+                placeholder="Repita a senha"
+                aria-describedby={form.confirmar ? 'reset-confirmar-hint' : undefined}
+                required
+              />
+              <PasswordMatchHint id="reset-confirmar-hint" senha={form.senha} confirmar={form.confirmar} />
+            </div>
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+              {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
+              {loading ? 'Salvando...' : 'Redefinir senha'}
+            </button>
+          </form>
+        </>
+      )}
+    </AuthLayout>
   )
 }

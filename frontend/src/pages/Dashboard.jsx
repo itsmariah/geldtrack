@@ -20,6 +20,7 @@ import { useToast } from '../context/ToastContext'
 import PullToRefresh from '../components/PullToRefresh'
 import { saudacao, contextoDoDia } from '../utils/saudacao'
 import { serieMensal } from '../utils/serieMensal'
+import WelcomeTour, { deveMostrarBoasVindas } from '../components/WelcomeTour'
 
 // 20 por página: a lista cresce todo dia e, no celular, 50 itens de uma vez já é uma
 // rolagem longa — a paginação numerada deixa pular direto pra qualquer página.
@@ -52,6 +53,7 @@ export default function Dashboard() {
   const [anexoTransactionId, setAnexoTransactionId] = useState(null)
   const [historicoTransactionId, setHistoricoTransactionId] = useState(null)
   const [showFiltersMobile, setShowFiltersMobile] = useState(false)
+  const [showTour, setShowTour] = useState(deveMostrarBoasVindas)
   const transactionsRef = useRef(null)
 
 
@@ -258,6 +260,7 @@ export default function Dashboard() {
   return (
     <>
       <PullToRefresh onRefresh={fetchData} />
+      {showTour && <WelcomeTour onClose={() => setShowTour(false)} />}
 
       <div className="dashboard-header">
         <div className="dashboard-greeting">

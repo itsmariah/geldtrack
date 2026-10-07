@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import Alert from '../components/Alert'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import AuthLayout from '../components/AuthLayout'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -26,39 +27,36 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="auth-page">
-      <Link to="/" className="back-link"><ArrowLeft size={16} /> Voltar para o início</Link>
-      <div className="auth-card">
-        <h1>💰 GeldTrack</h1>
-        <h2>Esqueceu a senha?</h2>
+    <AuthLayout>
+      <h1>💰 GeldTrack</h1>
+      <h2>Esqueceu a senha?</h2>
 
-        {error && <Alert type="error">{error}</Alert>}
-        {message && <Alert type="success">{message}</Alert>}
+      {error && <Alert type="error">{error}</Alert>}
+      {message && <Alert type="success">{message}</Alert>}
 
-        {!message && (
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="forgot-email">E-mail</label>
-              <input
-                id="forgot-email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-              {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
-              {loading ? 'Enviando...' : 'Enviar link de redefinição'}
-            </button>
-          </form>
-        )}
+      {!message && (
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="forgot-email">E-mail</label>
+            <input
+              id="forgot-email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="seu@email.com"
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
+            {loading ? 'Enviando...' : 'Enviar link de redefinição'}
+          </button>
+        </form>
+      )}
 
-        <p className="auth-link">
-          Lembrou a senha? <Link to="/login">Entrar</Link>
-        </p>
-      </div>
-    </div>
+      <p className="auth-link">
+        Lembrou a senha? <Link to="/login">Entrar</Link>
+      </p>
+    </AuthLayout>
   )
 }
