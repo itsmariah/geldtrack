@@ -18,6 +18,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,
+      workbox: {
+        // As imagens importadas na landing também entram no precache: sem isso, um
+        // service worker antigo serve o JS antigo, que aponta para imagens com hash
+        // que já não existem mais no deploy novo (e aparecem quebradas).
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        cleanupOutdatedCaches: true,
+      },
       manifest: {
         name: 'GeldTrack',
         short_name: 'GeldTrack',

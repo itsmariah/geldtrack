@@ -6,7 +6,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import screenshotDashboard from '../../assets/imagens/geldtrack_dashboard.png'
 import screenshotRelatorio from '../../assets/imagens/geldtrack_relatorio.png'
 
-const RELEASES_URL = 'https://github.com/itsmariah/moneytrack/releases'
+const RELEASES_URL = 'https://github.com/itsmariah/geldtrack/releases'
 const isDesktopApp = window.location.protocol === 'file:'
 
 export default function Landing() {
@@ -97,7 +97,7 @@ export default function Landing() {
           <div className="feature-card">
             <div className="feature-icon">📊</div>
             <h3>Controle total</h3>
-            <p>Adicione, edite e exclua receitas e despesas com categorias próprias para cada tipo.</p>
+            <p>Adicione, edite e exclua receitas e despesas, com busca por texto e filtros por tipo, categoria e período.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">🎯</div>
@@ -115,9 +115,9 @@ export default function Landing() {
             <p>Cadastre aluguel, assinaturas e salário uma vez só — o sistema lança os meses seguintes automaticamente.</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">🏦</div>
+            <div className="feature-icon">💳</div>
             <h3>Múltiplas contas</h3>
-            <p>Separe o dinheiro em conta corrente, cartão ou carteira, com saldo próprio e transferência entre elas.</p>
+            <p>Separe o dinheiro em conta corrente, cartão ou carteira, agrupadas por instituição, com saldo próprio e transferência entre elas.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">📥</div>
@@ -137,7 +137,7 @@ export default function Landing() {
           <div className="feature-card">
             <div className="feature-icon">🔒</div>
             <h3>Dados seguros</h3>
-            <p>Senhas criptografadas com bcrypt e autenticação via JWT — cada usuário só acessa suas próprias transações.</p>
+            <p>Senhas criptografadas com bcrypt, autenticação via JWT e recuperação de senha por e-mail — cada usuário só acessa os próprios dados.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">📱</div>
@@ -152,7 +152,7 @@ export default function Landing() {
           <div className="feature-card">
             <div className="feature-icon">👤</div>
             <h3>Perfil personalizável</h3>
-            <p>Edite nome, e-mail e senha a qualquer momento nas configurações da sua conta.</p>
+            <p>Edite nome, e-mail, senha e foto de perfil a qualquer momento nas configurações da sua conta.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">💡</div>
@@ -212,12 +212,42 @@ export default function Landing() {
           <div className="feature-card">
             <div className="feature-icon">🤝</div>
             <h3>Grupos (estilo Splitwise)</h3>
-            <p>Divida despesas com amigos, veja quem deve quem calculado automaticamente e quite os saldos direto pelo app.</p>
+            <p>Divida despesas com amigos (até quem não tem conta), em qualquer moeda, veja quem deve quem e quite os saldos — inclusive em outra moeda.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">💱</div>
             <h3>Multi-moeda</h3>
-            <p>Tenha contas em dólar, euro ou libra com cotação atualizável, e veja o total consolidado em reais no Dashboard.</p>
+            <p>Tenha contas em dólar, euro ou libra com cotação atualizável, transfira entre moedas e veja o total consolidado em reais no Dashboard.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🔗</div>
+            <h3>Grupo integrado ao dashboard</h3>
+            <p>Leve só a sua parte das despesas do grupo para o dashboard, com conversão de moeda, e transforme pagamentos recebidos em receita.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">📤</div>
+            <h3>Exportação em CSV</h3>
+            <p>Exporte suas transações em CSV respeitando os filtros ativos, com valor original e câmbio das transações convertidas.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">📬</div>
+            <h3>Resumo por e-mail</h3>
+            <p>Receba um resumo semanal e/ou mensal das suas finanças direto no e-mail — é só ativar no perfil.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">↕️</div>
+            <h3>Organize do seu jeito</h3>
+            <p>Arraste para reordenar transações, contas, metas, orçamentos, eventos, recorrências e grupos — no mouse, no toque ou no teclado.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🌗</div>
+            <h3>Modo claro e escuro</h3>
+            <p>Alterne entre tema claro e escuro quando quiser — a preferência fica salva no seu navegador.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">♿</div>
+            <h3>Acessível</h3>
+            <p>Navegação completa por teclado e suporte a leitores de tela em todo o app.</p>
           </div>
         </div>
       </section>
@@ -266,7 +296,7 @@ export default function Landing() {
       <footer className="landing-footer">
         <div className="footer-row">
           <p>💰 GeldTrack</p>
-          <a href="https://github.com/itsmariah/moneytrack" target="_blank" rel="noopener noreferrer">Ver no GitHub</a>
+          <a href="https://github.com/itsmariah/geldtrack" target="_blank" rel="noopener noreferrer">Ver no GitHub</a>
         </div>
         <p className="footer-credits">
           Feito por Mariah ·{' '}
