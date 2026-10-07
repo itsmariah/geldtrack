@@ -19,8 +19,8 @@ Se não tiver o Node.js, baixe em: https://nodejs.org (escolha a versão **LTS**
 Abra o terminal (PowerShell, CMD ou Git Bash) e execute:
 
 ```bash
-git clone https://github.com/itsmariah/moneytrack.git
-cd moneytrack
+git clone https://github.com/itsmariah/geldtrack.git
+cd geldtrack
 ```
 
 ---

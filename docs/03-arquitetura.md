@@ -110,7 +110,7 @@ React atualiza a lista na tela
 ## Estrutura de pastas
 
 ```
-moneytrack/
+geldtrack/
 │
 ├── electron/                    ← App desktop (Electron)
 │

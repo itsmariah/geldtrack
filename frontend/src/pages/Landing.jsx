@@ -6,7 +6,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import screenshotDashboard from '../../assets/imagens/geldtrack_dashboard.png'
 import screenshotRelatorio from '../../assets/imagens/geldtrack_relatorio.png'
 
-const RELEASES_URL = 'https://github.com/itsmariah/moneytrack/releases'
+const RELEASES_URL = 'https://github.com/itsmariah/geldtrack/releases'
 const isDesktopApp = window.location.protocol === 'file:'
 
 export default function Landing() {
@@ -266,7 +266,7 @@ export default function Landing() {
       <footer className="landing-footer">
         <div className="footer-row">
           <p>💰 GeldTrack</p>
-          <a href="https://github.com/itsmariah/moneytrack" target="_blank" rel="noopener noreferrer">Ver no GitHub</a>
+          <a href="https://github.com/itsmariah/geldtrack" target="_blank" rel="noopener noreferrer">Ver no GitHub</a>
         </div>
         <p className="footer-credits">
           Feito por Mariah ·{' '}

@@ -303,7 +303,7 @@ git pull                # Baixar mudanças do GitHub
 
 **Por que usamos:** Permite que toda a equipe acesse o mesmo código, com histórico de commits, visualização de diferenças e gerenciamento de branches.
 
-**Repositório:** https://github.com/itsmariah/moneytrack
+**Repositório:** https://github.com/itsmariah/geldtrack
 
 ---
 
