@@ -1,5 +1,3 @@
-import { ArrowLeft, Check, Pencil, Plus, Trash2 } from 'lucide-react'
-
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -16,6 +14,9 @@ import Alert from '../components/Alert'
 import Avatar from '../components/Avatar'
 import { SkeletonList } from '../components/Skeleton'
 import { fmt, fmtDate } from '../utils/format'
+import { useToast } from '../context/ToastContext'
+import EmptyIllustration from '../components/EmptyIllustration'
+import { ArrowLeft, Check, HandCoins, Loader2, Pencil, Plus, ReceiptText, Trash2 } from 'lucide-react'
 
 export default function GrupoDetalhe() {
   const { id } = useParams()
@@ -24,7 +25,7 @@ export default function GrupoDetalhe() {
   const [grupo, setGrupo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
 
   const [showDespesaModal, setShowDespesaModal] = useState(false)
   const [editingDespesa, setEditingDespesa] = useState(null)
@@ -56,11 +57,6 @@ export default function GrupoDetalhe() {
   const [showVincularEvento, setShowVincularEvento] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchGrupo = useCallback(async () => {
     setError('')
@@ -130,7 +126,7 @@ export default function GrupoDetalhe() {
       await api.post(`/grupos/${id}/convidados`, { nomeConvidado })
       setNomeConvidado('')
       setShowConvidadoForm(false)
-      setToast('Convidado adicionado.')
+      toast('Convidado adicionado.')
       fetchGrupo()
     } catch (err) {
       setConvidadoError(err.response?.data?.error || 'Não foi possível adicionar o convidado.')
@@ -144,7 +140,7 @@ export default function GrupoDetalhe() {
     setRemovendoMembro(null)
     try {
       await api.delete(`/grupos/${id}/membros/${membro.id}`)
-      setToast(`${membro.nome} foi removido(a) do grupo.`)
+      toast(`${membro.nome} foi removido(a) do grupo.`)
       fetchGrupo()
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível remover esse membro.')
@@ -173,7 +169,7 @@ export default function GrupoDetalhe() {
 
   const handleGrupoRenomeado = () => {
     setShowEditarGrupo(false)
-    setToast('Nome do grupo atualizado.')
+    toast('Nome do grupo atualizado.')
     fetchGrupo()
   }
 
@@ -188,7 +184,7 @@ export default function GrupoDetalhe() {
   }
 
   const handleDespesaSaved = () => {
-    setToast(editingDespesa ? 'Despesa atualizada com sucesso.' : 'Despesa adicionada com sucesso.')
+    toast(editingDespesa ? 'Despesa atualizada com sucesso.' : 'Despesa adicionada com sucesso.')
     handleDespesaModalClose()
     fetchGrupo()
   }
@@ -198,7 +194,7 @@ export default function GrupoDetalhe() {
     setDeleteDespesaId(null)
     try {
       await api.delete(`/grupos/${id}/despesas/${despesaId}`)
-      setToast('Despesa excluída.')
+      toast('Despesa excluída.')
       fetchGrupo()
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível excluir a despesa.')
@@ -207,19 +203,19 @@ export default function GrupoDetalhe() {
 
   const handleDashboardSaved = (count) => {
     setShowDashboardModal(false)
-    setToast(count === 1 ? '1 despesa adicionada ao dashboard.' : `${count} despesas adicionadas ao dashboard.`)
+    toast(count === 1 ? '1 despesa adicionada ao dashboard.' : `${count} despesas adicionadas ao dashboard.`)
     fetchGrupo()
   }
 
   const handlePagamentoDashboardSaved = () => {
     setPagamentoDashboard(null)
-    setToast('Pagamento adicionado ao dashboard como receita.')
+    toast('Pagamento adicionado ao dashboard como receita.')
     fetchGrupo()
   }
 
   const handleVinculado = (count, eventoId) => {
     setShowVincularEvento(false)
-    setToast(count === 0
+    toast(count === 0
       ? (eventoId ? 'Tudo já estava nesse evento.' : 'Nenhuma transação estava em evento.')
       : eventoId
         ? `${count === 1 ? '1 transação vinculada' : `${count} transações vinculadas`} ao evento.`
@@ -238,7 +234,7 @@ export default function GrupoDetalhe() {
   }
 
   const handlePagamentoSaved = () => {
-    setToast('Pagamento registrado.')
+    toast('Pagamento registrado.')
     handlePagamentoModalClose()
     fetchGrupo()
   }
@@ -248,7 +244,7 @@ export default function GrupoDetalhe() {
     setDeletePagamentoId(null)
     try {
       await api.delete(`/grupos/${id}/pagamentos/${pagamentoId}`)
-      setToast('Pagamento excluído.')
+      toast('Pagamento excluído.')
       fetchGrupo()
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível excluir o pagamento.')
@@ -315,6 +311,7 @@ export default function GrupoDetalhe() {
               style={{ flex: 1 }}
             />
             <button type="submit" className="btn btn-primary btn-sm" disabled={salvandoConvidado}>
+              {salvandoConvidado && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
               {salvandoConvidado ? 'Salvando...' : 'Adicionar'}
             </button>
           </form>
@@ -360,7 +357,7 @@ export default function GrupoDetalhe() {
 
         {grupo.pagamentos.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">💸</div>
+            <EmptyIllustration icon={HandCoins} />
             <p>Nenhum pagamento registrado ainda.</p>
           </div>
         ) : (
@@ -428,7 +425,7 @@ export default function GrupoDetalhe() {
 
         {grupo.despesas.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">🧾</div>
+            <EmptyIllustration icon={ReceiptText} />
             <p>Nenhuma despesa registrada ainda.</p>
           </div>
         ) : (
@@ -576,7 +573,6 @@ export default function GrupoDetalhe() {
         />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

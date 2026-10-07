@@ -7,11 +7,12 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
 import { Plus } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
 
 export default function Categorias() {
   const { categorias, loading, refetch } = useCategorias()
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [novoTipo, setNovoTipo] = useState('despesa')
@@ -28,7 +29,7 @@ export default function Categorias() {
   }
 
   const handleSaved = () => {
-    setToast(editing ? 'Categoria atualizada com sucesso.' : 'Categoria criada com sucesso.')
+    toast(editing ? 'Categoria atualizada com sucesso.' : 'Categoria criada com sucesso.')
     handleModalClose()
     refetch()
   }
@@ -38,7 +39,7 @@ export default function Categorias() {
     setDeleteCategoria(null)
     try {
       await api.delete(`/categorias/${categoria.id}`)
-      setToast('Categoria excluída.')
+      toast('Categoria excluída.')
       refetch()
     } catch (err) {
       console.error(err)
@@ -127,7 +128,6 @@ export default function Categorias() {
         />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

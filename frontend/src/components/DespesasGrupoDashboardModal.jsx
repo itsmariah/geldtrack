@@ -1,5 +1,3 @@
-import { X } from 'lucide-react'
-
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { useCategorias } from '../context/CategoriasContext'
@@ -7,6 +5,7 @@ import { fmt, fmtDate, descreverConversao } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
 import EventoSelect, { useEventoSelecao } from './EventoSelect'
+import { Loader2, X } from 'lucide-react'
 
 // Mesmo arredondamento do backend (utils/currency.js): centavos exatos, nunca zero.
 const converterValor = (valor, taxa) => Math.max(0.01, Math.round(valor * taxa * 100) / 100)
@@ -216,7 +215,8 @@ export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas,
 
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="btn btn-primary" disabled={loading || carregando || destinos.length === 0 || faltaTaxa}>
+          <button type="submit" className="btn btn-primary" disabled={loading || carregando || destinos.length === 0 || faltaTaxa}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {loading
               ? 'Adicionando...'
               : quantidadeSelecionada > 0 && quantidadeSelecionada < despesas.length

@@ -5,7 +5,7 @@ import { fmt, fmtDate, descreverConversao } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
 import EventoSelect, { useEventoSelecao } from './EventoSelect'
-import { X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 
 // Mesmo arredondamento do backend (utils/currency.js): centavos exatos, nunca zero.
 const converterValor = (valor, taxa) => Math.max(0.01, Math.round(valor * taxa * 100) / 100)
@@ -142,6 +142,7 @@ export default function PagamentoDashboardModal({ grupoId, pagamento, nomeQuemPa
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn btn-primary" disabled={loading || carregando || !conta || !taxaValida}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {loading ? 'Adicionando...' : 'Adicionar como receita'}
           </button>
         </div>

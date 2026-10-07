@@ -7,24 +7,21 @@ import { salvarOrdem } from '../utils/salvarOrdem'
 import GrupoCard from '../components/GrupoCard'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
-import { Plus } from 'lucide-react'
+import { Handshake, Loader2, Plus } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
+import EmptyIllustration from '../components/EmptyIllustration'
 
 export default function Grupos() {
   const navigate = useNavigate()
   const [grupos, setGrupos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
   const [showModal, setShowModal] = useState(false)
   const [codigoInput, setCodigoInput] = useState('')
   const [entrarError, setEntrarError] = useState('')
   const [entrando, setEntrando] = useState(false)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchGrupos = useCallback(async () => {
     setError('')
@@ -47,7 +44,7 @@ export default function Grupos() {
   const handleModalClose = () => setShowModal(false)
 
   const handleSaved = () => {
-    setToast('Grupo criado com sucesso.')
+    toast('Grupo criado com sucesso.')
     handleModalClose()
     fetchGrupos()
   }
@@ -91,7 +88,7 @@ export default function Grupos() {
         <>
           {grupos.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">🧾</div>
+              <EmptyIllustration icon={Handshake} />
               <p>Você ainda não tem nenhum grupo.</p>
               <p className="empty-state-sub">Crie um grupo pra dividir despesas com outras pessoas e ver quem deve quem, ou entre num grupo existente com um código.</p>
               <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
@@ -124,6 +121,7 @@ export default function Grupos() {
                 style={{ flex: 1, textTransform: 'uppercase' }}
               />
               <button type="submit" className="btn btn-primary btn-sm" disabled={entrando}>
+                {entrando && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
                 {entrando ? 'Entrando...' : 'Entrar'}
               </button>
             </form>
@@ -134,7 +132,6 @@ export default function Grupos() {
 
       {showModal && <GrupoModal onClose={handleModalClose} onSaved={handleSaved} />}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

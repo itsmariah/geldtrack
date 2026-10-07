@@ -1,5 +1,3 @@
-import { X } from 'lucide-react'
-
 import { useState, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { resizeImage } from '../utils/resizeImage'
@@ -7,6 +5,7 @@ import Modal from './Modal'
 import Alert from './Alert'
 import PasswordMatchHint from './PasswordMatchHint'
 import PasswordInput from './PasswordInput'
+import { Loader2, X } from 'lucide-react'
 
 export default function ProfileModal({ onClose }) {
   const { user, updateProfile } = useAuth()
@@ -187,6 +186,7 @@ export default function ProfileModal({ onClose }) {
           <div className="modal-footer">
             <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
               {loading ? 'Salvando...' : 'Salvar alterações'}
             </button>
           </div>

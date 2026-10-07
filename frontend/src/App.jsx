@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { ToastProvider } from './context/ToastContext'
 import { CategoriasProvider } from './context/CategoriasContext'
 import { LazyMotion, MotionConfig } from 'framer-motion'
 import PrivateRoute from './components/PrivateRoute'
@@ -38,37 +39,39 @@ export default function App() {
       {/* reducedMotion="user": quem ativou "reduzir movimento" no sistema não vê as animações. */}
       <MotionConfig reducedMotion="user">
         <ThemeProvider>
-          <AuthProvider>
-            <CategoriasProvider>
-              <BrowserRouter>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Landing />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/cadastro" element={<Register />} />
-                    <Route path="/esqueci-senha" element={<ForgotPassword />} />
-                    <Route path="/redefinir-senha" element={<ResetPassword />} />
-                    <Route element={<PrivateRoute><AppLayout /></PrivateRoute>}>
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/relatorios" element={<Reports />} />
-                      <Route path="/metas" element={<Goals />} />
-                      <Route path="/orcamentos" element={<Budgets />} />
-                      <Route path="/eventos" element={<Eventos />} />
-                      <Route path="/eventos/:id" element={<EventoDetalhe />} />
-                      <Route path="/recorrencias" element={<Recurring />} />
-                      <Route path="/contas" element={<Contas />} />
-                      <Route path="/categorias" element={<Categorias />} />
-                      <Route path="/familia" element={<Familia />} />
-                      <Route path="/grupos" element={<Grupos />} />
-                      <Route path="/grupos/:id" element={<GrupoDetalhe />} />
-                    </Route>
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </Suspense>
-                <FontTester />
-              </BrowserRouter>
-            </CategoriasProvider>
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <CategoriasProvider>
+                <BrowserRouter>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Landing />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/cadastro" element={<Register />} />
+                      <Route path="/esqueci-senha" element={<ForgotPassword />} />
+                      <Route path="/redefinir-senha" element={<ResetPassword />} />
+                      <Route element={<PrivateRoute><AppLayout /></PrivateRoute>}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/relatorios" element={<Reports />} />
+                        <Route path="/metas" element={<Goals />} />
+                        <Route path="/orcamentos" element={<Budgets />} />
+                        <Route path="/eventos" element={<Eventos />} />
+                        <Route path="/eventos/:id" element={<EventoDetalhe />} />
+                        <Route path="/recorrencias" element={<Recurring />} />
+                        <Route path="/contas" element={<Contas />} />
+                        <Route path="/categorias" element={<Categorias />} />
+                        <Route path="/familia" element={<Familia />} />
+                        <Route path="/grupos" element={<Grupos />} />
+                        <Route path="/grupos/:id" element={<GrupoDetalhe />} />
+                      </Route>
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </Suspense>
+                  <FontTester />
+                </BrowserRouter>
+              </CategoriasProvider>
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </MotionConfig>
     </LazyMotion>

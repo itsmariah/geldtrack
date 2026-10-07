@@ -8,30 +8,29 @@ import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
-import { Plus } from 'lucide-react'
+import { Plus, Target } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
+import { celebrate } from '../utils/celebrate'
+import EmptyIllustration from '../components/EmptyIllustration'
 
 export default function Goals() {
   const [metas, setMetas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
   const [showMetaModal, setShowMetaModal] = useState(false)
   const [editingMeta, setEditingMeta] = useState(null)
   const [aporteMeta, setAporteMeta] = useState(null)
   const [deleteMetaId, setDeleteMetaId] = useState(null)
   const [deleteAporte, setDeleteAporte] = useState(null)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchMetas = useCallback(async () => {
     setError('')
     try {
       const { data } = await api.get('/metas')
       setMetas(data)
+      return data
     } catch (err) {
       console.error('Erro ao buscar metas:', err)
       setError('Não foi possível carregar suas metas. Verifique sua conexão e tente novamente.')
@@ -55,7 +54,7 @@ export default function Goals() {
   }
 
   const handleMetaSaved = () => {
-    setToast(editingMeta ? 'Meta atualizada com sucesso.' : 'Meta criada com sucesso.')
+    toast(editingMeta ? 'Meta atualizada com sucesso.' : 'Meta criada com sucesso.')
     handleMetaModalClose()
     fetchMetas()
   }
@@ -65,7 +64,7 @@ export default function Goals() {
     setDeleteMetaId(null)
     try {
       await api.delete(`/metas/${id}`)
-      setToast('Meta excluída.')
+      toast('Meta excluída.')
       fetchMetas()
     } catch (err) {
       console.error(err)
@@ -73,10 +72,18 @@ export default function Goals() {
     }
   }
 
-  const handleAporteSaved = () => {
-    setToast('Aporte adicionado com sucesso.')
+  // Se o aporte fez a meta bater 100%, comemora (confete + vibração) em vez do toast comum.
+  const handleAporteSaved = async () => {
+    const { id, concluida: jaEstavaConcluida } = aporteMeta
     setAporteMeta(null)
-    fetchMetas()
+    const atualizadas = await fetchMetas()
+    const meta = atualizadas?.find(m => m.id === id)
+    if (meta?.concluida && !jaEstavaConcluida) {
+      celebrate()
+      toast(`Meta "${meta.titulo}" concluída! Parabéns 🎉`)
+    } else {
+      toast('Aporte adicionado com sucesso.')
+    }
   }
 
   const confirmDeleteAporte = async () => {
@@ -84,7 +91,7 @@ export default function Goals() {
     setDeleteAporte(null)
     try {
       await api.delete(`/metas/${metaId}/aportes/${aporteId}`)
-      setToast('Aporte removido.')
+      toast('Aporte removido.')
       fetchMetas()
     } catch (err) {
       console.error(err)
@@ -112,7 +119,7 @@ export default function Goals() {
         <SkeletonList rows={3} />
       ) : error ? null : metas.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">🎯</div>
+          <EmptyIllustration icon={Target} />
           <p>Você ainda não tem nenhuma meta.</p>
           <p className="empty-state-sub">Crie uma meta pra acompanhar o progresso de algo que você está juntando dinheiro pra conquistar.</p>
           <button type="button" className="btn btn-primary" onClick={() => setShowMetaModal(true)} style={{ marginTop: 16 }}>
@@ -172,7 +179,6 @@ export default function Goals() {
         />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

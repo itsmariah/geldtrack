@@ -3,7 +3,7 @@ import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
 import { fmt } from '../utils/format'
-import { X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 
 // new Date().toISOString() é UTC — perto da meia-noite no Brasil (UTC-3) isso adianta
 // a data em um dia. Aqui montamos a data local manualmente para evitar esse desvio.
@@ -165,6 +165,7 @@ export default function DespesaGrupoModal({ grupoId, despesa, membros, moedas, m
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {loading ? 'Salvando...' : despesa ? 'Atualizar' : 'Adicionar despesa'}
           </button>
         </div>

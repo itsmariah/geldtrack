@@ -1,5 +1,3 @@
-import { ArrowUp, Download, Menu, X } from 'lucide-react'
-
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -7,6 +5,7 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import ThemeToggle from '../components/ThemeToggle'
 import screenshotDashboard from '../../assets/imagens/geldtrack_dashboard.png'
 import screenshotRelatorio from '../../assets/imagens/geldtrack_relatorio.png'
+import { ArrowUp, Download, Menu, X } from 'lucide-react'
 
 const RELEASES_URL = 'https://github.com/itsmariah/geldtrack/releases'
 const isDesktopApp = window.location.protocol === 'file:'

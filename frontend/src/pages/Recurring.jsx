@@ -7,23 +7,20 @@ import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
-import { Plus } from 'lucide-react'
+import { Plus, Repeat } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
+import EmptyIllustration from '../components/EmptyIllustration'
 
 export default function Recurring() {
   const [recorrencias, setRecorrencias] = useState([])
   const [contas, setContas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchRecorrencias = useCallback(async () => {
     setError('')
@@ -55,7 +52,7 @@ export default function Recurring() {
   }
 
   const handleSaved = () => {
-    setToast(editing ? 'Recorrência atualizada com sucesso.' : 'Recorrência criada com sucesso.')
+    toast(editing ? 'Recorrência atualizada com sucesso.' : 'Recorrência criada com sucesso.')
     handleModalClose()
     fetchRecorrencias()
   }
@@ -63,7 +60,7 @@ export default function Recurring() {
   const handleToggleAtiva = async (recorrencia) => {
     try {
       await api.put(`/recorrencias/${recorrencia.id}`, { ...recorrencia, ativa: !recorrencia.ativa })
-      setToast(recorrencia.ativa ? 'Recorrência pausada.' : 'Recorrência retomada.')
+      toast(recorrencia.ativa ? 'Recorrência pausada.' : 'Recorrência retomada.')
       fetchRecorrencias()
     } catch (err) {
       console.error(err)
@@ -76,7 +73,7 @@ export default function Recurring() {
     setDeleteId(null)
     try {
       await api.delete(`/recorrencias/${id}`)
-      setToast('Recorrência excluída.')
+      toast('Recorrência excluída.')
       fetchRecorrencias()
     } catch (err) {
       console.error(err)
@@ -104,7 +101,7 @@ export default function Recurring() {
         <SkeletonList rows={3} />
       ) : error ? null : recorrencias.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">🔁</div>
+          <EmptyIllustration icon={Repeat} />
           <p>Você ainda não tem nenhuma recorrência.</p>
           <p className="empty-state-sub">Cadastre contas que se repetem todo mês, como aluguel, assinaturas ou salário, e o sistema lança elas automaticamente.</p>
           <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
@@ -141,7 +138,6 @@ export default function Recurring() {
         />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

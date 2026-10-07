@@ -181,6 +181,8 @@ select:focus-visible,
 }
 .btn-primary { background: var(--primary); color: #fff; }
 .btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); }
+/* "Afundar" ao apertar: feedback imediato no toque. */
+.btn:active:not(:disabled) { transform: scale(0.97); transition-duration: 60ms; }
 .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
 .btn-outline:hover { border-color: var(--primary); color: var(--primary-light); }
 .btn-danger { background: var(--red); color: #fff; }
@@ -263,25 +265,63 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .pagination-gap { min-width: 20px; text-align: center; color: var(--text-muted); }
 .pagination-info { font-size: 13px; color: var(--text-muted); }
 
-/* ── TOAST ── */
-.toast {
+/* ── TOAST (ver context/ToastContext.jsx) ── */
+.toast-region {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  right: calc(24px + var(--safe-right));
+  bottom: calc(24px + var(--safe-bottom));
+  z-index: 1100;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 420px;
+  padding: 12px 12px 12px 14px;
   background: var(--bg2);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--green);
-  border-radius: var(--radius-md);
-  padding: 14px 18px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
   font-size: 14px;
-  box-shadow: var(--shadow);
-  z-index: 1100;
-  animation: toast-in 0.2s ease-out;
+  overflow: hidden;
+  pointer-events: auto;
+  touch-action: pan-y;
+  cursor: grab;
 }
-@keyframes toast-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+.toast-icon { color: var(--green); }
+.toast--error .toast-icon { color: var(--red); }
+.toast--info .toast-icon, .toast--undo .toast-icon { color: var(--primary-light); }
+.toast-message { flex: 1; min-width: 0; line-height: 1.4; }
+.toast-action {
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+  padding: 6px 10px; border: none; border-radius: var(--radius-sm);
+  background: rgba(99,102,241,0.15); color: var(--primary-light);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: background var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
+.toast-action:hover { background: rgba(99,102,241,0.25); }
+.toast-action:active { transform: scale(0.95); }
+.toast-close {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  padding: 4px; border: none; border-radius: var(--radius-xs); background: none;
+  color: var(--text-muted); cursor: pointer;
+}
+.toast-close:hover { background: var(--bg3); color: var(--text); }
+/* Barra de tempo restante — no "Desfazer" mostra quanto falta pra exclusão valer. */
+.toast-progress {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--green); opacity: 0.7;
+  transform-origin: left;
+  animation: toast-progress linear forwards;
+}
+.toast--error .toast-progress { background: var(--red); }
+.toast--info .toast-progress, .toast--undo .toast-progress { background: var(--primary-light); }
+@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 /* ── LOADING ── */
 .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text-muted); font-size: 15px; }
@@ -297,7 +337,9 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   100% { background-position: 0 50%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .skeleton { animation: none; }
+  .skeleton, .empty-state, .empty-illustration-halo, .empty-illustration-badge, .empty-illustration-spark,
+  .meta-progress-fill, .meta-progress-fill::after, .budget-progress-fill, .toast-progress, .page-loader-coin { animation: none !important; }
+  .empty-illustration-spark { opacity: 0.6; }
 }
 
 /* ── AUTH PAGES ── */
@@ -797,9 +839,38 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .transaction-item.receita .tx-amount { color: var(--green); }
 .transaction-item.despesa .tx-amount { color: var(--red); }
 .tx-actions { display: flex; gap: 4px; flex-shrink: 0; }
-.empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 15px; }
+.empty-state { text-align: center; padding: 40px 24px; color: var(--text-muted); font-size: 15px; animation: empty-in var(--dur-slower) var(--ease-out) both; }
+.empty-state > p:not(.empty-state-sub) { color: var(--text); font-weight: 600; font-size: 16px; }
+.empty-state-sub { font-size: 14px; margin: 6px auto 0; max-width: 420px; line-height: 1.55; }
 .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
-.empty-state-sub { font-size: 13px; margin-top: 6px; }
+@keyframes empty-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Ilustração dos estados vazios (components/EmptyIllustration.jsx) */
+.empty-illustration { position: relative; width: 120px; height: 120px; margin: 0 auto 18px; }
+.empty-illustration-halo {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(167,139,250,0.35), rgba(99,102,241,0.12) 55%, transparent 72%);
+  animation: empty-halo 4s var(--ease-in-out) infinite;
+}
+.empty-illustration-badge {
+  position: absolute; inset: 26px; display: flex; align-items: center; justify-content: center;
+  border-radius: 22px; color: var(--primary-light);
+  background: linear-gradient(145deg, var(--bg3), var(--bg2));
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(99,102,241,0.25);
+  animation: empty-float 4s var(--ease-in-out) infinite;
+}
+.empty-illustration-spark {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  background: #a78bfa; opacity: 0;
+  animation: empty-spark 3s var(--ease-in-out) infinite;
+}
+.empty-illustration-spark--1 { top: 10px; right: 14px; }
+.empty-illustration-spark--2 { bottom: 18px; left: 6px; width: 6px; height: 6px; background: var(--green); animation-delay: 1s; }
+.empty-illustration-spark--3 { top: 34px; left: 0; width: 5px; height: 5px; background: var(--yellow); animation-delay: 2s; }
+@keyframes empty-float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-6px) rotate(3deg); } }
+@keyframes empty-halo { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.75; } }
+@keyframes empty-spark { 0%, 100% { opacity: 0; transform: scale(0.4); } 50% { opacity: 1; transform: scale(1); } }
 .empty-chart { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
 
 /* ── METAS ── */
@@ -816,8 +887,17 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .meta-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
 .meta-card-header h3 { font-size: 16px; font-weight: 600; }
 .meta-progress-bar { background: var(--bg3); border-radius: var(--radius-full); height: 10px; overflow: hidden; }
-.meta-progress-fill { height: 100%; border-radius: var(--radius-full); background: linear-gradient(90deg, var(--primary-light), #a78bfa); transition: width var(--dur-slow) var(--ease-out); }
+.meta-progress-fill { position: relative; height: 100%; border-radius: var(--radius-full); background: linear-gradient(90deg, var(--primary-light), #a78bfa); transition: width var(--dur-slower) var(--ease-out); transform-origin: left; animation: progress-grow 0.9s var(--ease-out) both; overflow: hidden; }
 .meta-card--concluida .meta-progress-fill { background: var(--green); }
+/* Brilho passando pela barra das metas concluídas. */
+.meta-card--concluida .meta-progress-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.45) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: progress-shine 2.4s var(--ease-in-out) 1s infinite;
+}
+@keyframes progress-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes progress-shine { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
 .meta-progress-info { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; font-size: 13px; }
 .meta-progress-pct { font-weight: 700; }
 .meta-card-status { margin-top: 6px; font-size: 13px; color: var(--text-muted); }
@@ -842,7 +922,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .budget-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .budget-card--warn { border-color: var(--yellow); }
 .budget-card--over { border-color: var(--red); }
-.budget-progress-fill { height: 100%; border-radius: var(--radius-full); transition: width var(--dur-slow) var(--ease-out); }
+.budget-progress-fill { height: 100%; border-radius: var(--radius-full); transition: width var(--dur-slower) var(--ease-out); transform-origin: left; animation: progress-grow 0.9s var(--ease-out) both; }
 .budget-progress-fill--ok { background: linear-gradient(90deg, var(--primary-light), #a78bfa); }
 .budget-progress-fill--warn { background: var(--yellow); }
 .budget-progress-fill--over { background: var(--red); }
@@ -1366,7 +1446,8 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   .modal-footer .btn { flex: 1; justify-content: center; }
   .ofx-dropzone { padding: 32px 16px; }
 
-  .toast { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .toast-region { left: calc(12px + var(--safe-left)); right: calc(12px + var(--safe-right)); bottom: calc(12px + var(--safe-bottom)); justify-content: center; }
+  .toast { min-width: 0; width: 100%; max-width: none; }
 
   .auth-page { padding: 64px 16px 24px; }
   .auth-card { padding: 28px 20px; border-radius: 16px; }
@@ -1459,7 +1540,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   .navbar-nav, .navbar-nav--open { display: none !important; }
 
   .main-content { padding-bottom: calc(96px + var(--safe-bottom)); }
-  .toast { bottom: calc(88px + var(--safe-bottom)); }
+  .toast-region { bottom: calc(88px + var(--safe-bottom)); }
   /* No celular o "+" da barra inferior já faz isso — o botão do topo só duplicaria a ação. */
   .dashboard-new-btn { display: none !important; }
 

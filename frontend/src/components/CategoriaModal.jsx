@@ -2,7 +2,7 @@ import { useState } from 'react'
 import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
-import { ArrowDownLeft, ArrowUpRight, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Loader2, X } from 'lucide-react'
 
 export default function CategoriaModal({ categoria, tipoPadrao, onClose, onSaved }) {
   const [form, setForm] = useState({
@@ -104,6 +104,7 @@ export default function CategoriaModal({ categoria, tipoPadrao, onClose, onSaved
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {loading ? 'Salvando...' : categoria ? 'Atualizar' : 'Criar categoria'}
           </button>
         </div>

@@ -1,5 +1,5 @@
 import { fmtDate } from '../utils/format'
-import { Trash2 } from 'lucide-react'
+import { Loader2, Trash2 } from 'lucide-react'
 
 const STATUS_INFO = {
   UPDATED: { label: 'Conectado', tom: 'ativa' },
@@ -32,6 +32,7 @@ export default function ConexaoBancariaCard({ conexao, onSincronizar, onDelete, 
       <div className="meta-card-actions">
         <span className={`recurring-badge recurring-badge--${info.tom}`}>{info.label}</span>
         <button type="button" className="btn-link" onClick={() => onSincronizar(conexao.id)} disabled={sincronizando}>
+          {sincronizando && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
           {sincronizando ? 'Sincronizando...' : 'Sincronizar agora'}
         </button>
       </div>

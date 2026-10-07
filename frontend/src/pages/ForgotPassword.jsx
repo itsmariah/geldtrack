@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import Alert from '../components/Alert'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -49,6 +49,7 @@ export default function ForgotPassword() {
               />
             </div>
             <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+              {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
               {loading ? 'Enviando...' : 'Enviar link de redefinição'}
             </button>
           </form>

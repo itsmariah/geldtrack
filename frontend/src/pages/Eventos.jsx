@@ -7,22 +7,19 @@ import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
-import { Plus } from 'lucide-react'
+import { Plane, Plus } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
+import EmptyIllustration from '../components/EmptyIllustration'
 
 export default function Eventos() {
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchEventos = useCallback(async () => {
     setError('')
@@ -52,7 +49,7 @@ export default function Eventos() {
   }
 
   const handleSaved = () => {
-    setToast(editing ? 'Evento atualizado com sucesso.' : 'Evento criado com sucesso.')
+    toast(editing ? 'Evento atualizado com sucesso.' : 'Evento criado com sucesso.')
     handleModalClose()
     fetchEventos()
   }
@@ -62,7 +59,7 @@ export default function Eventos() {
     setDeleteId(null)
     try {
       await api.delete(`/eventos/${id}`)
-      setToast('Evento excluído. As transações vinculadas continuam no seu extrato, só sem a etiqueta.')
+      toast('Evento excluído. As transações vinculadas continuam no seu extrato, só sem a etiqueta.')
       fetchEventos()
     } catch (err) {
       console.error(err)
@@ -101,7 +98,7 @@ export default function Eventos() {
         <SkeletonList rows={3} />
       ) : error ? null : eventos.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">🧳</div>
+          <EmptyIllustration icon={Plane} />
           <p>Você ainda não tem nenhum evento.</p>
           <p className="empty-state-sub">Crie um evento (ex: uma viagem) pra agrupar as transações que já lançar no dashboard normal.</p>
           <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
@@ -137,7 +134,6 @@ export default function Eventos() {
         />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

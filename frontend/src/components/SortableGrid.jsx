@@ -3,6 +3,7 @@ import { DndContext, closestCenter } from '@dnd-kit/core'
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useSortSensors, listenersSemTeclaDosFilhos, instrucoesArraste } from '../hooks/useSortSensors'
+import { haptic } from '../utils/haptics'
 
 function SortableItem({ id, descricao, arrastouRef, children }) {
   const { setNodeRef, transform, transition, attributes, listeners, isDragging } = useSortable({ id })
@@ -47,7 +48,7 @@ export default function SortableGrid({ items, onReorder, renderItem, descricao =
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragStart={() => { arrastouRef.current = true }}
+      onDragStart={() => { arrastouRef.current = true; haptic('medium') }}
       onDragEnd={handleDragEnd}
       onDragCancel={() => { arrastouRef.current = false }}
       accessibility={instrucoesArraste}

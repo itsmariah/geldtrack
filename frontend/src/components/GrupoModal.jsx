@@ -1,9 +1,8 @@
-import { X } from 'lucide-react'
-
 import { useState } from 'react'
 import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
+import { Loader2, X } from 'lucide-react'
 
 // Sem "grupo": cria um grupo novo. Com "grupo": renomeia (só admin chega aqui).
 export default function GrupoModal({ grupo, onClose, onSaved }) {
@@ -54,7 +53,8 @@ export default function GrupoModal({ grupo, onClose, onSaved }) {
 
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {grupo
               ? (loading ? 'Salvando...' : 'Salvar')
               : (loading ? 'Criando...' : 'Criar grupo')}

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { NAV_LINKS, isPathActive } from '../utils/navLinks'
 import Avatar from './Avatar'
 import ProfileModal from './ProfileModal'
+import { haptic } from '../utils/haptics'
 
 const PRIMARY = NAV_LINKS.filter(l => l.primary)
 const SECONDARY = NAV_LINKS.filter(l => !l.primary)
@@ -46,7 +47,7 @@ export default function BottomNav() {
           <m.button
             type="button"
             className="bottom-nav-fab"
-            onClick={() => navigate('/dashboard', { state: { novaTransacao: true } })}
+            onClick={() => { haptic('light'); navigate('/dashboard', { state: { novaTransacao: true } }) }}
             whileTap={{ scale: 0.88 }}
             aria-label="Nova transação"
           >

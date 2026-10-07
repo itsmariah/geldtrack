@@ -3,7 +3,7 @@ import api from '../services/api'
 import { fmt } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
-import { X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 
 function todayLocal() {
   const now = new Date()
@@ -171,6 +171,7 @@ export default function TransferModal({ contas, onClose, onSaved }) {
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {loading ? 'Salvando...' : 'Transferir'}
           </button>
         </div>

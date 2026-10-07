@@ -8,7 +8,9 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
 import { useCategorias } from '../context/CategoriasContext'
-import { Plus } from 'lucide-react'
+import { PiggyBank, Plus } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
+import EmptyIllustration from '../components/EmptyIllustration'
 
 // new Date().toISOString() é UTC — perto da virada do mês no Brasil (UTC-3) isso pode
 // adiantar o mês padrão exibido. Aqui montamos o mês local manualmente para evitar isso.
@@ -23,16 +25,11 @@ export default function Budgets() {
   const [orcamentos, setOrcamentos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchOrcamentos = useCallback(async () => {
     setError('')
@@ -62,7 +59,7 @@ export default function Budgets() {
   }
 
   const handleSaved = () => {
-    setToast(editing ? 'Orçamento atualizado com sucesso.' : 'Orçamento criado com sucesso.')
+    toast(editing ? 'Orçamento atualizado com sucesso.' : 'Orçamento criado com sucesso.')
     handleModalClose()
     fetchOrcamentos()
   }
@@ -72,7 +69,7 @@ export default function Budgets() {
     setDeleteId(null)
     try {
       await api.delete(`/orcamentos/${id}`)
-      setToast('Orçamento excluído.')
+      toast('Orçamento excluído.')
       fetchOrcamentos()
     } catch (err) {
       console.error(err)
@@ -115,7 +112,7 @@ export default function Budgets() {
         <SkeletonList rows={3} />
       ) : error ? null : orcamentos.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">📊</div>
+          <EmptyIllustration icon={PiggyBank} />
           <p>Você ainda não tem nenhum orçamento.</p>
           <p className="empty-state-sub">Defina um limite mensal por categoria pra saber quando está perto de estourar o gasto planejado.</p>
           <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
@@ -152,7 +149,6 @@ export default function Budgets() {
         />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

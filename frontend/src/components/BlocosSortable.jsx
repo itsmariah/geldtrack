@@ -3,6 +3,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
 import { useSortSensors, listenersSemTeclaDosFilhos, instrucoesArraste } from '../hooks/useSortSensors'
+import { haptic } from '../utils/haptics'
 
 const modifiers = [restrictToVerticalAxis]
 
@@ -42,7 +43,7 @@ export default function BlocosSortable({ blocos, onReorder, className, renderCab
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={modifiers} onDragEnd={handleDragEnd} accessibility={instrucoesArraste}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={modifiers} onDragStart={() => haptic('medium')} onDragEnd={handleDragEnd} accessibility={instrucoesArraste}>
       <SortableContext items={blocos.map(b => b.id)} strategy={verticalListSortingStrategy}>
         {blocos.map(bloco => (
           <Bloco key={bloco.id} id={bloco.id} className={className} renderCabecalho={() => renderCabecalho(bloco)}>

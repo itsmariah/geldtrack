@@ -12,7 +12,8 @@ import { useTheme } from '../context/ThemeContext'
 import { getChartTheme } from '../utils/chartTheme'
 import { SkeletonCards, SkeletonList, SkeletonChart } from '../components/Skeleton'
 import Alert from '../components/Alert'
-import { ArrowDownLeft, ArrowUpRight, FileDown, Repeat } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, FileDown, Inbox, Loader2, Repeat, SearchX } from 'lucide-react'
+import EmptyIllustration from '../components/EmptyIllustration'
 
 // new Date().toISOString() é UTC — perto da virada do mês no Brasil (UTC-3) isso pode
 // adiantar o mês padrão exibido. Aqui montamos o mês local manualmente para evitar isso.
@@ -164,7 +165,7 @@ export default function Reports() {
             className="month-picker"
           />
           <button className="btn btn-outline" onClick={handleDownloadPdf} disabled={generatingPdf || loading || !report}>
-            <FileDown size={16} /> {generatingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
+            {generatingPdf ? <Loader2 size={16} className="icon-spin" aria-hidden="true" /> : <FileDown size={16} />} {generatingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
           </button>
         </div>
       </div>
@@ -302,7 +303,7 @@ export default function Reports() {
 
             {filtered.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-state-icon">{isFiltered ? '🔍' : '📭'}</div>
+                <EmptyIllustration icon={isFiltered ? SearchX : Inbox} />
                 <p>
                   {isFiltered
                     ? 'Nenhuma transação com os filtros selecionados.'

@@ -1,10 +1,9 @@
-import { ArrowLeft } from 'lucide-react'
-
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Alert from '../components/Alert'
 import PasswordInput from '../components/PasswordInput'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', senha: '' })
@@ -68,6 +67,7 @@ export default function Login() {
             <Link to="/esqueci-senha" className="forgot-link">Esqueceu a senha?</Link>
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>

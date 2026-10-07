@@ -5,14 +5,15 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import Avatar from '../components/Avatar'
 import { SkeletonList } from '../components/Skeleton'
-import { Trash2 } from 'lucide-react'
+import { Loader2, Trash2 } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
 
 export default function Familia() {
   const { user, refreshUser } = useAuth()
   const [familia, setFamilia] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
 
   const [editandoNome, setEditandoNome] = useState(false)
   const [nomeInput, setNomeInput] = useState('')
@@ -31,11 +32,6 @@ export default function Familia() {
 
   const [removendoMembro, setRemovendoMembro] = useState(null)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchFamilia = async () => {
     setError('')
@@ -64,7 +60,7 @@ export default function Familia() {
       const { data } = await api.put('/familia', { nome: nomeInput })
       setFamilia(data)
       setEditandoNome(false)
-      setToast('Nome da família atualizado.')
+      toast('Nome da família atualizado.')
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível renomear a família.')
     } finally {
@@ -77,7 +73,7 @@ export default function Familia() {
     try {
       const { data } = await api.post('/familia/regenerar-codigo')
       setFamilia(f => ({ ...f, codigo: data.codigo }))
-      setToast('Novo código gerado. O código anterior não funciona mais.')
+      toast('Novo código gerado. O código anterior não funciona mais.')
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível gerar um novo código.')
     } finally {
@@ -113,7 +109,7 @@ export default function Familia() {
       await refreshUser()
       setCodigoInput('')
       setCodigoConfirmar(null)
-      setToast('Você entrou na família com sucesso.')
+      toast('Você entrou na família com sucesso.')
     } catch (err) {
       setCodigoConfirmar(null)
       setEntrarError(err.response?.data?.error || 'Não foi possível entrar nessa família.')
@@ -129,7 +125,7 @@ export default function Familia() {
       await refreshUser()
       await fetchFamilia()
       setConfirmarSair(false)
-      setToast('Você saiu da família e recebeu uma família pessoal nova.')
+      toast('Você saiu da família e recebeu uma família pessoal nova.')
     } catch (err) {
       setConfirmarSair(false)
       setError(err.response?.data?.error || 'Não foi possível sair da família.')
@@ -144,7 +140,7 @@ export default function Familia() {
     try {
       await api.delete(`/familia/membros/${membro.id}`)
       await fetchFamilia()
-      setToast(`${membro.nome} foi removido(a) da família.`)
+      toast(`${membro.nome} foi removido(a) da família.`)
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível remover esse membro.')
     }
@@ -186,6 +182,7 @@ export default function Familia() {
                   style={{ flex: 1 }}
                 />
                 <button type="submit" className="btn btn-primary btn-sm" disabled={salvandoNome}>
+                  {salvandoNome && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
                   {salvandoNome ? 'Salvando...' : 'Salvar'}
                 </button>
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => { setEditandoNome(false); setNomeInput(familia.nome) }}>
@@ -205,6 +202,7 @@ export default function Familia() {
                 </button>
                 {souDono && (
                   <button className="btn btn-outline btn-sm" onClick={handleRegenerarCodigo} disabled={regenerando}>
+                    {regenerando && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
                     {regenerando ? 'Gerando...' : 'Gerar novo código'}
                   </button>
                 )}
@@ -292,7 +290,6 @@ export default function Familia() {
         />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

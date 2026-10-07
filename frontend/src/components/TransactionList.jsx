@@ -10,7 +10,9 @@ import { CSS } from '@dnd-kit/utilities'
 import { fmt, fmtDate, fmtDayHeader, descreverConversao } from '../utils/format'
 import { useAuth } from '../context/AuthContext'
 import { useSortSensors, listenersSemTeclaDosFilhos } from '../hooks/useSortSensors'
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, GripVertical, History, Paperclip, Pencil, Plus, Repeat, Tag, Trash2 } from 'lucide-react'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, GripVertical, History, Paperclip, Pencil, Plus, ReceiptText, Repeat, SearchX, Tag, Trash2 } from 'lucide-react'
+import { haptic } from '../utils/haptics'
+import EmptyIllustration from './EmptyIllustration'
 
 // updatedAt e createdAt vêm do mesmo INSERT (mesmo now() do Postgres), mas usamos uma
 // margem pra não depender de igualdade exata de timestamp entre as duas colunas.
@@ -128,6 +130,7 @@ function DiaSortable({ grupo, onReorder, rowProps }) {
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={sortableModifiers}
+      onDragStart={() => haptic('medium')}
       onDragEnd={handleDragEnd}
       accessibility={{
         screenReaderInstructions: {
@@ -149,7 +152,7 @@ export default function TransactionList({ transactions, onEdit, onDelete, onView
     if (hasFilters) {
       return (
         <div className="empty-state">
-          <div className="empty-state-icon">🔍</div>
+          <EmptyIllustration icon={SearchX} />
           <p>Nenhuma transação encontrada com esses filtros.</p>
           <p className="empty-state-sub">Tente ajustar ou limpar os filtros.</p>
         </div>
@@ -157,7 +160,7 @@ export default function TransactionList({ transactions, onEdit, onDelete, onView
     }
     return (
       <div className="empty-state">
-        <div className="empty-state-icon">💸</div>
+        <EmptyIllustration icon={ReceiptText} />
         <p>Você ainda não tem nenhuma transação.</p>
         <p className="empty-state-sub">Adicione sua primeira receita ou despesa para começar a acompanhar seu saldo.</p>
         {onCreateClick && (

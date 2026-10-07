@@ -11,12 +11,12 @@ import ExpensePieChart from '../components/charts/ExpensePieChart'
 import OFXImportModal from '../components/OFXImportModal'
 import InsightsPanel from '../components/InsightsPanel'
 import ProjectionCard from '../components/ProjectionCard'
-import ConfirmDialog from '../components/ConfirmDialog'
 import Pagination from '../components/Pagination'
 import Alert from '../components/Alert'
 import { SkeletonCards, SkeletonList, SkeletonChart } from '../components/Skeleton'
 import { useCategorias } from '../context/CategoriasContext'
-import { ChevronDown, Download, Plus, Upload } from 'lucide-react'
+import { ChevronDown, Download, Loader2, Plus, Upload } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
 
 // 20 por página: a lista cresce todo dia e, no celular, 50 itens de uma vez já é uma
 // rolagem longa — a paginação numerada deixa pular direto pra qualquer página.
@@ -43,19 +43,13 @@ export default function Dashboard() {
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
-  const [deleteId, setDeleteId] = useState(null)
+  const toast = useToast()
   const [exporting, setExporting] = useState(false)
   const [anexoTransactionId, setAnexoTransactionId] = useState(null)
   const [historicoTransactionId, setHistoricoTransactionId] = useState(null)
   const [showFiltersMobile, setShowFiltersMobile] = useState(false)
   const transactionsRef = useRef(null)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   // Params de filtro compartilhados entre a listagem paginada e a exportação CSV.
   const buildFilterParams = useCallback(() => {
@@ -121,19 +115,31 @@ export default function Dashboard() {
     }
   }, [location, loading, contas.length, navigate])
 
-  const handleDelete = (id) => setDeleteId(id)
-
-  const confirmDelete = async () => {
-    const id = deleteId
-    setDeleteId(null)
-    try {
-      await api.delete(`/transactions/${id}`)
-      setToast('Transação excluída.')
-      fetchData()
-    } catch (err) {
-      console.error(err)
-      setError('Não foi possível excluir a transação. Tente novamente.')
+  // Exclusão com "Desfazer": a transação some da tela na hora e só é apagada de verdade
+  // quando o toast expira (ver ToastContext). Desfazer só recarrega — no servidor nada mudou.
+  const handleDelete = (id) => {
+    const removida = transactions.find(t => t.id === id)
+    // Saldo/totais também mudam na hora (só dá pra fazer localmente com valores em reais;
+    // transações em outra moeda entram no total convertidas, então esperam o recarregamento).
+    if (removida && (!removida.conta?.moeda || removida.conta.moeda === 'BRL')) {
+      const v = Number(removida.valor)
+      setBalance(b => removida.tipo === 'receita'
+        ? { ...b, receitas: b.receitas - v, saldo: b.saldo - v }
+        : { ...b, despesas: b.despesas - v, saldo: b.saldo + v })
     }
+    setTransactions(ts => ts.filter(t => t.id !== id))
+    toast.undoable('Transação excluída.', {
+      onCommit: async () => {
+        try {
+          await api.delete(`/transactions/${id}`)
+        } catch (err) {
+          console.error(err)
+          toast.error('Não foi possível excluir a transação. Tente novamente.')
+        }
+        fetchData()
+      },
+      onUndo: () => fetchData(),
+    })
   }
 
   // Otimista: a lista já muda na hora (sem esperar a API), e só volta ao estado do servidor
@@ -169,7 +175,7 @@ export default function Dashboard() {
   }
 
   const handleSaved = () => {
-    setToast(editingTransaction ? 'Transação atualizada com sucesso.' : 'Transação adicionada com sucesso.')
+    toast(editingTransaction ? 'Transação atualizada com sucesso.' : 'Transação adicionada com sucesso.')
     handleModalClose()
     fetchData()
   }
@@ -243,7 +249,7 @@ export default function Dashboard() {
         <h2>Olá, {user?.nome?.split(' ')[0]} 👋</h2>
         <div className="header-actions">
           <button className="btn btn-outline" onClick={handleExportCsv} disabled={exporting}>
-            <Download size={16} /> {exporting ? 'Exportando...' : 'Exportar CSV'}
+            {exporting ? <Loader2 size={16} className="icon-spin" aria-hidden="true" /> : <Download size={16} />} {exporting ? 'Exportando...' : 'Exportar CSV'}
           </button>
           <button className="btn btn-outline" onClick={() => setShowOFXModal(true)} disabled={contas.length === 0}>
             <Upload size={16} /> Importar OFX
@@ -386,15 +392,6 @@ export default function Dashboard() {
         />
       )}
 
-      {deleteId !== null && (
-        <ConfirmDialog
-          title="Excluir transação"
-          message="Tem certeza que deseja excluir esta transação? Essa ação não pode ser desfeita."
-          confirmLabel="Excluir"
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteId(null)}
-        />
-      )}
 
       {anexoTransactionId !== null && (
         <AnexoViewer transactionId={anexoTransactionId} onClose={() => setAnexoTransactionId(null)} />
@@ -404,7 +401,6 @@ export default function Dashboard() {
         <HistoricoViewer transactionId={historicoTransactionId} contas={contas} onClose={() => setHistoricoTransactionId(null)} />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

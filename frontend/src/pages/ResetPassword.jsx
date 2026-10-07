@@ -1,11 +1,10 @@
-import { ArrowLeft } from 'lucide-react'
-
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import Alert from '../components/Alert'
 import PasswordMatchHint from '../components/PasswordMatchHint'
 import PasswordInput from '../components/PasswordInput'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -75,6 +74,7 @@ export default function ResetPassword() {
                 <PasswordMatchHint id="reset-confirmar-hint" senha={form.senha} confirmar={form.confirmar} />
               </div>
               <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
                 {loading ? 'Salvando...' : 'Redefinir senha'}
               </button>
             </form>

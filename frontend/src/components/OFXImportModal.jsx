@@ -1,5 +1,3 @@
-import { X } from 'lucide-react'
-
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { readOFXFile, parseOFX } from '../utils/ofxParser'
@@ -8,6 +6,7 @@ import api from '../services/api'
 import { useCategorias } from '../context/CategoriasContext'
 import Modal from './Modal'
 import Alert from './Alert'
+import { Loader2, X } from 'lucide-react'
 
 export default function OFXImportModal({ contas, onClose, onImported }) {
   const navigate = useNavigate()
@@ -194,6 +193,7 @@ export default function OFXImportModal({ contas, onClose, onImported }) {
               <span className="ofx-footer-info">{selected.length} de {transactions.length} selecionada(s)</span>
               <button className="btn btn-outline" onClick={onClose}>Cancelar</button>
               <button className="btn btn-primary" onClick={handleImport} disabled={importing || !selected.length}>
+                {importing && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
                 {importing ? 'Importando...' : `Importar ${selected.length} transação(ões)`}
               </button>
             </div>

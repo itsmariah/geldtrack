@@ -5,11 +5,11 @@ import TransactionModal from '../components/TransactionModal'
 import TransactionList from '../components/TransactionList'
 import AnexoViewer from '../components/AnexoViewer'
 import HistoricoViewer from '../components/HistoricoViewer'
-import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
 import { fmt, fmtDate } from '../utils/format'
 import { ArrowLeft, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
 
 const PAGE_SIZE = 50
 
@@ -30,18 +30,12 @@ export default function EventoDetalhe() {
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
   const [showModal, setShowModal] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
-  const [deleteId, setDeleteId] = useState(null)
   const [anexoTransactionId, setAnexoTransactionId] = useState(null)
   const [historicoTransactionId, setHistoricoTransactionId] = useState(null)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchData = useCallback(async () => {
     setError('')
@@ -74,19 +68,22 @@ export default function EventoDetalhe() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  const handleDelete = (txId) => setDeleteId(txId)
-
-  const confirmDelete = async () => {
-    const txId = deleteId
-    setDeleteId(null)
-    try {
-      await api.delete(`/transactions/${txId}`)
-      setToast('Transação excluída.')
-      fetchData()
-    } catch (err) {
-      console.error(err)
-      setError('Não foi possível excluir a transação. Tente novamente.')
-    }
+  // Exclusão com "Desfazer": a transação some da tela na hora e só é apagada de verdade
+  // quando o toast expira (ver ToastContext). Desfazer só recarrega — no servidor nada mudou.
+  const handleDelete = (id) => {
+    setTransactions(ts => ts.filter(t => t.id !== id))
+    toast.undoable('Transação excluída.', {
+      onCommit: async () => {
+        try {
+          await api.delete(`/transactions/${id}`)
+        } catch (err) {
+          console.error(err)
+          toast.error('Não foi possível excluir a transação. Tente novamente.')
+        }
+        fetchData()
+      },
+      onUndo: () => fetchData(),
+    })
   }
 
   const handleEdit = (transaction) => {
@@ -100,7 +97,7 @@ export default function EventoDetalhe() {
   }
 
   const handleSaved = () => {
-    setToast(editingTransaction ? 'Transação atualizada com sucesso.' : 'Transação adicionada com sucesso.')
+    toast(editingTransaction ? 'Transação atualizada com sucesso.' : 'Transação adicionada com sucesso.')
     handleModalClose()
     fetchData()
   }
@@ -192,15 +189,6 @@ export default function EventoDetalhe() {
         />
       )}
 
-      {deleteId !== null && (
-        <ConfirmDialog
-          title="Excluir transação"
-          message="Tem certeza que deseja excluir esta transação? Essa ação não pode ser desfeita."
-          confirmLabel="Excluir"
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteId(null)}
-        />
-      )}
 
       {anexoTransactionId !== null && (
         <AnexoViewer transactionId={anexoTransactionId} onClose={() => setAnexoTransactionId(null)} />
@@ -210,7 +198,6 @@ export default function EventoDetalhe() {
         <HistoricoViewer transactionId={historicoTransactionId} contas={contas} onClose={() => setHistoricoTransactionId(null)} />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }

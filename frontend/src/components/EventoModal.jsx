@@ -2,7 +2,7 @@ import { useState } from 'react'
 import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
-import { X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 
 export default function EventoModal({ evento, onClose, onSaved }) {
   const [form, setForm] = useState({
@@ -98,6 +98,7 @@ export default function EventoModal({ evento, onClose, onSaved }) {
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {loading ? 'Salvando...' : evento ? 'Atualizar' : 'Criar evento'}
           </button>
         </div>

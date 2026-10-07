@@ -1,11 +1,10 @@
-import { ArrowLeft } from 'lucide-react'
-
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Alert from '../components/Alert'
 import PasswordMatchHint from '../components/PasswordMatchHint'
 import PasswordInput from '../components/PasswordInput'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function Register() {
   const [form, setForm] = useState({ nome: '', email: '', senha: '', confirmar: '' })
@@ -91,6 +90,7 @@ export default function Register() {
             <PasswordMatchHint id="register-confirmar-hint" senha={form.senha} confirmar={form.confirmar} />
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            {loading && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
             {loading ? 'Criando conta...' : 'Criar conta'}
           </button>
         </form>

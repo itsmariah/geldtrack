@@ -15,6 +15,7 @@ import { SkeletonList } from '../components/Skeleton'
 import { fmt, fmtDate } from '../utils/format'
 import { agruparContasPorInstituicao, totalDoGrupo, instituicoesUsadas } from '../utils/agruparContas'
 import { ArrowLeftRight, Landmark, Plus, Trash2 } from 'lucide-react'
+import { useToast } from '../context/ToastContext'
 
 export default function Contas() {
   const [contas, setContas] = useState([])
@@ -23,7 +24,7 @@ export default function Contas() {
   const [conexoes, setConexoes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const toast = useToast()
   const [showContaModal, setShowContaModal] = useState(false)
   const [editingConta, setEditingConta] = useState(null)
   const [showTransferModal, setShowTransferModal] = useState(false)
@@ -33,11 +34,6 @@ export default function Contas() {
   const [deleteTransferId, setDeleteTransferId] = useState(null)
   const [deleteConexao, setDeleteConexao] = useState(null)
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   const fetchData = useCallback(async () => {
     setError('')
@@ -75,7 +71,7 @@ export default function Contas() {
   }
 
   const handleContaSaved = () => {
-    setToast(editingConta ? 'Conta atualizada com sucesso.' : 'Conta criada com sucesso.')
+    toast(editingConta ? 'Conta atualizada com sucesso.' : 'Conta criada com sucesso.')
     handleContaModalClose()
     fetchData()
   }
@@ -85,7 +81,7 @@ export default function Contas() {
     setDeleteConta(null)
     try {
       await api.delete(`/contas/${conta.id}`)
-      setToast('Conta excluída.')
+      toast('Conta excluída.')
       fetchData()
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível excluir a conta. Tente novamente.')
@@ -93,7 +89,7 @@ export default function Contas() {
   }
 
   const handleTransferSaved = () => {
-    setToast('Transferência realizada com sucesso.')
+    toast('Transferência realizada com sucesso.')
     setShowTransferModal(false)
     fetchData()
   }
@@ -103,7 +99,7 @@ export default function Contas() {
     setDeleteTransferId(null)
     try {
       await api.delete(`/transferencias/${id}`)
-      setToast('Transferência desfeita.')
+      toast('Transferência desfeita.')
       fetchData()
     } catch (err) {
       console.error(err)
@@ -114,9 +110,9 @@ export default function Contas() {
   const handleBancoConectado = (resultado) => {
     setShowConectarBanco(false)
     if (resultado.aindaSincronizando) {
-      setToast('Banco conectado — a sincronização está demorando mais que o normal, confira em instantes.')
+      toast('Banco conectado — a sincronização está demorando mais que o normal, confira em instantes.')
     } else {
-      setToast(`Banco conectado! ${resultado.transacoesImportadas} transação(ões) importada(s).`)
+      toast(`Banco conectado! ${resultado.transacoesImportadas} transação(ões) importada(s).`)
     }
     fetchData()
   }
@@ -126,11 +122,11 @@ export default function Contas() {
     try {
       const { data } = await api.post(`/open-finance/conexoes/${conexaoId}/sincronizar`)
       if (data.status === 'UPDATED') {
-        setToast(`Sincronizado! ${data.transacoesImportadas} transação(ões) nova(s).`)
+        toast(`Sincronizado! ${data.transacoesImportadas} transação(ões) nova(s).`)
       } else if (data.status === 'LOGIN_ERROR' || data.status === 'OUTDATED') {
-        setToast('A sincronização falhou — pode ser necessário reconectar o banco.')
+        toast('A sincronização falhou — pode ser necessário reconectar o banco.')
       } else {
-        setToast('O banco ainda está processando. Tente de novo em alguns instantes.')
+        toast('O banco ainda está processando. Tente de novo em alguns instantes.')
       }
       fetchData()
     } catch (err) {
@@ -146,7 +142,7 @@ export default function Contas() {
     setDeleteConexao(null)
     try {
       await api.delete(`/open-finance/conexoes/${conexao.id}`)
-      setToast('Conexão removida.')
+      toast('Conexão removida.')
       fetchData()
     } catch (err) {
       console.error(err)
@@ -343,7 +339,6 @@ export default function Contas() {
         />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   )
 }
