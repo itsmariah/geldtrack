@@ -192,7 +192,7 @@ Roda como **aplicação web**, como **app instalável no celular (PWA)** e como 
 ## 📁 Estrutura do projeto
 
 ```
-moneytrack/
+geldtrack/
 │
 ├── electron/                           ← App desktop (Electron)
 │   ├── main.js                         ← Processo principal: inicia backend e janela
@@ -400,8 +400,8 @@ moneytrack/
 ### Passo 1 — Clonar o repositório
 
 ```bash
-git clone https://github.com/itsmariah/moneytrack.git
-cd moneytrack
+git clone https://github.com/itsmariah/geldtrack.git
+cd geldtrack
 ```
 
 ### Passo 2 — Instalar dependências
@@ -1038,7 +1038,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-Isso dispara o workflow, que builda em paralelo no Windows, macOS e Linux e anexa `.exe`/`.dmg`/`.AppImage` na release correspondente à tag — sem precisar gerar e subir o instalador manualmente. O botão "Baixar para desktop" da landing page aponta para `https://github.com/itsmariah/moneytrack/releases`, então ele passa a funcionar assim que a primeira tag for publicada.
+Isso dispara o workflow, que builda em paralelo no Windows, macOS e Linux e anexa `.exe`/`.dmg`/`.AppImage` na release correspondente à tag — sem precisar gerar e subir o instalador manualmente. O botão "Baixar para desktop" da landing page aponta para `https://github.com/itsmariah/geldtrack/releases`, então ele passa a funcionar assim que a primeira tag for publicada.
 
 ---
 

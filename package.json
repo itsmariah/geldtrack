@@ -4,7 +4,7 @@
   "main": "electron/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/itsmariah/moneytrack.git"
+    "url": "https://github.com/itsmariah/geldtrack.git"
   },
   "scripts": {
     "backend": "cd backend && npm run dev",
@@ -61,7 +61,7 @@
     "publish": {
       "provider": "github",
       "owner": "itsmariah",
-      "repo": "moneytrack",
+      "repo": "geldtrack",
       "releaseType": "release"
     }
   }
