@@ -7,6 +7,8 @@ import {
 } from '@dnd-kit/sortable'
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
+import { useRef } from 'react'
+import { m, useMotionValue, useTransform } from 'framer-motion'
 import { fmt, fmtDate, fmtDayHeader, descreverConversao } from '../utils/format'
 import { useAuth } from '../context/AuthContext'
 import { useSortSensors, listenersSemTeclaDosFilhos } from '../hooks/useSortSensors'
@@ -34,18 +36,21 @@ function agruparPorDia(transactions) {
 
 const sortableModifiers = [restrictToVerticalAxis, restrictToParentElement]
 
+// Deslizar pros lados só em telas de toque — no mouse, editar/excluir seguem pelos botões.
+const SWIPE_ENABLED = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches
+const SWIPE_ACTION = 96 // px deslizados pra disparar a ação
+const SWIPE_MAX = 140
+
 function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHistorico, sortable }) {
   const { user } = useAuth()
   const { setNodeRef, style, attributes, listeners, isDragging } = sortable || {}
+  const x = useMotionValue(0)
+  const armado = useRef(false)
 
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={`transaction-item ${t.tipo}${sortable ? ' transaction-item--sortable' : ''}${isDragging ? ' transaction-item--dragging' : ''}`}
-      {...attributes}
-      {...listeners}
-    >
+  const itemClass = `transaction-item ${t.tipo}${sortable ? ' transaction-item--sortable' : ''}${isDragging ? ' transaction-item--dragging' : ''}`
+
+  const conteudo = (
+    <>
       {sortable && <span className="tx-grip" aria-hidden="true"><GripVertical size={16} /></span>}
       <div className="tx-icon">{t.tipo === 'receita' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}</div>
       <div className="tx-info">
@@ -91,13 +96,68 @@ function TransactionRow({ t, showDate, onEdit, onDelete, onViewAnexo, onViewHist
         )}
       </div>
       <div className="tx-amount">
-        {t.tipo === 'receita' ? '+' : '-'}{fmt(t.valor, t.conta?.moeda)}
+        {t.tipo === 'receita' ? '+' : '-'}<span className="money">{fmt(t.valor, t.conta?.moeda)}</span>
       </div>
       <div className="tx-actions">
         <button className="btn-icon" onClick={() => onEdit(t)} title="Editar" aria-label="Editar"><Pencil size={16} /></button>
         <button className="btn-icon btn-danger" onClick={() => onDelete(t.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
       </div>
+    </>
+  )
+
+  if (!SWIPE_ENABLED) {
+    return (
+      <li ref={setNodeRef} style={style} className={itemClass} {...attributes} {...listeners}>
+        {conteudo}
+      </li>
+    )
+  }
+
+  // Celular/tablet: a linha desliza pros lados revelando as ações — direita = editar,
+  // esquerda = excluir (que já tem "Desfazer" no toast). O <li> continua sendo o nó do
+  // arraste vertical (dnd-kit, segurar e arrastar); o deslize horizontal é no conteúdo.
+  return (
+    <li ref={setNodeRef} style={style} className={`tx-swipe${isDragging ? ' tx-swipe--dragging' : ''}`} {...attributes} {...listeners}>
+      <SwipeActions x={x} />
+      <m.div
+        className={itemClass}
+        style={{ x }}
+        drag="x"
+        dragDirectionLock
+        dragSnapToOrigin
+        dragElastic={0.12}
+        dragConstraints={{ left: -SWIPE_MAX, right: SWIPE_MAX }}
+        onDrag={(_, info) => {
+          const passou = Math.abs(info.offset.x) >= SWIPE_ACTION
+          if (passou !== armado.current) { armado.current = passou; if (passou) haptic('light') }
+        }}
+        onDragEnd={(_, info) => {
+          armado.current = false
+          if (info.offset.x <= -SWIPE_ACTION) onDelete(t.id)
+          else if (info.offset.x >= SWIPE_ACTION) onEdit(t)
+        }}
+      >
+        {conteudo}
+      </m.div>
     </li>
+  )
+}
+
+// Fundo revelado atrás da linha: cada lado aparece conforme a direção do deslize.
+function SwipeActions({ x }) {
+  const editOpacity = useTransform(x, [0, 24, SWIPE_ACTION], [0, 0.6, 1])
+  const deleteOpacity = useTransform(x, [-SWIPE_ACTION, -24, 0], [1, 0.6, 0])
+  const editScale = useTransform(x, [0, SWIPE_ACTION], [0.6, 1.1])
+  const deleteScale = useTransform(x, [-SWIPE_ACTION, 0], [1.1, 0.6])
+  return (
+    <>
+      <m.div className="tx-swipe-bg tx-swipe-bg--edit" style={{ opacity: editOpacity }} aria-hidden="true">
+        <m.span style={{ scale: editScale }}><Pencil size={20} /></m.span> Editar
+      </m.div>
+      <m.div className="tx-swipe-bg tx-swipe-bg--delete" style={{ opacity: deleteOpacity }} aria-hidden="true">
+        Excluir <m.span style={{ scale: deleteScale }}><Trash2 size={20} /></m.span>
+      </m.div>
+    </>
   )
 }
 

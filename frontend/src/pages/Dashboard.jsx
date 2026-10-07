@@ -17,6 +17,9 @@ import { SkeletonCards, SkeletonList, SkeletonChart } from '../components/Skelet
 import { useCategorias } from '../context/CategoriasContext'
 import { ChevronDown, Download, Loader2, Plus, Upload } from 'lucide-react'
 import { useToast } from '../context/ToastContext'
+import PullToRefresh from '../components/PullToRefresh'
+import { saudacao, contextoDoDia } from '../utils/saudacao'
+import { serieMensal } from '../utils/serieMensal'
 
 // 20 por página: a lista cresce todo dia e, no celular, 50 itens de uma vez já é uma
 // rolagem longa — a paginação numerada deixa pular direto pra qualquer página.
@@ -34,6 +37,7 @@ export default function Dashboard() {
   const [eventos, setEventos] = useState([])
   const [insights, setInsights] = useState([])
   const [projecao, setProjecao] = useState(null)
+  const [evolucao, setEvolucao] = useState([])
   const [filters, setFilters] = useState({ tipo: '', categoria: '', conta: '', data_inicio: '', data_fim: '', busca: '' })
   const [buscaInput, setBuscaInput] = useState('')
   const [page, setPage] = useState(1)
@@ -68,7 +72,7 @@ export default function Dashboard() {
     try {
       const params = { ...buildFilterParams(), page, limit: PAGE_SIZE }
 
-      const [txRes, balanceRes, catRes, contasRes, insightsRes, projecaoRes, eventosRes] = await Promise.all([
+      const [txRes, balanceRes, catRes, contasRes, insightsRes, projecaoRes, eventosRes, evolucaoRes] = await Promise.all([
         api.get('/transactions', { params }),
         api.get('/reports/balance'),
         api.get('/reports/categories'),
@@ -76,6 +80,8 @@ export default function Dashboard() {
         api.get('/reports/insights'),
         api.get('/reports/projecao'),
         api.get('/eventos'),
+        // Só alimenta os minigráficos dos cards — se falhar, o Dashboard segue sem eles.
+        api.get('/reports/evolution').catch(() => ({ data: [] })),
       ])
 
       setTransactions(txRes.data.transactions)
@@ -90,6 +96,7 @@ export default function Dashboard() {
       setInsights(insightsRes.data)
       setProjecao(projecaoRes.data)
       setEventos(eventosRes.data)
+      setEvolucao(evolucaoRes.data)
     } catch (err) {
       console.error('Erro ao buscar dados:', err)
       setError('Não foi possível carregar seus dados. Verifique sua conexão e tente novamente.')
@@ -235,6 +242,9 @@ export default function Dashboard() {
     setPage(1)
   }
 
+  const ola = saudacao()
+  const serie = serieMensal(evolucao)
+
   const despesasByCategory = categoryData
     .filter(d => d.tipo === 'despesa')
     .map(d => ({ name: d.categoria, value: d.total }))
@@ -245,8 +255,13 @@ export default function Dashboard() {
 
   return (
     <>
+      <PullToRefresh onRefresh={fetchData} />
+
       <div className="dashboard-header">
-        <h2>Olá, {user?.nome?.split(' ')[0]} 👋</h2>
+        <div className="dashboard-greeting">
+          <h2>{ola.texto}, {user?.nome?.split(' ')[0]} <span className="dashboard-greeting-emoji" aria-hidden="true">{ola.emoji}</span></h2>
+          <p className="dashboard-subtitle">{contextoDoDia()}</p>
+        </div>
         <div className="header-actions">
           <button className="btn btn-outline" onClick={handleExportCsv} disabled={exporting}>
             {exporting ? <Loader2 size={16} className="icon-spin" aria-hidden="true" /> : <Download size={16} />} {exporting ? 'Exportando...' : 'Exportar CSV'}
@@ -267,7 +282,7 @@ export default function Dashboard() {
         </Alert>
       )}
 
-      {loading ? <SkeletonCards /> : <SummaryCards balance={balance} />}
+      {loading ? <SkeletonCards /> : <SummaryCards balance={balance} serie={serie} />}
 
       {!loading && <ProjectionCard projecao={projecao} />}
 

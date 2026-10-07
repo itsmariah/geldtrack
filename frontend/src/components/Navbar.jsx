@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { NAV_LINKS, isPathActive } from '../utils/navLinks'
 import ProfileModal from './ProfileModal'
 import ThemeToggle from './ThemeToggle'
+import PrivacyToggle from './PrivacyToggle'
 import Avatar from './Avatar'
 import { Menu, X } from 'lucide-react'
 
@@ -49,6 +50,7 @@ export default function Navbar() {
       </nav>
 
       <div className="navbar-user">
+        <PrivacyToggle />
         <ThemeToggle />
         <button className="user-btn" onClick={() => setShowProfile(true)} aria-label="Meu perfil">
           <Avatar nome={user?.nome} foto={user?.foto} size="sm" />

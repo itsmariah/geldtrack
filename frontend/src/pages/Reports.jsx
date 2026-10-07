@@ -341,7 +341,7 @@ export default function Reports() {
                       </span>
                     </div>
                     <div className="tx-amount">
-                      {t.tipo === 'receita' ? '+' : '-'}{fmt(t.valor, t.conta?.moeda)}
+                      {t.tipo === 'receita' ? '+' : '-'}<span className="money">{fmt(t.valor, t.conta?.moeda)}</span>
                     </div>
                   </li>
                 ))}

@@ -132,7 +132,7 @@ export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas,
           return (
             <div key={p.moeda} className="form-group">
               <label htmlFor={`grupo-dash-conta-${p.moeda}`}>
-                Despesas em {simbolo(p.moeda)} — {p.lista.length === 1 ? '1 despesa' : `${p.lista.length} despesas`}, sua parte {fmt(p.total, p.moeda)}
+                Despesas em {simbolo(p.moeda)} — {p.lista.length === 1 ? '1 despesa' : `${p.lista.length} despesas`}, sua parte <span className="money">{fmt(p.total, p.moeda)}</span>
               </label>
               <ul className="grupo-despesas-list" style={{ margin: '4px 0 8px', maxHeight: 160, overflowY: 'auto' }}>
                 {p.lista.map(d => (
@@ -142,10 +142,10 @@ export default function DespesasGrupoDashboardModal({ grupoId, despesas, moedas,
                       <span className="tx-meta">{fmtDate(d.data)}</span>
                     </div>
                     <div className="grupo-despesa-valor">
-                      {fmt(d.minhaParte, p.moeda)}
+                      <span className="money">{fmt(d.minhaParte, p.moeda)}</span>
                       {p.converte && p.taxaValida && (
                         <span className="tx-meta" style={{ display: 'block', textAlign: 'right' }}>
-                          ≈ {fmt(converterValor(d.minhaParte, p.taxa), p.conta.moeda)}
+                          ≈ <span className="money">{fmt(converterValor(d.minhaParte, p.taxa), p.conta.moeda)}</span>
                         </span>
                       )}
                     </div>

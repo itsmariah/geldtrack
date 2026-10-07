@@ -139,7 +139,7 @@ export default function TransferModal({ contas, onClose, onSaved }) {
             />
             <span className="form-hint">
               {temCotacao && dataCotacao
-                ? <>Sugestão de acordo com a cotação de {dataCotacao} ({fmt(1, moedaDestino)} = {fmt(taxaDestino / taxaOrigem, moedaOrigem)}). </>
+                ? <>Sugestão de acordo com a cotação de {dataCotacao} (<span className="money">{fmt(1, moedaDestino)}</span> = <span className="money">{fmt(taxaDestino / taxaOrigem, moedaOrigem)}</span>). </>
                 : <>Sem cotação salva pra essa moeda — atualize as cotações nesta página ou informe o valor manualmente. </>}
               Ajuste para o valor que realmente chegou, já descontadas as taxas e o IOF.
             </span>

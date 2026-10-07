@@ -20,7 +20,7 @@ export default function SaldosGrupo({ saldos, membros, meuMembroId, onQuitar }) 
           <li key={i} className="grupo-saldo-item">
             <span className="grupo-pessoas">
               <Avatar nome={membroPorId[s.deMembroId]?.nome} foto={membroPorId[s.deMembroId]?.foto} size="xs" />
-              {membroPorId[s.deMembroId]?.nome ?? '—'} deve <strong className={classe}>{fmt(s.valor, s.moeda)}</strong> a
+              {membroPorId[s.deMembroId]?.nome ?? '—'} deve <strong className={classe}><span className="money">{fmt(s.valor, s.moeda)}</span></strong> a
               <Avatar nome={membroPorId[s.paraMembroId]?.nome} foto={membroPorId[s.paraMembroId]?.foto} size="xs" />
               {membroPorId[s.paraMembroId]?.nome ?? '—'}
             </span>

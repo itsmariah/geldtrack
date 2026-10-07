@@ -21,7 +21,7 @@ export default function MetaCard({ meta, onEdit, onDelete, onAddAporte, onDelete
         <div className="meta-progress-fill" style={{ width: `${pct}%` }} />
       </div>
       <div className="meta-progress-info">
-        <span>{fmt(meta.valorAtual)} de {fmt(meta.valorAlvo)}</span>
+        <span><span className="money">{fmt(meta.valorAtual)}</span> de <span className="money">{fmt(meta.valorAlvo)}</span></span>
         <span className="meta-progress-pct">{pct}%</span>
       </div>
 
@@ -29,7 +29,7 @@ export default function MetaCard({ meta, onEdit, onDelete, onAddAporte, onDelete
         {meta.concluida ? (
           <span className="meta-badge meta-badge--done">🎉 Meta concluída</span>
         ) : (
-          <span>Faltam {fmt(restante)}{meta.prazo ? ` até ${fmtDate(meta.prazo)}` : ''}</span>
+          <span>Faltam <span className="money">{fmt(restante)}</span>{meta.prazo ? ` até ${fmtDate(meta.prazo)}` : ''}</span>
         )}
       </div>
 
@@ -47,7 +47,7 @@ export default function MetaCard({ meta, onEdit, onDelete, onAddAporte, onDelete
           {meta.aportes.map(a => (
             <li key={a.id}>
               <span className="meta-aporte-info">{fmtDate(a.data)}{a.descricao ? ` · ${a.descricao}` : ''}</span>
-              <span className="meta-aporte-valor">+{fmt(a.valor)}</span>
+              <span className="meta-aporte-valor">+<span className="money">{fmt(a.valor)}</span></span>
               <button className="btn-icon btn-danger" onClick={() => onDeleteAporte(meta, a.id)} title="Remover aporte" aria-label="Remover aporte"><Trash2 size={16} /></button>
             </li>
           ))}

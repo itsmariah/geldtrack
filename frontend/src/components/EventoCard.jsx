@@ -47,7 +47,7 @@ export default function EventoCard({ evento, onEdit, onDelete, onToggleStatus })
             <div className={`budget-progress-fill budget-progress-fill--${level}`} style={{ width: `${pct}%` }} />
           </div>
           <div className="meta-progress-info">
-            <span>{fmt(evento.gasto)} de {fmt(evento.orcamento)}</span>
+            <span><span className="money">{fmt(evento.gasto)}</span> de <span className="money">{fmt(evento.orcamento)}</span></span>
             <span className="meta-progress-pct">{evento.percentual}%</span>
           </div>
         </>
@@ -55,9 +55,9 @@ export default function EventoCard({ evento, onEdit, onDelete, onToggleStatus })
 
       <div className="meta-card-status">
         {evento.estourado ? (
-          <span className="budget-badge budget-badge--over">⚠ Orçamento estourado em {fmt(evento.gasto - evento.orcamento)}</span>
+          <span className="budget-badge budget-badge--over">⚠ Orçamento estourado em <span className="money">{fmt(evento.gasto - evento.orcamento)}</span></span>
         ) : (
-          <span>Gasto {fmt(evento.gasto)} · Recebido {fmt(evento.recebido)} · Saldo {fmt(evento.saldo)}</span>
+          <span>Gasto <span className="money">{fmt(evento.gasto)}</span> · Recebido <span className="money">{fmt(evento.recebido)}</span> · Saldo <span className="money">{fmt(evento.saldo)}</span></span>
         )}
       </div>
 

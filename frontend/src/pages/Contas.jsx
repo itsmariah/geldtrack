@@ -215,7 +215,7 @@ export default function Contas() {
                       <h3>🏦 {grupo.nome}</h3>
                       {grupo.contas.length > 1 && (
                         <span className="contas-grupo-total" title={total.aproximado ? 'Convertido para R$ pela cotação salva' : undefined}>
-                          Total {total.aproximado ? '≈ ' : ''}{fmt(total.valor, total.moeda)}
+                          Total {total.aproximado ? '≈ ' : ''}<span className="money">{fmt(total.valor, total.moeda)}</span>
                         </span>
                       )}
                     </div>

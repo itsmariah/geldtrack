@@ -12,7 +12,7 @@ export default function ContaCard({ conta, onEdit, onDelete }) {
           <button className="btn-icon btn-danger" onClick={() => onDelete(conta)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
         </div>
       </div>
-      <div className={`conta-saldo ${conta.saldo < 0 ? 'negative' : 'positive'}`}>{fmt(conta.saldo, conta.moeda)}</div>
+      <div className={`conta-saldo ${conta.saldo < 0 ? 'negative' : 'positive'}`}><span className="money">{fmt(conta.saldo, conta.moeda)}</span></div>
       <div className="meta-card-status">{labelTipoConta(conta.tipo)}{conta.moeda && conta.moeda !== 'BRL' ? ` · ${conta.moeda}` : ''}</div>
     </div>
   )

@@ -25,15 +25,15 @@ export default function BudgetCard({ orcamento, onEdit, onDelete }) {
         <div className={`budget-progress-fill budget-progress-fill--${level}`} style={{ width: `${pct}%` }} />
       </div>
       <div className="meta-progress-info">
-        <span>{fmt(orcamento.gasto)} de {fmt(orcamento.valorLimite)}</span>
+        <span><span className="money">{fmt(orcamento.gasto)}</span> de <span className="money">{fmt(orcamento.valorLimite)}</span></span>
         <span className="meta-progress-pct">{orcamento.percentual}%</span>
       </div>
 
       <div className="meta-card-status">
         {orcamento.estourado ? (
-          <span className="budget-badge budget-badge--over">⚠ Limite estourado em {fmt(orcamento.gasto - orcamento.valorLimite)}</span>
+          <span className="budget-badge budget-badge--over">⚠ Limite estourado em <span className="money">{fmt(orcamento.gasto - orcamento.valorLimite)}</span></span>
         ) : (
-          <span>Restam {fmt(orcamento.restante)} este mês</span>
+          <span>Restam <span className="money">{fmt(orcamento.restante)}</span> este mês</span>
         )}
       </div>
     </div>

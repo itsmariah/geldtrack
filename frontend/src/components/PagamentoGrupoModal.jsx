@@ -169,7 +169,7 @@ export default function PagamentoGrupoModal({ grupoId, membros, moedas, moedaPad
             </div>
             <span className="form-hint">
               {sugestao && dataCotacao
-                ? <>Sugestão de acordo com a cotação de {fmtDate(dataCotacao)} ({fmt(1, form.moeda)} = {fmt(taxaDivida / taxaPagamento, moedaPagamentoEfetiva)}). </>
+                ? <>Sugestão de acordo com a cotação de {fmtDate(dataCotacao)} (<span className="money">{fmt(1, form.moeda)}</span> = <span className="money">{fmt(taxaDivida / taxaPagamento, moedaPagamentoEfetiva)}</span>). </>
                 : <>Sem cotação salva pra essa conversão. </>}
               Informe quanto foi pago de fato — o saldo abate {form.valor ? fmt(Number(form.valor), form.moeda) : `o valor em ${simbolo(form.moeda)}`}.
             </span>

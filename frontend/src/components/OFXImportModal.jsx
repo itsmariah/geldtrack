@@ -176,7 +176,7 @@ export default function OFXImportModal({ contas, onClose, onImported }) {
                         )}
                       </td>
                       <td className={`ofx-amount ofx-amount--${t.tipo}`}>
-                        {t.tipo === 'receita' ? '+' : '-'}{fmt(t.valor)}
+                        {t.tipo === 'receita' ? '+' : '-'}<span className="money">{fmt(t.valor)}</span>
                       </td>
                     </tr>
                   ))}
@@ -185,8 +185,8 @@ export default function OFXImportModal({ contas, onClose, onImported }) {
             </div>
 
             <div className="ofx-summary">
-              <span className="ofx-summary-item positive">↑ {fmt(totalReceitas)}</span>
-              <span className="ofx-summary-item negative">↓ {fmt(totalDespesas)}</span>
+              <span className="ofx-summary-item positive">↑ <span className="money">{fmt(totalReceitas)}</span></span>
+              <span className="ofx-summary-item negative">↓ <span className="money">{fmt(totalDespesas)}</span></span>
             </div>
 
             <div className="modal-footer">

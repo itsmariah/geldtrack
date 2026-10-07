@@ -672,6 +672,15 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 /* ── DASHBOARD ── */
 .dashboard-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
 .dashboard-header h2 { font-size: 22px; }
+.dashboard-greeting { min-width: 0; }
+.dashboard-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.dashboard-subtitle::first-letter { text-transform: uppercase; }
+.dashboard-greeting-emoji { display: inline-block; transform-origin: 70% 70%; animation: greeting-wave 1.6s var(--ease-in-out) 0.4s 1 both; }
+@keyframes greeting-wave {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(14deg); } 30% { transform: rotate(-8deg); }
+  45% { transform: rotate(14deg); } 60% { transform: rotate(-4deg); } 75% { transform: rotate(10deg); }
+}
 .header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .dashboard-side { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 
@@ -687,6 +696,12 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .card-label { font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
 .card-value { font-size: 26px; font-weight: 700; }
+/* Minigráfico dos cards do Dashboard (components/Sparkline.jsx) */
+.sparkline {
+  display: block; width: 100%; height: 36px; margin-top: 12px; overflow: visible;
+  animation: sparkline-reveal 1.1s var(--ease-out) 0.25s both;
+}
+@keyframes sparkline-reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 .card-balance { border-top: 3px solid var(--primary); }
 .card-income { border-top: 3px solid var(--green); }
 .card-expense { border-top: 3px solid var(--red); }
@@ -698,7 +713,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .card-por-moeda { grid-column: 1 / -1; }
 .por-moeda-linha { display: flex; align-items: center; gap: 16px; padding: 6px 0; }
 .por-moeda-linha strong { width: 48px; flex-shrink: 0; }
-.por-moeda-linha span { min-width: 110px; }
+.por-moeda-linha > span { min-width: 110px; }
 
 /* ── PROJEÇÃO DE SALDO ── */
 .projection-card {
@@ -1375,7 +1390,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   .card-value { font-size: 18px; overflow-wrap: anywhere; }
   .card-balance .card-value { font-size: 24px; }
   .por-moeda-linha { flex-wrap: wrap; gap: 4px 12px; }
-  .por-moeda-linha span { min-width: 0; }
+  .por-moeda-linha > span { min-width: 0; }
 
   .projection-card { padding: 14px 16px; margin-bottom: 16px; }
   .projection-value { font-size: 20px; }
@@ -1613,6 +1628,55 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 
 @media (max-width: 380px) {
   .more-sheet-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── MODO PRIVACIDADE (context/PrivacyContext.jsx) ── */
+.money, .tx-amount { transition: filter var(--dur-slow) var(--ease-out); }
+html[data-privacy="on"] .money,
+html[data-privacy="on"] .tx-amount,
+html[data-privacy="on"] .recharts-tooltip-wrapper,
+html[data-privacy="on"] .recharts-yAxis .recharts-cartesian-axis-tick-value {
+  filter: blur(7px);
+  user-select: none;
+}
+
+/* ── DESLIZAR TRANSAÇÃO (celular) ── */
+.tx-swipe { position: relative; border-radius: var(--radius-md); overflow: hidden; list-style: none; touch-action: pan-y; }
+.tx-swipe > .transaction-item { position: relative; z-index: 1; }
+.tx-swipe--dragging { z-index: 2; overflow: visible; }
+.tx-swipe-bg {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+.tx-swipe-bg--edit { justify-content: flex-start; background: linear-gradient(90deg, var(--primary), #8b5cf6); }
+.tx-swipe-bg--delete { justify-content: flex-end; background: linear-gradient(270deg, #dc2626, var(--red)); }
+.tx-swipe-bg span { display: inline-flex; }
+
+/* ── PUXAR PRA ATUALIZAR (components/PullToRefresh.jsx) ── */
+.ptr-indicator {
+  position: fixed;
+  top: calc(56px + var(--safe-top));
+  left: 50%;
+  z-index: 80;
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--primary-light);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+.ptr-indicator--ready, .ptr-indicator--refreshing { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+@media (max-width: 600px) {
+  .summary-cards .card-income .sparkline, .summary-cards .card-expense .sparkline { height: 28px; margin-top: 8px; }
+  .dashboard-subtitle { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sparkline, .dashboard-greeting-emoji { animation: none; }
 }
 
 /* ── FONT TESTER (temporário — sai junto com components/FontTester.jsx) ── */

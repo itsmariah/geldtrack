@@ -13,7 +13,7 @@ export default function RecurringCard({ recorrencia, onEdit, onDelete, onToggleA
       </div>
 
       <div className={`recurring-valor ${recorrencia.tipo}`}>
-        {recorrencia.tipo === 'receita' ? '+' : '-'}{fmt(recorrencia.valor)}
+        {recorrencia.tipo === 'receita' ? '+' : '-'}<span className="money">{fmt(recorrencia.valor)}</span>
         <span className="recurring-categoria"> · {recorrencia.categoria}</span>
       </div>
 

@@ -154,7 +154,7 @@ export default function DespesaGrupoModal({ grupoId, despesa, membros, moedas, m
                   <input type="checkbox" checked={participanteIds.includes(m.id)} onChange={() => toggleParticipante(m.id)} />
                   <span className="despesa-participante-nome">{m.nome}</span>
                   {participanteIds.includes(m.id) && preview[m.id] != null && (
-                    <span className="despesa-participante-valor">{fmt(preview[m.id], form.moeda)}</span>
+                    <span className="despesa-participante-valor"><span className="money">{fmt(preview[m.id], form.moeda)}</span></span>
                   )}
                 </label>
               </li>

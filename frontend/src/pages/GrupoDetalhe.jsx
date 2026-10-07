@@ -376,7 +376,7 @@ export default function GrupoDetalhe() {
                     {p.moedaPagamento && ` · pago em ${fmt(p.valorPagamento, p.moedaPagamento)}`}
                   </span>
                 </div>
-                <div className="grupo-despesa-valor">{fmt(p.valor, p.moeda)}</div>
+                <div className="grupo-despesa-valor"><span className="money">{fmt(p.valor, p.moeda)}</span></div>
                 {/* Receita no dashboard: só pra quem recebeu, e por escolha (nunca automático). */}
                 {p.paraMembroId === meuMembro?.id && (p.noDashboard
                   ? <span className="tx-evento-chip"><Check size={12} /> No dashboard</span>
@@ -443,7 +443,7 @@ export default function GrupoDetalhe() {
                     {membroPorId[d.pagoPorMembroId]?.nome ?? '—'} · {fmtDate(d.data)}
                   </span>
                 </div>
-                <div className="grupo-despesa-valor">{fmt(d.valorTotal, d.moeda)}</div>
+                <div className="grupo-despesa-valor"><span className="money">{fmt(d.valorTotal, d.moeda)}</span></div>
                 {(d.criadoPorUsuarioId === user?.id || souAdmin) && (
                   <div className="tx-actions">
                     <button className="btn-icon" onClick={() => handleEditDespesa(d)} title="Editar" aria-label="Editar"><Pencil size={16} /></button>

@@ -89,7 +89,7 @@ export default function PagamentoDashboardModal({ grupoId, pagamento, nomeQuemPa
       {error && <Alert type="error">{error}</Alert>}
 
       <p className="form-hint" style={{ marginTop: 0, marginBottom: 12 }}>
-        {nomeQuemPagou} te pagou {fmt(recebido.valor, recebido.moeda)} em {fmtDate(pagamento.data)}. Isso entra como receita
+        {nomeQuemPagou} te pagou <span className="money">{fmt(recebido.valor, recebido.moeda)}</span> em {fmtDate(pagamento.data)}. Isso entra como receita
         no dashboard, na data do pagamento.
       </p>
       <Alert type={parteJaNoDashboard ? 'warning' : 'info'}>
