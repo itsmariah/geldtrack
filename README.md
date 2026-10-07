@@ -1,12 +1,8 @@
 # 💰 GeldTrack
 
-> Gestão financeira pessoal com dashboard, relatórios e importação de extratos bancários (OFX).
-
-![Status](https://img.shields.io/badge/status-ativo-brightgreen)
-![Frontend](https://img.shields.io/badge/frontend-React%20%7C%20Vite-61dafb)
-![Backend](https://img.shields.io/badge/backend-Node.js%20%7C%20Express-green)
-![Database](https://img.shields.io/badge/banco-PostgreSQL%20%7C%20Prisma-blue)
-![Desktop](https://img.shields.io/badge/desktop-Electron-47848f)
+![status](https://img.shields.io/badge/status-ativo-brightgreen)
+![plataformas](https://img.shields.io/badge/plataformas-web%20%7C%20desktop%20%7C%20PWA-8a63d2)
+![idioma](https://img.shields.io/badge/idioma-pt--BR-9cc3e6)
 
 **🔗 Acesse online:** [geldtrack.vercel.app](https://geldtrack.vercel.app)
 
@@ -14,46 +10,83 @@
 
 ## 📖 Sobre o projeto
 
-O **GeldTrack** é uma aplicação de gestão financeira pessoal que permite ao usuário registrar receitas e despesas, visualizar o saldo atualizado automaticamente, filtrar transações, importar extratos bancários (OFX) e gerar relatórios mensais com gráficos. Pode ser executado como aplicação web ou como **app desktop** via Electron.
+O **GeldTrack** é um sistema completo de gestão financeira pessoal e compartilhada — do registro de receitas e despesas à divisão de gastos em grupo — desenvolvido do zero até o deploy. O nome vem de *Geld*, "dinheiro" em alemão.
+
+Ele nasceu como um controle simples de entradas e saídas com dashboard e relatórios, e foi crescendo para cobrir o dia a dia financeiro de verdade:
+
+- **Organização do dinheiro** — múltiplas contas (corrente, cartão, dinheiro, investimento), agrupadas por instituição, em reais ou em moeda estrangeira (USD, EUR, GBP), com transferências entre elas, inclusive entre moedas diferentes.
+- **Entrada de dados sem atrito** — lançamento manual, importação de extratos OFX, sincronização automática com o banco via **Open Finance** e transações recorrentes que se lançam sozinhas todo mês.
+- **Planejamento** — orçamento mensal por categoria (com aviso por e-mail quando estoura), metas com aportes, eventos para acompanhar o custo de uma viagem e projeção do saldo até o fim do mês.
+- **Leitura dos números** — dashboard com insights automáticos, relatórios mensais com gráficos, exportação em CSV e PDF, e um resumo semanal/mensal enviado por e-mail.
+- **Dinheiro compartilhado** — modo família (uma carteira em comum, entrando por código) e grupos estilo Splitwise, com despesas em várias moedas, "quem deve quem", quitações e integração com o dashboard pessoal de cada membro.
+
+Roda como **aplicação web**, como **app instalável no celular (PWA)** e como **app desktop** (Electron), com modo claro/escuro, layout pensado para celular e navegação completa por teclado e leitor de tela.
+
+> Este repositório documenta o processo de construção do projeto para fins de portfólio. Nenhuma credencial é versionada — variáveis sensíveis ficam em `.env`, que está no `.gitignore`.
 
 ---
 
 ## ✨ Funcionalidades
 
-- Cadastro e login de usuários (senha criptografada)
+### Conta e acesso
+- Cadastro e login de usuários (senha criptografada com bcrypt)
 - Recuperação de senha por e-mail ("Esqueceu a senha?"), com invalidação automática de sessões antigas ao trocar a senha
-- Adicionar, editar e excluir transações
-- Saldo calculado automaticamente
+- Botão de exibir/ocultar senha em todos os campos de senha
+- Edição de perfil (nome, e-mail, senha, foto de perfil redimensionada no navegador)
+
+### Transações
+- Adicionar, editar e excluir receitas e despesas, com saldo calculado automaticamente
 - Filtros por tipo, categoria, período de data e **busca por texto** (descrição ou categoria)
-- Listagem de transações **paginada**
-- **Exportação das transações em CSV** (respeitando os filtros ativos)
-- **Importação de extratos bancários em formato OFX** com preview e edição de categorias antes de confirmar
-- Categorias separadas por tipo (receitas e despesas) com auto-categorização no OFX
-- Gráfico de **despesas** por categoria (rosca)
-- Gráfico de **fontes de renda** por categoria (rosca)
-- Relatório mensal com filtros de tipo e categoria
-- Gráfico de evolução mensal (últimos 6 meses)
-- Edição de perfil (nome, e-mail, senha, foto de perfil)
-- **Modo claro/escuro**, com preferência salva no navegador
-- Interface responsiva (menu mobile com hambúrguer na landing page)
-- Navegação completa por teclado (modais com trava de foco, `aria-live` para leitores de tela)
-- **Aplicação desktop** empacotável via Electron
-- **Metas financeiras**, com aportes manuais e acompanhamento do progresso até o valor alvo
+- Lista **agrupada por dia** com **paginação numerada** (20 por página)
+- **Reordenação por arraste** das transações do mesmo dia (mouse, toque e teclado)
+- **Anexo de comprovante** (imagem ou PDF)
+- **Histórico de edição** (o que mudou, de qual valor para qual valor)
+- Vínculo opcional com um **evento**
+- **Exportação em CSV** respeitando os filtros ativos, incluindo valor/moeda originais e câmbio das transações convertidas
+- **Importação de extratos OFX** com preview e edição de categorias antes de confirmar
+
+### Categorias
+- Categorias padrão separadas por tipo (receitas e despesas), com auto-categorização no OFX
+- **Categorias personalizadas** com ícone e cor próprios — renomear atualiza tudo que já foi lançado
+
+### Contas, moedas e bancos
+- **Múltiplas contas** (corrente, cartão, dinheiro...) com saldo atual de cada uma
+- **Agrupamento por instituição** (ex: "Wise · Real" e "Wise · Dólar" sob "Wise"), com total do grupo
+- **Multi-moeda**: contas em USD/EUR/GBP com cotação atualizável e data da cotação exibida
+- **Transferências entre contas**, inclusive entre moedas diferentes (valor enviado × valor recebido)
+- **Sincronização bancária via Open Finance** (Pluggy), com contas já agrupadas pelo nome do banco
+
+### Planejamento
 - **Orçamento mensal por categoria**, com aviso automático por e-mail quando o gasto estoura o limite
+- **Metas financeiras**, com aportes manuais e acompanhamento do progresso até o valor alvo
 - **Transações recorrentes** (aluguel, assinaturas, salário...), lançadas automaticamente todo mês
-- **Múltiplas contas** (corrente, cartão, dinheiro...) e transferências entre elas
-- **Sincronização bancária via Open Finance** (Pluggy), importando transações direto do banco
+- **Eventos** para agrupar transações de uma viagem/ocasião, com orçamento próprio e indicador visual quando estoura
+- **Reordenação por arraste** em contas (inclusive os blocos por instituição), metas, orçamentos, eventos, recorrências e grupos
+
+### Análise e relatórios
 - **Insights automáticos** no dashboard (padrões de gasto e comparação com meses anteriores)
 - **Projeção de saldo** do mês, com base no ritmo de gastos e nas recorrências previstas
-- **Exportação de relatório mensal em PDF**
-- **Categorias personalizadas**, com ícone e cor próprios
-- **Anexo de comprovante** (imagem ou PDF) nas transações
-- **Histórico de edição** de transações (o que mudou, de qual valor para qual valor)
-- **Contas compartilhadas / modo família**, com entrada por código e dados visíveis a todos os membros
+- Gráficos de **despesas** e de **fontes de renda** por categoria (rosca)
+- Relatório mensal com filtros de tipo e categoria e gráfico de evolução dos últimos 6 meses
+- **Exportação do relatório mensal em PDF**
+- **Resumo semanal e/ou mensal por e-mail** (opt-in no perfil), disparado diariamente por GitHub Actions
+
+### Família e grupos
+- **Modo família**: carteira compartilhada, com entrada por código e dados visíveis a todos os membros
+- **Grupos estilo Splitwise** para dividir despesas, com convidados sem conta e fotos dos membros
+- **Moeda por despesa** no grupo, com "quem deve quem" separado por moeda
+- **Quitação de saldos** (settle up), inclusive em outra moeda (ex: € 40 pagos em R$ 250)
+- **Adicionar despesas do grupo ao dashboard**: importa só a parte do usuário, com data original, conversão de moeda (pela cotação salva ou por um câmbio informado) e sincronização ao editar a despesa
+- Pagamento recebido no grupo pode virar **receita no dashboard**
+- **Vincular ao evento** todas as transações de um grupo já levadas ao dashboard
+- Renomear o grupo atualiza a descrição das transações no dashboard (com histórico)
+
+### Experiência e plataformas
+- **Modo claro/escuro**, com preferência salva no navegador
+- Layout otimizado para celular: menu recolhível, modais em *bottom sheet*, filtros recolhíveis
+- Navegação completa por teclado (modais com trava de foco, `aria-live` para leitores de tela)
 - Suporte a **PWA** (instalável no celular direto do navegador)
-- **Multi-moeda**: contas em USD/EUR/GBP com cotação atualizável
-- **Eventos** para agrupar transações de uma viagem/ocasião, com orçamento próprio e indicador visual quando estoura
-- **Grupos estilo Splitwise**, para dividir despesas, ver quem deve quem e quitar saldos
+- **Aplicação desktop** via Electron, com instaladores para Windows, macOS e Linux publicados automaticamente
 
 ---
 
@@ -68,22 +101,91 @@ O **GeldTrack** é uma aplicação de gestão financeira pessoal que permite ao 
 **Relatórios**
 ![Relatórios](./frontend/assets/imagens/geldtrack_relatorio.png)
 
+**Contas** — agrupadas por instituição, em várias moedas
+![Contas](./frontend/assets/imagens/geldtrack_contas.png)
+
+**Grupos** — despesas em euro, "quem deve quem" por moeda e quitação em outra moeda
+![Grupos](./frontend/assets/imagens/geldtrack_grupo.png)
+
+**Metas**
+![Metas](./frontend/assets/imagens/geldtrack_metas.png)
+
+**Orçamentos**
+![Orçamentos](./frontend/assets/imagens/geldtrack_orcamentos.png)
+
+**Eventos**
+![Eventos](./frontend/assets/imagens/geldtrack_eventos.png)
+
+> Capturas feitas com uma conta de demonstração e dados fictícios.
+
 ---
 
-## 🛠 Tecnologias
+## 🛠 Stack técnica
+
+#### Linguagem e framework
+
+![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=for-the-badge&logo=javascript&logoColor=white)
+![React](https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4-000000?style=for-the-badge&logo=express&logoColor=white)
+
+#### Interface
+
+![React Router](https://img.shields.io/badge/React%20Router-6-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white)
+![Recharts](https://img.shields.io/badge/Recharts-2-22B5BF?style=for-the-badge)
+![dnd kit](https://img.shields.io/badge/dnd%20kit-6-1B1B1F?style=for-the-badge)
+![CSS](https://img.shields.io/badge/CSS-custom%20properties-663399?style=for-the-badge&logo=css&logoColor=white)
+
+#### Dados e autenticação
+
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-HS256-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+![bcrypt](https://img.shields.io/badge/bcrypt-2-338833?style=for-the-badge)
+![Axios](https://img.shields.io/badge/Axios-1-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
+
+#### Integrações
+
+![Pluggy](https://img.shields.io/badge/Pluggy-Open%20Finance-EF294B?style=for-the-badge)
+![Nodemailer](https://img.shields.io/badge/Nodemailer-9-22B573?style=for-the-badge)
+![jsPDF](https://img.shields.io/badge/jsPDF-4-E53935?style=for-the-badge)
+![ExchangeRate API](https://img.shields.io/badge/ExchangeRate--API-c%C3%A2mbio-1E88E5?style=for-the-badge)
+
+#### Desktop e mobile
+
+![Electron](https://img.shields.io/badge/Electron-31-47848F?style=for-the-badge&logo=electron&logoColor=white)
+![electron-builder](https://img.shields.io/badge/electron--builder-24-2B2E3A?style=for-the-badge&logo=electron&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-vite--plugin--pwa-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
+
+#### Qualidade e deploy
+
+![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
+![Supertest](https://img.shields.io/badge/Supertest-7-404D59?style=for-the-badge)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)
+![Neon](https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black)
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Frontend | React 18 + Vite |
-| Roteamento | React Router DOM |
+| Frontend | React 18 + Vite 5 + React Router 6, CSS puro com temas via custom properties |
+| Backend | Node.js + Express 4 (API REST) |
+| Banco de dados | PostgreSQL + Prisma ORM (valores em `Decimal(12,2)`) |
+| Autenticação | JWT (HS256, 7 dias, invalidação por `tokenVersion`) + senhas com bcrypt |
+| Segurança | Helmet + express-rate-limit |
 | Gráficos | Recharts |
+| Arrastar e soltar | dnd kit (mouse, toque e teclado) |
 | HTTP | Axios |
-| Backend | Node.js + Express |
-| Banco de dados | PostgreSQL (via Prisma ORM) |
-| Autenticação | JWT (JSON Web Token) |
-| Criptografia | bcryptjs |
+| Open Finance | Pluggy (widget Pluggy Connect + webhook) |
+| Câmbio | ExchangeRate-API (open.er-api.com), atualização manual |
+| E-mail transacional | Nodemailer via SMTP (redefinição de senha, orçamento estourado, resumos) |
+| Relatórios em PDF | jsPDF + jspdf-autotable + html2canvas |
+| PWA | vite-plugin-pwa |
+| Desktop | Electron 31 + electron-builder (Windows, macOS e Linux) |
 | Testes | Vitest (unitários e integração) + Supertest (rotas HTTP) |
-| Desktop | Electron 31 + electron-builder |
+| Agendamento | GitHub Actions (resumos por e-mail e releases do desktop) |
+| Deploy | Vercel (frontend) + Render (backend) + Neon (Postgres gerenciado) |
 
 ---
 
@@ -118,6 +220,7 @@ moneytrack/
 │   │   ├── openFinance.js              ← Sincronização bancária via Pluggy (Open Finance) + webhook
 │   │   ├── orcamentos.js               ← CRUD de orçamentos mensais por categoria
 │   │   ├── recorrencias.js             ← CRUD de recorrências, materializa ocorrências vencidas
+│   │   ├── resumos.js                  ← Envio dos resumos por e-mail (chamado pelo GitHub Actions)
 │   │   └── transferencias.js           ← Criar/listar/excluir transferências entre contas
 │   ├── utils/                          ← Lógica pura, testável sem banco
 │   │   ├── mailer.js                   ← Envio de e-mail (redefinição de senha) via nodemailer
@@ -133,6 +236,8 @@ moneytrack/
 │   │   ├── checkOrcamentoEstourado.js  ← Decide se um orçamento estourado já foi notificado no mês
 │   │   ├── currency.js                 ← Busca e converte cotações de câmbio (TaxaCambio)
 │   │   ├── defaultCategorias.js        ← Categorias padrão usadas pra semear a tabela Categoria
+│   │   ├── despesaGrupoTransacao.js    ← Regras de "Adicionar despesas ao dashboard" (parte do usuário)
+│   │   ├── enviarResumos.js            ← Monta e envia os resumos semanal/mensal por e-mail
 │   │   ├── generateInsights.js         ← Gera os insights automáticos do dashboard
 │   │   ├── gerarCodigoFamilia.js       ← Gera código único de convite para a família
 │   │   ├── gerarCodigoGrupo.js         ← Gera código único de convite para o grupo
@@ -140,8 +245,12 @@ moneytrack/
 │   │   ├── materializeRecorrencias.js  ← Materializa ocorrências vencidas de uma recorrência
 │   │   ├── moedas.js                   ← Lista de moedas suportadas (BRL, USD, EUR, GBP)
 │   │   ├── notifyOrcamentoEstourado.js ← Envia o e-mail de aviso de orçamento estourado
+│   │   ├── periodosResumo.js           ← Períodos dos resumos (semana/mês anterior, fuso de Brasília)
 │   │   ├── pluggyClient.js             ← Cliente da API Pluggy (Open Finance)
 │   │   ├── projectBalance.js           ← Projeta o saldo do mês com base no ritmo de gastos
+│   │   ├── proximaOrdemDoDia.js        ← Posição de uma transação nova no topo do dia
+│   │   ├── reorderDia.js               ← Reordenação das transações de um dia (com filtro/paginação)
+│   │   ├── reorderLista.js             ← Reordenação das listas em cards (contas, metas, grupos...)
 │   │   ├── serializeConta.js           ← Converte Prisma.Decimal em number nas respostas de Conta
 │   │   ├── serializeEvento.js          ← Converte Prisma.Decimal em number nas respostas de Evento
 │   │   ├── serializeFamilia.js         ← Formata os dados da família e membros nas respostas
@@ -168,8 +277,12 @@ moneytrack/
 │   ├── tests/                          ← Testes de integração das rotas (Vitest + Supertest)
 │   ├── server.js                       ← Ponto de entrada da API
 │   ├── .env                            ← Variáveis de ambiente (não vai pro git)
-│   ├── .env.example                    ← Modelo de variáveis de ambiente (inclui SMTP)
+│   ├── .env.example                    ← Modelo de variáveis de ambiente (inclui SMTP e CRON_SECRET)
 │   └── package.json
+│
+├── .github/workflows/
+│   ├── release.yml                     ← Builda e publica os instaladores do desktop a cada tag
+│   └── resumo-email.yml                ← Dispara os resumos por e-mail todo dia às 08:00
 │
 ├── render.yaml                          ← Blueprint de deploy do backend no Render
 │
@@ -209,6 +322,8 @@ moneytrack/
     │   │   ├── PasswordMatchHint.jsx   ← Feedback ao vivo de confirmação de senha
     │   │   ├── AnexoViewer.jsx         ← Visualização do comprovante anexado (imagem ou PDF)
     │   │   ├── AporteModal.jsx         ← Modal de registrar aporte numa meta
+│   │   ├── Avatar.jsx              ← Foto de perfil ou inicial do nome
+│   │   ├── BlocosSortable.jsx      ← Blocos reordenáveis (contas por instituição)
     │   │   ├── BudgetCard.jsx          ← Card de orçamento com progresso do gasto no mês
     │   │   ├── BudgetModal.jsx         ← Modal de criar/editar orçamento por categoria
     │   │   ├── CategoriaChip.jsx       ← Chip de categoria com ícone e cor
@@ -219,20 +334,27 @@ moneytrack/
     │   │   ├── ContaModal.jsx          ← Modal de criar/editar conta
     │   │   ├── CotacoesPanel.jsx       ← Painel de cotações de câmbio
     │   │   ├── DespesaGrupoModal.jsx   ← Modal de lançar/editar despesa de grupo
+│   │   ├── DespesasGrupoDashboardModal.jsx ← Levar despesas do grupo ao dashboard (conta por moeda, câmbio)
     │   │   ├── EventoCard.jsx          ← Card de evento com gasto/recebido acumulados
     │   │   ├── EventoModal.jsx         ← Modal de criar/editar evento
+│   │   ├── EventoSelect.jsx        ← Seletor de evento, com opção de criar um novo ali mesmo
     │   │   ├── GrupoCard.jsx           ← Card de grupo (nome, membros)
     │   │   ├── GrupoModal.jsx          ← Modal de criar grupo / entrar por código
     │   │   ├── HistoricoViewer.jsx     ← Histórico de edições de uma transação
     │   │   ├── InsightsPanel.jsx       ← Painel de insights automáticos do dashboard
     │   │   ├── MetaCard.jsx            ← Card de meta com progresso
     │   │   ├── MetaModal.jsx           ← Modal de criar/editar meta
-    │   │   ├── PagamentoGrupoModal.jsx ← Modal de registrar quitação entre membros
+    │   │   ├── PagamentoDashboardModal.jsx ← Levar um pagamento recebido no grupo ao dashboard como receita
+│   │   ├── PagamentoGrupoModal.jsx ← Modal de registrar quitação entre membros
+│   │   ├── Pagination.jsx          ← Paginação numerada
+│   │   ├── PasswordInput.jsx       ← Campo de senha com exibir/ocultar
     │   │   ├── ProjectionCard.jsx      ← Card de projeção de saldo do mês
     │   │   ├── RecurringCard.jsx       ← Card de recorrência
     │   │   ├── RecurringModal.jsx      ← Modal de criar/editar recorrência
-    │   │   ├── SaldosGrupo.jsx         ← Exibição de "quem deve quem" no grupo
-    │   │   ├── TransferModal.jsx       ← Modal de transferência entre contas
+    │   │   ├── SaldosGrupo.jsx         ← Exibição de "quem deve quem" no grupo (por moeda)
+│   │   ├── SortableGrid.jsx        ← Grade de cards reordenável por arraste
+    │   │   ├── TransferModal.jsx       ← Modal de transferência entre contas (inclusive entre moedas)
+│   │   ├── VincularEventoModal.jsx ← Vincular ao evento as transações de um grupo no dashboard
     │   │   └── charts/
     │   │       └── ExpensePieChart.jsx ← Gráfico de pizza (despesas e receitas)
     │   ├── context/
@@ -240,14 +362,18 @@ moneytrack/
     │   │   ├── CategoriasContext.jsx   ← Estado global de categorias (ícone/cor, cache)
     │   │   └── ThemeContext.jsx        ← Estado global de tema (persistido no navegador)
     │   ├── hooks/
-    │   │   └── useInstallPrompt.js     ← Captura o evento beforeinstallprompt (instalar como PWA)
+    │   │   ├── useInstallPrompt.js     ← Captura o evento beforeinstallprompt (instalar como PWA)
+│   │   └── useSortSensors.js       ← Sensores do dnd kit (mouse, toque e teclado)
     │   ├── services/
     │   │   └── api.js                  ← Configuração do Axios (suporta file://)
     │   ├── utils/
-    │   │   ├── categories.js           ← Categorias por tipo (fonte única)
+    │   │   ├── agruparContas.js        ← Agrupa as contas por instituição, com total do grupo
+│   │   ├── categories.js           ← Categorias por tipo (fonte única)
     │   │   ├── ofxParser.js            ← Parser de arquivos OFX (SGML e XML)
     │   │   ├── resizeImage.js          ← Redimensiona a foto de perfil no navegador antes do upload
-    │   │   ├── format.js               ← Formatação de moeda (BRL) e data
+    │   │   ├── format.js               ← Formatação de moeda, data e descrição de conversões
+│   │   ├── pageItems.js            ← Números exibidos na paginação
+│   │   ├── salvarOrdem.js          ← Envia a nova ordem após arrastar
     │   │   ├── chartTheme.js           ← Cores dos gráficos por tema (claro/escuro)
     │   │   ├── anexoFile.js            ← Leitura/validação do arquivo de comprovante no navegador
     │   │   ├── contaTipos.js           ← Tipos de conta (corrente, cartão, dinheiro...) e ícones
@@ -357,6 +483,7 @@ Base URL: `http://localhost:3001/api`
 | Método | Rota | Descrição | Auth |
 |--------|------|-----------|------|
 | GET | `/transactions` | Listar transações, paginado (com filtros) | Sim |
+| PUT | `/transactions/reorder` | Reordenar transações de um mesmo dia | Sim |
 | GET | `/transactions/export` | Exportar transações em CSV (respeita os filtros) | Sim |
 | POST | `/transactions` | Criar transação | Sim |
 | POST | `/transactions/bulk` | Importar lote de transações (OFX, máx. 500 por vez) | Sim |
@@ -372,7 +499,7 @@ Base URL: `http://localhost:3001/api`
 ?data_inicio=2026-05-01 → filtra por data inicial
 ?data_fim=2026-05-31    → filtra por data final
 ?busca=mercado          → busca por texto na descrição ou categoria
-?page=1&limit=50        → paginação (padrão: 50 por página, máx. 200)
+?page=1&limit=20        → paginação (o dashboard usa 20 por página; máx. 200)
 ```
 
 **Resposta do GET `/transactions`:**
@@ -401,6 +528,8 @@ Base URL: `http://localhost:3001/api`
 | DELETE | `/metas/:id` | Excluir meta (cascata apaga os aportes) | Sim |
 | POST | `/metas/:id/aportes` | Adicionar aporte a uma meta | Sim |
 | DELETE | `/metas/:id/aportes/:aporteId` | Remover um aporte | Sim |
+
+> Contas, metas, orçamentos, recorrências, eventos e grupos também têm `PUT /<recurso>/reorder`, que recebe a lista de ids na nova ordem (arrastar e soltar).
 
 ### Orçamentos
 
@@ -482,15 +611,19 @@ Estilo Splitwise — um usuário pode estar em vários grupos (não é escopado 
 | GET | `/grupos` | Listar os grupos do usuário logado | Sim |
 | GET | `/grupos/:id` | Detalhe do grupo: membros, despesas, pagamentos e saldo "quem deve quem" | Sim |
 | POST | `/grupos` | Criar grupo (criador vira admin) | Sim |
+| PUT | `/grupos/:id` | Renomear grupo (só admin; atualiza a descrição das transações no dashboard) | Sim |
 | POST | `/grupos/entrar` | Entrar num grupo existente por código | Sim |
 | DELETE | `/grupos/:id` | Excluir grupo (só admin) | Sim |
 | POST | `/grupos/:id/convidados` | Adicionar convidado sem conta ao grupo | Sim |
 | POST | `/grupos/:id/sair` | Sair do grupo | Sim |
 | DELETE | `/grupos/:id/membros/:membroId` | Remover um membro (só admin) | Sim |
-| POST | `/grupos/:id/despesas` | Registrar despesa, dividida igualmente entre os participantes escolhidos | Sim |
+| POST | `/grupos/:id/despesas` | Registrar despesa (com moeda própria), dividida igualmente entre os participantes escolhidos | Sim |
 | PUT | `/grupos/:id/despesas/:despesaId` | Editar despesa (só quem criou ou um admin) | Sim |
 | DELETE | `/grupos/:id/despesas/:despesaId` | Excluir despesa (só quem criou ou um admin) | Sim |
-| POST | `/grupos/:id/pagamentos` | Registrar quitação entre dois membros | Sim |
+| POST | `/grupos/:id/dashboard` | Levar ao dashboard a parte do usuário nas despesas (uma conta por moeda, com conversão opcional) | Sim |
+| POST | `/grupos/:id/evento` | Vincular a um evento todas as transações do grupo já no dashboard | Sim |
+| POST | `/grupos/:id/pagamentos` | Registrar quitação entre dois membros (pode ser paga em outra moeda) | Sim |
+| POST | `/grupos/:id/pagamentos/:pagamentoId/dashboard` | Levar um pagamento recebido ao dashboard como receita | Sim |
 | DELETE | `/grupos/:id/pagamentos/:pagamentoId` | Excluir um pagamento (só quem registrou ou um admin) | Sim |
 
 > Um membro com despesa ou pagamento registrado não pode ser removido/sair do grupo — precisa editar/excluir esses registros primeiro (preserva o histórico de quem gastou/pagou o quê).
@@ -512,6 +645,12 @@ Estilo Splitwise — um usuário pode estar em vários grupos (não é escopado 
 | POST | `/open-finance/conexoes/:id/sincronizar` | Sincronizar manualmente ("Sincronizar agora") | Sim |
 | DELETE | `/open-finance/conexoes/:id` | Remover a conexão (contas e transações importadas ficam) | Sim |
 | POST | `/open-finance/webhook` | Webhook chamado pela Pluggy quando um item é atualizado | Não |
+
+### Resumos por e-mail
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| POST | `/resumos/enviar` | Envia os resumos semanais/mensais pendentes (chamado pelo GitHub Actions) | Cabeçalho `x-cron-secret` |
 
 ---
 
@@ -552,6 +691,8 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 | resetTokenHash | String? (único) | Hash (sha256) do token de redefinição de senha, opcional |
 | resetTokenExpiresAt | DateTime? | Expiração do token de redefinição |
 | tokenVersion | Int | Incrementado ao trocar a senha, invalida tokens JWT antigos |
+| resumoSemanal / resumoMensal | Boolean | Opt-in dos resumos por e-mail (desligados por padrão) |
+| ultimoResumoSemanal / ultimoResumoMensal | String? | Último período já enviado (evita envio duplicado) |
 | createdAt | DateTime | Data de cadastro |
 
 **Tabela: Familia**
@@ -582,6 +723,9 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 | recorrenciaId | Int? (FK) | Recorrência que originou a transação, opcional |
 | pluggyTransactionId | String? (único) | Preenchido só em transações vindas de sincronização Open Finance |
 | anexo / anexoNome | String? | Comprovante anexado (data URL base64) e seu nome, opcionais |
+| ordem | Int | Posição manual dentro do dia (arrastar e soltar) |
+| despesaGrupoId / pagamentoGrupoId | Int? (FK) | Despesa ou pagamento de grupo que originou a transação (SetNull ao excluir) |
+| moedaOriginal / valorOriginal / taxaConversao | — | Preenchidos quando o valor foi convertido de outra moeda, com a data da cotação |
 | createdAt / updatedAt | DateTime | Data de criação / última edição |
 
 **Tabela: Categoria**
@@ -738,6 +882,7 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 | id | Int (PK) | Identificador único |
 | grupoId | Int (FK) | Grupo da despesa |
 | descricao / valorTotal / data | — | Dados da despesa |
+| moeda | String | Moeda em que a despesa foi paga (padrão `BRL`) |
 | pagoPorMembroId | Int (FK) | Quem desembolsou (Restrict — preserva o histórico) |
 | criadoPorUsuarioId | Int (FK) | Quem lançou a despesa no app |
 | createdAt | DateTime | Data de criação |
@@ -760,7 +905,8 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 | id | Int (PK) | Identificador único |
 | grupoId | Int (FK) | Grupo da quitação |
 | deMembroId / paraMembroId | Int (FK) | Quem pagou / quem recebeu, fora do app |
-| valor / data | — | Valor e data da quitação |
+| valor / moeda / data | — | Valor, moeda da dívida abatida e data da quitação |
+| moedaPagamento | String? | Só quando a dívida foi quitada em outra moeda (o valor pago também fica registrado) |
 | criadoPorUsuarioId | Int (FK) | Quem registrou a quitação |
 | createdAt | DateTime | Data de criação |
 
@@ -777,6 +923,8 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 
 > Global (sem familiaId) — cotação é dado de mercado, não pertence a uma família específica. Atualizada manualmente, nunca por cron.
 
+> Conta, Meta, Orcamento, Recorrencia, Evento e GrupoMembro também têm uma coluna `ordem` para a reordenação manual (empates caem na ordem de criação).
+
 **Relacionamento:** Todo Usuario pertence a exatamente uma Familia. Os dados financeiros (Transacao, Categoria, Conta, ConexaoBancaria, Transferencia, Recorrencia, Meta, Orcamento, Evento) carregam tanto `usuarioId` (atribuição — "quem lançou") quanto `familiaId` — mas o escopo real de acesso é sempre `familiaId`: qualquer membro da família pode ver/editar/excluir qualquer registro dela. Grupo/GrupoMembro seguem um modelo à parte (N:N, sem familiaId): um usuário pode estar em vários grupos, e um grupo pode incluir convidados sem conta.
 
 ---
@@ -789,6 +937,7 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 - Token de redefinição de senha armazenado como hash (sha256), nunca em texto puro
 - Rate limiting em `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/reset-password` e em todas as rotas de transações/relatórios
 - Cabeçalhos de segurança via `helmet`
+- Rota de resumos protegida por segredo compartilhado (`CRON_SECRET`), comparado em tempo constante
 - Todas as rotas de transações e relatórios exigem token válido
 - Cada usuário só acessa suas próprias transações
 
@@ -799,11 +948,11 @@ O banco é **PostgreSQL**, acessado via Prisma ORM a partir da string de conexã
 Backend e frontend têm suítes de testes automatizados com **[Vitest](https://vitest.dev)**.
 
 ```bash
-# Backend — 100+ testes: cálculos financeiros, validação, paginação, hash de token,
-# serialização de Decimal, e testes de integração das rotas (auth, transações, relatórios) via Supertest
+# Backend — 600+ testes: cálculos financeiros, validação, paginação, hash de token, câmbio,
+# divisão de despesas, reordenação, resumos por e-mail e testes de integração de todas as rotas via Supertest
 cd backend && npm test
 
-# Frontend — parser de OFX (receita/despesa, encoding, arquivos malformados) e formatação (moeda, data)
+# Frontend — parser de OFX, formatação (moeda, data, conversões), paginação, agrupamento de contas e PDF
 cd frontend && npm test
 ```
 
@@ -909,6 +1058,7 @@ Dashboard (/dashboard)
     ├── Adicionar / editar / excluir transações
     ├── Filtrar por tipo, categoria e data
     ├── Importar extrato bancário (.ofx)
+    ├── Reordenar transações do dia arrastando
     ├── Gráfico de gastos por categoria
     └── Gráfico de fontes de renda
         ↓
@@ -961,8 +1111,10 @@ Eventos (/eventos)
 Grupos (/grupos)
     ├── Criar grupo ou entrar por código
     ├── Adicionar convidados sem conta
-    ├── Lançar despesas divididas entre os participantes
-    └── Ver "quem deve quem" e quitar saldos
+    ├── Lançar despesas divididas entre os participantes, em qualquer moeda
+    ├── Ver "quem deve quem" por moeda e quitar saldos
+    ├── Levar a própria parte das despesas (e pagamentos recebidos) ao dashboard
+    └── Vincular essas transações a um evento
 ```
 
 ---
@@ -1006,6 +1158,16 @@ Grupos (/grupos)
 | RF33 | Eventos para agrupar transações, com orçamento e indicador visual de estouro | ✅ |
 | RF34 | Grupos estilo Splitwise (dividir despesas, ver quem deve quem) | ✅ |
 | RF35 | Quitação de saldo em grupos (settle up) | ✅ |
+| RF36 | Reordenação por arraste (transações do dia e listas em cards) | ✅ |
+| RF37 | Paginação numerada e layout otimizado para celular | ✅ |
+| RF38 | Adicionar despesas do grupo ao dashboard, sincronizadas ao editar | ✅ |
+| RF39 | Transferência entre contas de moedas diferentes | ✅ |
+| RF40 | Agrupamento de contas por instituição | ✅ |
+| RF41 | Moeda por despesa nos grupos, com conversão ao levar ao dashboard | ✅ |
+| RF42 | Quitação em outra moeda e CSV com dados de câmbio | ✅ |
+| RF43 | Exibir/ocultar senha e renomear grupo | ✅ |
+| RF44 | Pagamento recebido no grupo como receita e vínculo das transações do grupo a um evento | ✅ |
+| RF45 | Resumo semanal/mensal por e-mail (opt-in) | ✅ |
 
 ---
 
@@ -1014,4 +1176,5 @@ Grupos (/grupos)
 - O arquivo `.env` **não vai para o Git** (está no `.gitignore`). Cada desenvolvedor cria o seu a partir de `backend/.env.example`.
 - `JWT_SECRET` é **obrigatório** — o servidor (`node server.js`) encerra imediatamente se essa variável não estiver definida.
 - Para a recuperação de senha funcionar, configure as variáveis `SMTP_*` no `.env` do backend com credenciais de um provedor de e-mail (ex: Gmail App Password). Sem isso, o envio do e-mail falha.
+- Os resumos por e-mail só são enviados com `CRON_SECRET` configurado no backend e nos secrets do GitHub (veja a seção de Deploy).
 - Os dois servidores precisam estar rodando ao mesmo tempo para o sistema funcionar (exceto no modo Electron, que gerencia isso automaticamente).
