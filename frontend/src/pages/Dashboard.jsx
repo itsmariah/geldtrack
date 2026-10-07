@@ -109,10 +109,12 @@ export default function Dashboard() {
     fetchData()
   }, [fetchData])
 
-  // Botão "+" da barra inferior (BottomNav): chega aqui com state.novaTransacao e abre o
-  // modal assim que as contas carregam. O state é limpo pra não reabrir ao voltar/recarregar.
+  // Botão "+" da barra inferior (BottomNav) chega com state.novaTransacao; o atalho
+  // "Nova transação" do ícone do app instalado (manifest) chega com ?nova=1. Os dois abrem
+  // o modal assim que as contas carregam, e são limpos pra não reabrir ao voltar/recarregar.
   useEffect(() => {
-    if (!location.state?.novaTransacao || loading) return
+    const pediuNova = location.state?.novaTransacao || new URLSearchParams(location.search).has('nova')
+    if (!pediuNova || loading) return
     navigate(location.pathname, { replace: true, state: {} })
     if (contas.length > 0) {
       setEditingTransaction(null)

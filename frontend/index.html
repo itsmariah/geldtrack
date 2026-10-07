@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f1117" />
+    <meta name="theme-color" content="#1a1d2e" />
+    <!-- iOS: app instalado ocupa a tela toda (o layout já respeita as safe areas) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GeldTrack" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <title>GeldTrack — Gestão Financeira Pessoal</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,6 +19,8 @@
       // Aplica o tema salvo antes do React montar, pra não dar um flash do tema errado.
       if (localStorage.getItem('theme') === 'light') {
         document.documentElement.setAttribute('data-theme', 'light')
+        // Barra do sistema (Android/PWA) na cor da navbar do tema — ver ThemeContext.jsx.
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
       }
       // Mesmo esquema pro modo privacidade (valores borrados) — ver PrivacyContext.jsx.
       if (localStorage.getItem('privacy') === 'on') {

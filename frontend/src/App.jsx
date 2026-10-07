@@ -12,6 +12,8 @@ import Landing from './pages/Landing'
 import Login from './pages/Login'
 import PageLoader from './components/PageLoader'
 import FontTester from './components/FontTester'
+import PwaUpdateBanner from './components/PwaUpdateBanner'
+import ConnectionStatus from './components/ConnectionStatus'
 
 // Landing e login vão no pacote inicial (são as portas de entrada); o resto das páginas
 // vira um chunk próprio, baixado só quando a rota é acessada pela primeira vez.
@@ -70,6 +72,8 @@ export default function App() {
                       </Routes>
                     </Suspense>
                     <FontTester />
+                    <PwaUpdateBanner />
+                    <ConnectionStatus />
                   </BrowserRouter>
                 </CategoriasProvider>
               </AuthProvider>

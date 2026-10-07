@@ -15,8 +15,10 @@ export default defineConfig({
     // então o app continua exigindo rede pra qualquer dado real. O registro do
     // service worker é manual (ver src/main.jsx), pra pular sozinho dentro do
     // Electron (que carrega via file://, onde service workers não registram).
+    // registerType "prompt": versão nova só entra quando o usuário aceita o aviso
+    // (components/PwaUpdateBanner.jsx) — nada de trocar o JS no meio do uso.
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       workbox: {
         // As imagens importadas na landing também entram no precache: sem isso, um
@@ -30,13 +32,25 @@ export default defineConfig({
         short_name: 'GeldTrack',
         description: 'Controle financeiro pessoal — transações, orçamentos, metas e mais.',
         lang: 'pt-BR',
-        theme_color: '#0f1117',
+        // Cor da navbar no tema escuro; index.html/ThemeContext trocam a
+        // <meta name="theme-color"> em tempo real quando o tema muda.
+        theme_color: '#1a1d2e',
         background_color: '#0f1117',
         display: 'standalone',
-        start_url: '/',
+        id: '/',
+        start_url: '/dashboard',
+        scope: '/',
+        categories: ['finance', 'productivity'],
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        ],
+        // Atalhos ao pressionar e segurar o ícone do app instalado (Android/Windows).
+        shortcuts: [
+          { name: 'Nova transação', short_name: 'Nova', url: '/dashboard?nova=1', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
+          { name: 'Relatórios', url: '/relatorios', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
+          { name: 'Contas', url: '/contas', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
+          { name: 'Metas', url: '/metas', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
         ],
       },
     }),
