@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import MetaModal from '../components/MetaModal'
 import AporteModal from '../components/AporteModal'
 import MetaCard from '../components/MetaCard'
@@ -9,6 +8,7 @@ import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
+import { Plus } from 'lucide-react'
 
 export default function Goals() {
   const [metas, setMetas] = useState([])
@@ -93,51 +93,48 @@ export default function Goals() {
   }
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Metas financeiras</h2>
-          <button className="btn btn-primary" onClick={() => setShowMetaModal(true)}>
-            + Nova meta
+    <>
+      <div className="dashboard-header">
+        <h2>Metas financeiras</h2>
+        <button className="btn btn-primary" onClick={() => setShowMetaModal(true)}>
+          <Plus size={16} /> Nova meta
+        </button>
+      </div>
+
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchMetas}>Tentar novamente</button>
+        </Alert>
+      )}
+
+      {loading ? (
+        <SkeletonList rows={3} />
+      ) : error ? null : metas.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">🎯</div>
+          <p>Você ainda não tem nenhuma meta.</p>
+          <p className="empty-state-sub">Crie uma meta pra acompanhar o progresso de algo que você está juntando dinheiro pra conquistar.</p>
+          <button type="button" className="btn btn-primary" onClick={() => setShowMetaModal(true)} style={{ marginTop: 16 }}>
+            <Plus size={16} /> Criar minha primeira meta
           </button>
         </div>
-
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchMetas}>Tentar novamente</button>
-          </Alert>
-        )}
-
-        {loading ? (
-          <SkeletonList rows={3} />
-        ) : error ? null : metas.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">🎯</div>
-            <p>Você ainda não tem nenhuma meta.</p>
-            <p className="empty-state-sub">Crie uma meta pra acompanhar o progresso de algo que você está juntando dinheiro pra conquistar.</p>
-            <button type="button" className="btn btn-primary" onClick={() => setShowMetaModal(true)} style={{ marginTop: 16 }}>
-              + Criar minha primeira meta
-            </button>
-          </div>
-        ) : (
-          <SortableGrid
-            items={metas}
-            onReorder={handleReorder}
-            descricao="meta reordenável"
-            renderItem={meta => (
-              <MetaCard
-                meta={meta}
-                onEdit={handleEdit}
-                onDelete={setDeleteMetaId}
-                onAddAporte={setAporteMeta}
-                onDeleteAporte={(m, aporteId) => setDeleteAporte({ metaId: m.id, aporteId })}
-              />
-            )}
-          />
-        )}
-      </main>
+      ) : (
+        <SortableGrid
+          items={metas}
+          onReorder={handleReorder}
+          descricao="meta reordenável"
+          renderItem={meta => (
+            <MetaCard
+              meta={meta}
+              onEdit={handleEdit}
+              onDelete={setDeleteMetaId}
+              onAddAporte={setAporteMeta}
+              onDeleteAporte={(m, aporteId) => setDeleteAporte({ metaId: m.id, aporteId })}
+            />
+          )}
+        />
+      )}
 
       {showMetaModal && (
         <MetaModal
@@ -176,6 +173,6 @@ export default function Goals() {
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }

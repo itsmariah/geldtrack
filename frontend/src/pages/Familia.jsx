@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import Avatar from '../components/Avatar'
@@ -152,119 +151,116 @@ export default function Familia() {
   }
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Família</h2>
-        </div>
+    <>
+      <div className="dashboard-header">
+        <h2>Família</h2>
+      </div>
 
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchFamilia}>Tentar novamente</button>
-          </Alert>
-        )}
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchFamilia}>Tentar novamente</button>
+        </Alert>
+      )}
 
-        {loading ? (
-          <SkeletonList rows={3} />
-        ) : familia && (
-          <>
-            <div className="transactions-section" style={{ marginBottom: 24 }}>
-              <div className="section-header">
-                <h3>{familia.nome}</h3>
-                {souDono && !editandoNome && (
-                  <button className="btn btn-outline btn-sm" onClick={() => setEditandoNome(true)}>Renomear</button>
-                )}
-              </div>
-
-              {editandoNome ? (
-                <form onSubmit={handleSalvarNome} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-                  <input
-                    type="text"
-                    value={nomeInput}
-                    onChange={e => setNomeInput(e.target.value)}
-                    maxLength={60}
-                    required
-                    style={{ flex: 1 }}
-                  />
-                  <button type="submit" className="btn btn-primary btn-sm" disabled={salvandoNome}>
-                    {salvandoNome ? 'Salvando...' : 'Salvar'}
-                  </button>
-                  <button type="button" className="btn btn-outline btn-sm" onClick={() => { setEditandoNome(false); setNomeInput(familia.nome) }}>
-                    Cancelar
-                  </button>
-                </form>
-              ) : null}
-
-              <div className="familia-codigo-box">
-                <div>
-                  <span className="familia-codigo-label">Código da família</span>
-                  <span className="familia-codigo-valor">{familia.codigo}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-outline btn-sm" onClick={handleCopiarCodigo}>
-                    {copiado ? 'Copiado!' : 'Copiar código'}
-                  </button>
-                  {souDono && (
-                    <button className="btn btn-outline btn-sm" onClick={handleRegenerarCodigo} disabled={regenerando}>
-                      {regenerando ? 'Gerando...' : 'Gerar novo código'}
-                    </button>
-                  )}
-                </div>
-              </div>
-              <p className="form-hint">Compartilhe esse código com quem você quiser convidar — a pessoa entra digitando ele na seção "Entrar em outra família", mais abaixo.</p>
-            </div>
-
-            <div className="transactions-section" style={{ marginBottom: 24 }}>
-              <div className="section-header">
-                <h3>Membros</h3>
-              </div>
-              <ul className="familia-membros-list">
-                {familia.membros.map(m => (
-                  <li key={m.id} className="familia-membro-item">
-                    <Avatar nome={m.nome} foto={m.foto} size="lg" />
-                    <div className="familia-membro-info">
-                      <span className="familia-membro-nome">{m.nome}{m.id === user?.id ? ' (você)' : ''}</span>
-                      <span className="familia-membro-email">{m.email}</span>
-                    </div>
-                    <span className={`familia-papel-badge familia-papel-badge--${m.papel}`}>
-                      {m.papel === 'dono' ? 'Dono' : 'Membro'}
-                    </span>
-                    {souDono && m.id !== user?.id && (
-                      <button className="btn-icon btn-danger" title="Remover da família" aria-label="Remover da família" onClick={() => setRemovendoMembro(m)}><Trash2 size={16} /></button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              {posoSair && (
-                <button className="btn btn-outline btn-sm" style={{ marginTop: 16 }} onClick={() => setConfirmarSair(true)}>
-                  Sair da família
-                </button>
+      {loading ? (
+        <SkeletonList rows={3} />
+      ) : familia && (
+        <>
+          <div className="transactions-section" style={{ marginBottom: 24 }}>
+            <div className="section-header">
+              <h3>{familia.nome}</h3>
+              {souDono && !editandoNome && (
+                <button className="btn btn-outline btn-sm" onClick={() => setEditandoNome(true)}>Renomear</button>
               )}
             </div>
 
-            <div className="transactions-section">
-              <div className="section-header">
-                <h3>Entrar em outra família</h3>
-              </div>
-              {entrarError && <Alert type="error">{entrarError}</Alert>}
-              <form onSubmit={handleSubmitEntrar} style={{ display: 'flex', gap: 8 }}>
+            {editandoNome ? (
+              <form onSubmit={handleSalvarNome} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                 <input
                   type="text"
-                  value={codigoInput}
-                  onChange={e => setCodigoInput(e.target.value)}
-                  placeholder="Ex: AB3F92"
-                  maxLength={12}
-                  style={{ flex: 1, textTransform: 'uppercase' }}
+                  value={nomeInput}
+                  onChange={e => setNomeInput(e.target.value)}
+                  maxLength={60}
+                  required
+                  style={{ flex: 1 }}
                 />
-                <button type="submit" className="btn btn-primary btn-sm">Entrar</button>
+                <button type="submit" className="btn btn-primary btn-sm" disabled={salvandoNome}>
+                  {salvandoNome ? 'Salvando...' : 'Salvar'}
+                </button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => { setEditandoNome(false); setNomeInput(familia.nome) }}>
+                  Cancelar
+                </button>
               </form>
-              <p className="form-hint">Ao entrar em outra família, você deixa de ver os dados da sua família atual (transações, contas, orçamentos e mais). Essa ação não pode ser desfeita.</p>
+            ) : null}
+
+            <div className="familia-codigo-box">
+              <div>
+                <span className="familia-codigo-label">Código da família</span>
+                <span className="familia-codigo-valor">{familia.codigo}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-outline btn-sm" onClick={handleCopiarCodigo}>
+                  {copiado ? 'Copiado!' : 'Copiar código'}
+                </button>
+                {souDono && (
+                  <button className="btn btn-outline btn-sm" onClick={handleRegenerarCodigo} disabled={regenerando}>
+                    {regenerando ? 'Gerando...' : 'Gerar novo código'}
+                  </button>
+                )}
+              </div>
             </div>
-          </>
-        )}
-      </main>
+            <p className="form-hint">Compartilhe esse código com quem você quiser convidar — a pessoa entra digitando ele na seção "Entrar em outra família", mais abaixo.</p>
+          </div>
+
+          <div className="transactions-section" style={{ marginBottom: 24 }}>
+            <div className="section-header">
+              <h3>Membros</h3>
+            </div>
+            <ul className="familia-membros-list">
+              {familia.membros.map(m => (
+                <li key={m.id} className="familia-membro-item">
+                  <Avatar nome={m.nome} foto={m.foto} size="lg" />
+                  <div className="familia-membro-info">
+                    <span className="familia-membro-nome">{m.nome}{m.id === user?.id ? ' (você)' : ''}</span>
+                    <span className="familia-membro-email">{m.email}</span>
+                  </div>
+                  <span className={`familia-papel-badge familia-papel-badge--${m.papel}`}>
+                    {m.papel === 'dono' ? 'Dono' : 'Membro'}
+                  </span>
+                  {souDono && m.id !== user?.id && (
+                    <button className="btn-icon btn-danger" title="Remover da família" aria-label="Remover da família" onClick={() => setRemovendoMembro(m)}><Trash2 size={16} /></button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {posoSair && (
+              <button className="btn btn-outline btn-sm" style={{ marginTop: 16 }} onClick={() => setConfirmarSair(true)}>
+                Sair da família
+              </button>
+            )}
+          </div>
+
+          <div className="transactions-section">
+            <div className="section-header">
+              <h3>Entrar em outra família</h3>
+            </div>
+            {entrarError && <Alert type="error">{entrarError}</Alert>}
+            <form onSubmit={handleSubmitEntrar} style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={codigoInput}
+                onChange={e => setCodigoInput(e.target.value)}
+                placeholder="Ex: AB3F92"
+                maxLength={12}
+                style={{ flex: 1, textTransform: 'uppercase' }}
+              />
+              <button type="submit" className="btn btn-primary btn-sm">Entrar</button>
+            </form>
+            <p className="form-hint">Ao entrar em outra família, você deixa de ver os dados da sua família atual (transações, contas, orçamentos e mais). Essa ação não pode ser desfeita.</p>
+          </div>
+        </>
+      )}
 
       {codigoConfirmar && (
         <ConfirmDialog
@@ -297,6 +293,6 @@ export default function Familia() {
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }

@@ -1,10 +1,9 @@
-import { ArrowLeft, Check, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import DespesaGrupoModal from '../components/DespesaGrupoModal'
 import PagamentoGrupoModal from '../components/PagamentoGrupoModal'
 import DespesasGrupoDashboardModal from '../components/DespesasGrupoDashboardModal'
@@ -85,21 +84,11 @@ export default function GrupoDetalhe() {
   useEffect(() => { fetchGrupo() }, [fetchGrupo])
 
   if (loading) {
-    return (
-      <div className="app-layout">
-        <Navbar />
-        <main className="main-content"><SkeletonList rows={5} /></main>
-      </div>
-    )
+    return <SkeletonList rows={5} />
   }
 
   if (!grupo) {
-    return (
-      <div className="app-layout">
-        <Navbar />
-        <main className="main-content">{error && <Alert type="error">{error}</Alert>}</main>
-      </div>
-    )
+    return error ? <Alert type="error">{error}</Alert> : null
   }
 
   const meuMembro = grupo.membros.find(m => m.usuarioId === user?.id)
@@ -267,211 +256,208 @@ export default function GrupoDetalhe() {
   }
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <div>
-            <Link to="/grupos" className="btn-link"><ArrowLeft size={16} /> Voltar pra Grupos</Link>
-            <h2 style={{ marginTop: 6 }}>{grupo.nome}</h2>
+    <>
+      <div className="dashboard-header">
+        <div>
+          <Link to="/grupos" className="btn-link"><ArrowLeft size={16} /> Voltar pra Grupos</Link>
+          <h2 style={{ marginTop: 6 }}>{grupo.nome}</h2>
+        </div>
+        {souAdmin && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-outline btn-sm" onClick={() => setShowEditarGrupo(true)}>
+              Editar nome
+            </button>
+            <button className="btn btn-outline btn-sm" onClick={() => setConfirmarExcluirGrupo(true)}>
+              Excluir grupo
+            </button>
           </div>
-          {souAdmin && (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-outline btn-sm" onClick={() => setShowEditarGrupo(true)}>
-                Editar nome
-              </button>
-              <button className="btn btn-outline btn-sm" onClick={() => setConfirmarExcluirGrupo(true)}>
-                Excluir grupo
-              </button>
-            </div>
-          )}
+        )}
+      </div>
+
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchGrupo}>Tentar novamente</button>
+        </Alert>
+      )}
+
+      <div className="transactions-section" style={{ marginBottom: 24 }}>
+        <div className="familia-codigo-box">
+          <div>
+            <span className="familia-codigo-label">Código do grupo</span>
+            <span className="familia-codigo-valor">{grupo.codigo}</span>
+          </div>
+          <button className="btn btn-outline btn-sm" onClick={handleCopiarCodigo}>
+            {copiado ? 'Copiado!' : 'Copiar código'}
+          </button>
+        </div>
+        <p className="form-hint">Compartilhe esse código com quem você quiser adicionar — a pessoa entra em "Grupos → Entrar em um grupo".</p>
+      </div>
+
+      <div className="transactions-section" style={{ marginBottom: 24 }}>
+        <div className="section-header">
+          <h3>Membros</h3>
+          <button className="btn btn-outline btn-sm" onClick={() => setShowConvidadoForm(v => !v)}>
+            <Plus size={16} /> Adicionar convidado
+          </button>
         </div>
 
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchGrupo}>Tentar novamente</button>
-          </Alert>
+        {showConvidadoForm && (
+          <form onSubmit={handleAdicionarConvidado} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {convidadoError && <Alert type="error">{convidadoError}</Alert>}
+            <input
+              type="text"
+              value={nomeConvidado}
+              onChange={e => setNomeConvidado(e.target.value)}
+              placeholder="Nome do convidado"
+              maxLength={60}
+              required
+              style={{ flex: 1 }}
+            />
+            <button type="submit" className="btn btn-primary btn-sm" disabled={salvandoConvidado}>
+              {salvandoConvidado ? 'Salvando...' : 'Adicionar'}
+            </button>
+          </form>
         )}
 
-        <div className="transactions-section" style={{ marginBottom: 24 }}>
-          <div className="familia-codigo-box">
-            <div>
-              <span className="familia-codigo-label">Código do grupo</span>
-              <span className="familia-codigo-valor">{grupo.codigo}</span>
-            </div>
-            <button className="btn btn-outline btn-sm" onClick={handleCopiarCodigo}>
-              {copiado ? 'Copiado!' : 'Copiar código'}
-            </button>
-          </div>
-          <p className="form-hint">Compartilhe esse código com quem você quiser adicionar — a pessoa entra em "Grupos → Entrar em um grupo".</p>
+        <ul className="familia-membros-list">
+          {grupo.membros.map(m => (
+            <li key={m.id} className="familia-membro-item">
+              <Avatar nome={m.nome} foto={m.foto} size="lg" />
+              <div className="familia-membro-info">
+                <span className="familia-membro-nome">
+                  {m.nome}{m.usuarioId === user?.id ? ' (você)' : ''}{m.isConvidado ? ' (convidado)' : ''}
+                </span>
+                {m.email && <span className="familia-membro-email">{m.email}</span>}
+              </div>
+              <span className={`familia-papel-badge familia-papel-badge--${m.papel}`}>
+                {m.papel === 'admin' ? 'Admin' : 'Membro'}
+              </span>
+              {souAdmin && m.id !== meuMembro?.id && (
+                <button className="btn-icon btn-danger" title="Remover do grupo" aria-label="Remover do grupo" onClick={() => setRemovendoMembro(m)}><Trash2 size={16} /></button>
+              )}
+            </li>
+          ))}
+        </ul>
+        {posoSair && (
+          <button className="btn btn-outline btn-sm" style={{ marginTop: 16 }} onClick={() => setConfirmarSair(true)}>
+            Sair do grupo
+          </button>
+        )}
+      </div>
+
+      <div className="transactions-section" style={{ marginBottom: 24 }}>
+        <div className="section-header">
+          <h3>Quem deve quem</h3>
+        </div>
+        <SaldosGrupo saldos={grupo.saldos} membros={grupo.membros} meuMembroId={meuMembro?.id} onQuitar={handleQuitarSaldo} />
+      </div>
+
+      <div className="transactions-section" style={{ marginBottom: 24 }}>
+        <div className="section-header">
+          <h3>Histórico de pagamentos</h3>
         </div>
 
-        <div className="transactions-section" style={{ marginBottom: 24 }}>
-          <div className="section-header">
-            <h3>Membros</h3>
-            <button className="btn btn-outline btn-sm" onClick={() => setShowConvidadoForm(v => !v)}>
-              + Adicionar convidado
-            </button>
+        {grupo.pagamentos.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">💸</div>
+            <p>Nenhum pagamento registrado ainda.</p>
           </div>
-
-          {showConvidadoForm && (
-            <form onSubmit={handleAdicionarConvidado} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              {convidadoError && <Alert type="error">{convidadoError}</Alert>}
-              <input
-                type="text"
-                value={nomeConvidado}
-                onChange={e => setNomeConvidado(e.target.value)}
-                placeholder="Nome do convidado"
-                maxLength={60}
-                required
-                style={{ flex: 1 }}
-              />
-              <button type="submit" className="btn btn-primary btn-sm" disabled={salvandoConvidado}>
-                {salvandoConvidado ? 'Salvando...' : 'Adicionar'}
-              </button>
-            </form>
-          )}
-
-          <ul className="familia-membros-list">
-            {grupo.membros.map(m => (
-              <li key={m.id} className="familia-membro-item">
-                <Avatar nome={m.nome} foto={m.foto} size="lg" />
-                <div className="familia-membro-info">
-                  <span className="familia-membro-nome">
-                    {m.nome}{m.usuarioId === user?.id ? ' (você)' : ''}{m.isConvidado ? ' (convidado)' : ''}
+        ) : (
+          <ul className="grupo-despesas-list">
+            {grupo.pagamentos.map(p => (
+              <li key={p.id} className="grupo-despesa-item">
+                <div className="grupo-despesa-info">
+                  <span className="grupo-despesa-desc grupo-pessoas">
+                    <Avatar nome={membroPorId[p.deMembroId]?.nome} foto={membroPorId[p.deMembroId]?.foto} size="xs" />
+                    {membroPorId[p.deMembroId]?.nome ?? '—'} pagou
+                    <Avatar nome={membroPorId[p.paraMembroId]?.nome} foto={membroPorId[p.paraMembroId]?.foto} size="xs" />
+                    {membroPorId[p.paraMembroId]?.nome ?? '—'}
                   </span>
-                  {m.email && <span className="familia-membro-email">{m.email}</span>}
+                  <span className="tx-meta">
+                    {fmtDate(p.data)}
+                    {p.moedaPagamento && ` · pago em ${fmt(p.valorPagamento, p.moedaPagamento)}`}
+                  </span>
                 </div>
-                <span className={`familia-papel-badge familia-papel-badge--${m.papel}`}>
-                  {m.papel === 'admin' ? 'Admin' : 'Membro'}
-                </span>
-                {souAdmin && m.id !== meuMembro?.id && (
-                  <button className="btn-icon btn-danger" title="Remover do grupo" aria-label="Remover do grupo" onClick={() => setRemovendoMembro(m)}><Trash2 size={16} /></button>
+                <div className="grupo-despesa-valor">{fmt(p.valor, p.moeda)}</div>
+                {/* Receita no dashboard: só pra quem recebeu, e por escolha (nunca automático). */}
+                {p.paraMembroId === meuMembro?.id && (p.noDashboard
+                  ? <span className="tx-evento-chip"><Check size={12} /> No dashboard</span>
+                  : (
+                    <button className="btn btn-outline btn-sm" onClick={() => setPagamentoDashboard(p)} title="Adicionar como receita no dashboard">
+                      <Plus size={16} /> Dashboard
+                    </button>
+                  ))}
+                {(p.criadoPorUsuarioId === user?.id || souAdmin) && (
+                  <div className="tx-actions">
+                    <button className="btn-icon btn-danger" onClick={() => setDeletePagamentoId(p.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
+                  </div>
                 )}
               </li>
             ))}
           </ul>
-          {posoSair && (
-            <button className="btn btn-outline btn-sm" style={{ marginTop: 16 }} onClick={() => setConfirmarSair(true)}>
-              Sair do grupo
-            </button>
-          )}
-        </div>
+        )}
+      </div>
 
-        <div className="transactions-section" style={{ marginBottom: 24 }}>
-          <div className="section-header">
-            <h3>Quem deve quem</h3>
-          </div>
-          <SaldosGrupo saldos={grupo.saldos} membros={grupo.membros} meuMembroId={meuMembro?.id} onQuitar={handleQuitarSaldo} />
-        </div>
-
-        <div className="transactions-section" style={{ marginBottom: 24 }}>
-          <div className="section-header">
-            <h3>Histórico de pagamentos</h3>
-          </div>
-
-          {grupo.pagamentos.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">💸</div>
-              <p>Nenhum pagamento registrado ainda.</p>
-            </div>
-          ) : (
-            <ul className="grupo-despesas-list">
-              {grupo.pagamentos.map(p => (
-                <li key={p.id} className="grupo-despesa-item">
-                  <div className="grupo-despesa-info">
-                    <span className="grupo-despesa-desc grupo-pessoas">
-                      <Avatar nome={membroPorId[p.deMembroId]?.nome} foto={membroPorId[p.deMembroId]?.foto} size="xs" />
-                      {membroPorId[p.deMembroId]?.nome ?? '—'} pagou
-                      <Avatar nome={membroPorId[p.paraMembroId]?.nome} foto={membroPorId[p.paraMembroId]?.foto} size="xs" />
-                      {membroPorId[p.paraMembroId]?.nome ?? '—'}
-                    </span>
-                    <span className="tx-meta">
-                      {fmtDate(p.data)}
-                      {p.moedaPagamento && ` · pago em ${fmt(p.valorPagamento, p.moedaPagamento)}`}
-                    </span>
-                  </div>
-                  <div className="grupo-despesa-valor">{fmt(p.valor, p.moeda)}</div>
-                  {/* Receita no dashboard: só pra quem recebeu, e por escolha (nunca automático). */}
-                  {p.paraMembroId === meuMembro?.id && (p.noDashboard
-                    ? <span className="tx-evento-chip"><Check size={12} /> No dashboard</span>
-                    : (
-                      <button className="btn btn-outline btn-sm" onClick={() => setPagamentoDashboard(p)} title="Adicionar como receita no dashboard">
-                        + Dashboard
-                      </button>
-                    ))}
-                  {(p.criadoPorUsuarioId === user?.id || souAdmin) && (
-                    <div className="tx-actions">
-                      <button className="btn-icon btn-danger" onClick={() => setDeletePagamentoId(p.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="transactions-section">
-          <div className="section-header">
-            <h3>Despesas</h3>
-            <div className="header-actions">
-              {grupo.eventosNoDashboard?.length > 0 && (
-                <button className="btn btn-outline btn-sm" onClick={() => setShowVincularEvento(true)}>
-                  Vincular ao evento
-                </button>
-              )}
-              {minhasDespesas.length > 0 && (
-                <button
-                  className="btn btn-outline btn-sm"
-                  onClick={() => setShowDashboardModal(true)}
-                  disabled={despesasForaDoDashboard.length === 0}
-                  title={despesasForaDoDashboard.length === 0 ? 'Todas as suas despesas deste grupo já estão no dashboard' : undefined}
-                >
-                  {despesasForaDoDashboard.length === 0
-                    ? <><Check size={16} /> Tudo no dashboard</>
-                    : `Adicionar despesas ao dashboard (${despesasForaDoDashboard.length})`}
-                </button>
-              )}
-              <button className="btn btn-primary btn-sm" onClick={() => setShowDespesaModal(true)}>
-                + Nova despesa
+      <div className="transactions-section">
+        <div className="section-header">
+          <h3>Despesas</h3>
+          <div className="header-actions">
+            {grupo.eventosNoDashboard?.length > 0 && (
+              <button className="btn btn-outline btn-sm" onClick={() => setShowVincularEvento(true)}>
+                Vincular ao evento
               </button>
-            </div>
+            )}
+            {minhasDespesas.length > 0 && (
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => setShowDashboardModal(true)}
+                disabled={despesasForaDoDashboard.length === 0}
+                title={despesasForaDoDashboard.length === 0 ? 'Todas as suas despesas deste grupo já estão no dashboard' : undefined}
+              >
+                {despesasForaDoDashboard.length === 0
+                  ? <><Check size={16} /> Tudo no dashboard</>
+                  : `Adicionar despesas ao dashboard (${despesasForaDoDashboard.length})`}
+              </button>
+            )}
+            <button className="btn btn-primary btn-sm" onClick={() => setShowDespesaModal(true)}>
+              <Plus size={16} /> Nova despesa
+            </button>
           </div>
-
-          {grupo.despesas.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">🧾</div>
-              <p>Nenhuma despesa registrada ainda.</p>
-            </div>
-          ) : (
-            <ul className="grupo-despesas-list">
-              {grupo.despesas.map(d => (
-                <li key={d.id} className="grupo-despesa-item">
-                  <div className="grupo-despesa-info">
-                    <span className="grupo-despesa-desc">
-                      {d.descricao}
-                      {d.noDashboard && <span className="tx-evento-chip" style={{ marginLeft: 8 }}><Check size={12} /> No dashboard</span>}
-                    </span>
-                    <span className="tx-meta grupo-pessoas">
-                      Pago por
-                      <Avatar nome={membroPorId[d.pagoPorMembroId]?.nome} foto={membroPorId[d.pagoPorMembroId]?.foto} size="xs" />
-                      {membroPorId[d.pagoPorMembroId]?.nome ?? '—'} · {fmtDate(d.data)}
-                    </span>
-                  </div>
-                  <div className="grupo-despesa-valor">{fmt(d.valorTotal, d.moeda)}</div>
-                  {(d.criadoPorUsuarioId === user?.id || souAdmin) && (
-                    <div className="tx-actions">
-                      <button className="btn-icon" onClick={() => handleEditDespesa(d)} title="Editar" aria-label="Editar"><Pencil size={16} /></button>
-                      <button className="btn-icon btn-danger" onClick={() => setDeleteDespesaId(d.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
-      </main>
+
+        {grupo.despesas.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">🧾</div>
+            <p>Nenhuma despesa registrada ainda.</p>
+          </div>
+        ) : (
+          <ul className="grupo-despesas-list">
+            {grupo.despesas.map(d => (
+              <li key={d.id} className="grupo-despesa-item">
+                <div className="grupo-despesa-info">
+                  <span className="grupo-despesa-desc">
+                    {d.descricao}
+                    {d.noDashboard && <span className="tx-evento-chip" style={{ marginLeft: 8 }}><Check size={12} /> No dashboard</span>}
+                  </span>
+                  <span className="tx-meta grupo-pessoas">
+                    Pago por
+                    <Avatar nome={membroPorId[d.pagoPorMembroId]?.nome} foto={membroPorId[d.pagoPorMembroId]?.foto} size="xs" />
+                    {membroPorId[d.pagoPorMembroId]?.nome ?? '—'} · {fmtDate(d.data)}
+                  </span>
+                </div>
+                <div className="grupo-despesa-valor">{fmt(d.valorTotal, d.moeda)}</div>
+                {(d.criadoPorUsuarioId === user?.id || souAdmin) && (
+                  <div className="tx-actions">
+                    <button className="btn-icon" onClick={() => handleEditDespesa(d)} title="Editar" aria-label="Editar"><Pencil size={16} /></button>
+                    <button className="btn-icon btn-danger" onClick={() => setDeleteDespesaId(d.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {showDespesaModal && (
         <DespesaGrupoModal
@@ -591,6 +577,6 @@ export default function GrupoDetalhe() {
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }

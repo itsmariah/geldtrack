@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import BudgetModal from '../components/BudgetModal'
 import BudgetCard from '../components/BudgetCard'
 import SortableGrid from '../components/SortableGrid'
@@ -9,6 +8,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
 import { useCategorias } from '../context/CategoriasContext'
+import { Plus } from 'lucide-react'
 
 // new Date().toISOString() é UTC — perto da virada do mês no Brasil (UTC-3) isso pode
 // adiantar o mês padrão exibido. Aqui montamos o mês local manualmente para evitar isso.
@@ -83,58 +83,55 @@ export default function Budgets() {
   const semCategoriaDisponivel = orcamentos.length >= categoriasDespesa.length
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Orçamentos</h2>
-          <div className="header-actions">
-            <input
-              type="month"
-              value={month}
-              onChange={e => setMonth(e.target.value)}
-              className="month-picker"
-            />
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowModal(true)}
-              disabled={semCategoriaDisponivel}
-              title={semCategoriaDisponivel ? 'Todas as categorias de despesa já têm orçamento' : undefined}
-            >
-              + Novo orçamento
-            </button>
-          </div>
-        </div>
-
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchOrcamentos}>Tentar novamente</button>
-          </Alert>
-        )}
-
-        {loading ? (
-          <SkeletonList rows={3} />
-        ) : error ? null : orcamentos.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">📊</div>
-            <p>Você ainda não tem nenhum orçamento.</p>
-            <p className="empty-state-sub">Defina um limite mensal por categoria pra saber quando está perto de estourar o gasto planejado.</p>
-            <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
-              + Criar meu primeiro orçamento
-            </button>
-          </div>
-        ) : (
-          <SortableGrid
-            items={orcamentos}
-            onReorder={handleReorder}
-            descricao="orçamento reordenável"
-            renderItem={orcamento => (
-              <BudgetCard orcamento={orcamento} onEdit={handleEdit} onDelete={setDeleteId} />
-            )}
+    <>
+      <div className="dashboard-header">
+        <h2>Orçamentos</h2>
+        <div className="header-actions">
+          <input
+            type="month"
+            value={month}
+            onChange={e => setMonth(e.target.value)}
+            className="month-picker"
           />
-        )}
-      </main>
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowModal(true)}
+            disabled={semCategoriaDisponivel}
+            title={semCategoriaDisponivel ? 'Todas as categorias de despesa já têm orçamento' : undefined}
+          >
+            <Plus size={16} /> Novo orçamento
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchOrcamentos}>Tentar novamente</button>
+        </Alert>
+      )}
+
+      {loading ? (
+        <SkeletonList rows={3} />
+      ) : error ? null : orcamentos.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">📊</div>
+          <p>Você ainda não tem nenhum orçamento.</p>
+          <p className="empty-state-sub">Defina um limite mensal por categoria pra saber quando está perto de estourar o gasto planejado.</p>
+          <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
+            <Plus size={16} /> Criar meu primeiro orçamento
+          </button>
+        </div>
+      ) : (
+        <SortableGrid
+          items={orcamentos}
+          onReorder={handleReorder}
+          descricao="orçamento reordenável"
+          renderItem={orcamento => (
+            <BudgetCard orcamento={orcamento} onEdit={handleEdit} onDelete={setDeleteId} />
+          )}
+        />
+      )}
 
       {showModal && (
         <BudgetModal
@@ -156,6 +153,6 @@ export default function Budgets() {
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }

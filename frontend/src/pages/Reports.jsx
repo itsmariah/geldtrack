@@ -4,7 +4,6 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
-import Navbar from '../components/Navbar'
 import SummaryCards from '../components/SummaryCards'
 import ExpensePieChart from '../components/charts/ExpensePieChart'
 import api from '../services/api'
@@ -154,205 +153,202 @@ export default function Reports() {
   }
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Relatórios</h2>
-          <div className="header-actions">
-            <input
-              type="month"
-              value={month}
-              onChange={e => setMonth(e.target.value)}
-              className="month-picker"
-            />
-            <button className="btn btn-outline" onClick={handleDownloadPdf} disabled={generatingPdf || loading || !report}>
-              <FileDown size={16} /> {generatingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
-            </button>
-          </div>
+    <>
+      <div className="dashboard-header">
+        <h2>Relatórios</h2>
+        <div className="header-actions">
+          <input
+            type="month"
+            value={month}
+            onChange={e => setMonth(e.target.value)}
+            className="month-picker"
+          />
+          <button className="btn btn-outline" onClick={handleDownloadPdf} disabled={generatingPdf || loading || !report}>
+            <FileDown size={16} /> {generatingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
+          </button>
         </div>
+      </div>
 
-        <div className="reports-filters">
-          <div className="filter-group">
-            {[
-              { key: 'todos',   label: 'Todos' },
-              { key: 'receita', label: '↑ Receitas' },
-              { key: 'despesa', label: '↓ Despesas' },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                className={`filter-btn${tipoFilter === key ? ` filter-btn--${key}` : ''}`}
-                onClick={() => setTipoFilter(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <select
-            className="filter-select"
-            value={categoriaFilter}
-            onChange={e => setCategoriaFilter(e.target.value)}
-            disabled={categorias.length === 0}
-          >
-            <option value="todas">Todas as categorias</option>
-            {categorias.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-
-          {isFiltered && (
+      <div className="reports-filters">
+        <div className="filter-group">
+          {[
+            { key: 'todos',   label: 'Todos' },
+            { key: 'receita', label: '↑ Receitas' },
+            { key: 'despesa', label: '↓ Despesas' },
+          ].map(({ key, label }) => (
             <button
-              className="btn btn-sm btn-outline"
-              onClick={() => { setTipoFilter('todos'); setCategoriaFilter('todas') }}
+              key={key}
+              className={`filter-btn${tipoFilter === key ? ` filter-btn--${key}` : ''}`}
+              onClick={() => setTipoFilter(key)}
             >
-              Limpar filtros
+              {label}
             </button>
-          )}
+          ))}
         </div>
 
-        {loading ? (
-          <>
-            <SkeletonCards />
-            <div className="chart-section" style={{ marginBottom: 24 }}>
-              <h3>Evolução dos Últimos 6 Meses</h3>
-              <SkeletonChart height={260} />
-            </div>
-            <div className="reports-charts">
-              <div className="chart-section">
-                <h3>Despesas por Categoria</h3>
-                <SkeletonChart />
-              </div>
-              <div className="chart-section">
-                <h3>Fontes de Renda</h3>
-                <SkeletonChart />
-              </div>
-            </div>
-            <div className="transactions-section">
-              <SkeletonList rows={5} />
-            </div>
-          </>
-        ) : error ? (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchReport}>Tentar novamente</button>
-          </Alert>
-        ) : report ? (
-          <>
-            <SummaryCards balance={summary} />
+        <select
+          className="filter-select"
+          value={categoriaFilter}
+          onChange={e => setCategoriaFilter(e.target.value)}
+          disabled={categorias.length === 0}
+        >
+          <option value="todas">Todas as categorias</option>
+          {categorias.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
 
-            {/* Evolução — full width */}
-            <div className="chart-section" style={{ marginBottom: 24 }} ref={evolutionRef}>
-              <h3>Evolução dos Últimos 6 Meses</h3>
-              {evolutionData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={evolutionData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
-                    <XAxis dataKey="mes" stroke={chartTheme.axis} tick={{ fontSize: 12 }} />
-                    <YAxis stroke={chartTheme.axis} tick={{ fontSize: 12 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip
-                      contentStyle={{ background: chartTheme.tooltipBg, border: `1px solid ${chartTheme.tooltipBorder}`, borderRadius: 8 }}
-                      formatter={(v) => fmt(v)}
-                    />
-                    <Legend />
-                    <Bar dataKey="Receitas" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="empty-chart">Sem dados suficientes para o gráfico</div>
-              )}
+        {isFiltered && (
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={() => { setTipoFilter('todos'); setCategoriaFilter('todas') }}
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <>
+          <SkeletonCards />
+          <div className="chart-section" style={{ marginBottom: 24 }}>
+            <h3>Evolução dos Últimos 6 Meses</h3>
+            <SkeletonChart height={260} />
+          </div>
+          <div className="reports-charts">
+            <div className="chart-section">
+              <h3>Despesas por Categoria</h3>
+              <SkeletonChart />
             </div>
-
-            {/* Dois pies lado a lado */}
-            <div className="reports-charts">
-              <div className="chart-section" ref={despesasChartRef}>
-                <h3>
-                  Despesas por Categoria
-                  {categoriaFilter !== 'todas' && (
-                    <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 13 }}>
-                      {' '}— {categoriaFilter}
-                    </span>
-                  )}
-                </h3>
-                <ExpensePieChart data={pieDataDespesas} emptyMessage="Nenhuma despesa neste período" />
-              </div>
-
-              <div className="chart-section" ref={receitasChartRef}>
-                <h3>
-                  Fontes de Renda
-                  {categoriaFilter !== 'todas' && (
-                    <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 13 }}>
-                      {' '}— {categoriaFilter}
-                    </span>
-                  )}
-                </h3>
-                <ExpensePieChart data={pieDataReceitas} emptyMessage="Nenhuma receita neste período" />
-              </div>
+            <div className="chart-section">
+              <h3>Fontes de Renda</h3>
+              <SkeletonChart />
             </div>
+          </div>
+          <div className="transactions-section">
+            <SkeletonList rows={5} />
+          </div>
+        </>
+      ) : error ? (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchReport}>Tentar novamente</button>
+        </Alert>
+      ) : report ? (
+        <>
+          <SummaryCards balance={summary} />
 
-            <div className="transactions-section">
-              <div className="section-header">
-                <h3>
-                  Transações do mês{' '}
-                  <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 14 }}>
-                    {isFiltered
-                      ? `${filtered.length} de ${report.transactions.length} registro(s)`
-                      : `${report.transactions.length} registro(s)`}
+          {/* Evolução — full width */}
+          <div className="chart-section" style={{ marginBottom: 24 }} ref={evolutionRef}>
+            <h3>Evolução dos Últimos 6 Meses</h3>
+            {evolutionData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={evolutionData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                  <XAxis dataKey="mes" stroke={chartTheme.axis} tick={{ fontSize: 12 }} />
+                  <YAxis stroke={chartTheme.axis} tick={{ fontSize: 12 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ background: chartTheme.tooltipBg, border: `1px solid ${chartTheme.tooltipBorder}`, borderRadius: 8 }}
+                    formatter={(v) => fmt(v)}
+                  />
+                  <Legend />
+                  <Bar dataKey="Receitas" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="empty-chart">Sem dados suficientes para o gráfico</div>
+            )}
+          </div>
+
+          {/* Dois pies lado a lado */}
+          <div className="reports-charts">
+            <div className="chart-section" ref={despesasChartRef}>
+              <h3>
+                Despesas por Categoria
+                {categoriaFilter !== 'todas' && (
+                  <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 13 }}>
+                    {' '}— {categoriaFilter}
                   </span>
-                </h3>
-              </div>
-
-              {filtered.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-state-icon">{isFiltered ? '🔍' : '📭'}</div>
-                  <p>
-                    {isFiltered
-                      ? 'Nenhuma transação com os filtros selecionados.'
-                      : 'Nenhuma transação neste mês.'}
-                  </p>
-                  <p className="empty-state-sub">
-                    {isFiltered
-                      ? 'Tente ajustar ou limpar os filtros.'
-                      : 'Selecione outro mês ou adicione transações no Dashboard.'}
-                  </p>
-                  {isFiltered && (
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-sm"
-                      style={{ marginTop: 16 }}
-                      onClick={() => { setTipoFilter('todos'); setCategoriaFilter('todas') }}
-                    >
-                      Limpar filtros
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <ul className="transaction-list">
-                  {filtered.map(t => (
-                    <li key={t.id} className={`transaction-item ${t.tipo}`}>
-                      <div className="tx-icon">{t.tipo === 'receita' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}</div>
-                      <div className="tx-info">
-                        <span className="tx-desc">
-                          {t.recorrenciaId && <span className="tx-desc-icon" title="Gerada automaticamente por uma recorrência"><Repeat size={13} aria-label="Recorrente" /></span>}
-                          {t.descricao || t.categoria}
-                        </span>
-                        <span className="tx-meta">
-                          {t.categoria} · {fmtDate(t.data)}
-                          {t.conta?.moeda && t.conta.moeda !== 'BRL' && ` · ${t.conta.nome}`}
-                        </span>
-                      </div>
-                      <div className="tx-amount">
-                        {t.tipo === 'receita' ? '+' : '-'}{fmt(t.valor, t.conta?.moeda)}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                )}
+              </h3>
+              <ExpensePieChart data={pieDataDespesas} emptyMessage="Nenhuma despesa neste período" />
             </div>
-          </>
-        ) : null}
-      </main>
-    </div>
+
+            <div className="chart-section" ref={receitasChartRef}>
+              <h3>
+                Fontes de Renda
+                {categoriaFilter !== 'todas' && (
+                  <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 13 }}>
+                    {' '}— {categoriaFilter}
+                  </span>
+                )}
+              </h3>
+              <ExpensePieChart data={pieDataReceitas} emptyMessage="Nenhuma receita neste período" />
+            </div>
+          </div>
+
+          <div className="transactions-section">
+            <div className="section-header">
+              <h3>
+                Transações do mês{' '}
+                <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 14 }}>
+                  {isFiltered
+                    ? `${filtered.length} de ${report.transactions.length} registro(s)`
+                    : `${report.transactions.length} registro(s)`}
+                </span>
+              </h3>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">{isFiltered ? '🔍' : '📭'}</div>
+                <p>
+                  {isFiltered
+                    ? 'Nenhuma transação com os filtros selecionados.'
+                    : 'Nenhuma transação neste mês.'}
+                </p>
+                <p className="empty-state-sub">
+                  {isFiltered
+                    ? 'Tente ajustar ou limpar os filtros.'
+                    : 'Selecione outro mês ou adicione transações no Dashboard.'}
+                </p>
+                {isFiltered && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    style={{ marginTop: 16 }}
+                    onClick={() => { setTipoFilter('todos'); setCategoriaFilter('todas') }}
+                  >
+                    Limpar filtros
+                  </button>
+                )}
+              </div>
+            ) : (
+              <ul className="transaction-list">
+                {filtered.map(t => (
+                  <li key={t.id} className={`transaction-item ${t.tipo}`}>
+                    <div className="tx-icon">{t.tipo === 'receita' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}</div>
+                    <div className="tx-info">
+                      <span className="tx-desc">
+                        {t.recorrenciaId && <span className="tx-desc-icon" title="Gerada automaticamente por uma recorrência"><Repeat size={13} aria-label="Recorrente" /></span>}
+                        {t.descricao || t.categoria}
+                      </span>
+                      <span className="tx-meta">
+                        {t.categoria} · {fmtDate(t.data)}
+                        {t.conta?.moeda && t.conta.moeda !== 'BRL' && ` · ${t.conta.nome}`}
+                      </span>
+                    </div>
+                    <div className="tx-amount">
+                      {t.tipo === 'receita' ? '+' : '-'}{fmt(t.valor, t.conta?.moeda)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
+      ) : null}
+    </>
   )
 }

@@ -1,23 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { m } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+import { NAV_LINKS, isPathActive } from '../utils/navLinks'
 import ProfileModal from './ProfileModal'
 import ThemeToggle from './ThemeToggle'
 import Avatar from './Avatar'
 import { Menu, X } from 'lucide-react'
 
-const LINKS = [
-  ['/dashboard', 'Dashboard'],
-  ['/contas', 'Contas'],
-  ['/relatorios', 'Relatórios'],
-  ['/metas', 'Metas'],
-  ['/orcamentos', 'Orçamentos'],
-  ['/eventos', 'Eventos'],
-  ['/recorrencias', 'Recorrências'],
-  ['/categorias', 'Categorias'],
-  ['/familia', 'Família'],
-  ['/grupos', 'Grupos'],
-]
+const SPRING = { type: 'spring', stiffness: 500, damping: 38 }
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -36,8 +27,6 @@ export default function Navbar() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [menuOpen])
 
-  // Rotas de detalhe (/eventos/3, /grupos/5) marcam o item da lista como ativo.
-  const isActive = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`) ? 'active' : ''
 
   return (
     <header className="navbar">
@@ -46,9 +35,16 @@ export default function Navbar() {
       </Link>
 
       <nav id="app-nav" className={`navbar-nav${menuOpen ? ' navbar-nav--open' : ''}`}>
-        {LINKS.map(([path, label]) => (
-          <Link key={path} to={path} className={isActive(path)}>{label}</Link>
-        ))}
+        {NAV_LINKS.map(({ path, label }) => {
+          const active = isPathActive(location.pathname, path)
+          return (
+            <Link key={path} to={path} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined}>
+              {/* Pílula compartilhada (layoutId): desliza de um link pro outro ao trocar de página. */}
+              {active && <m.span layoutId="navbar-pill" className="navbar-pill" transition={SPRING} />}
+              <span className="navbar-link-label">{label}</span>
+            </Link>
+          )
+        })}
         <button className="btn btn-outline btn-sm navbar-nav-logout" onClick={logout}>Sair</button>
       </nav>
 

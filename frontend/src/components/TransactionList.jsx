@@ -10,7 +10,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { fmt, fmtDate, fmtDayHeader, descreverConversao } from '../utils/format'
 import { useAuth } from '../context/AuthContext'
 import { useSortSensors, listenersSemTeclaDosFilhos } from '../hooks/useSortSensors'
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, GripVertical, History, Paperclip, Pencil, Repeat, Tag, Trash2 } from 'lucide-react'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, GripVertical, History, Paperclip, Pencil, Plus, Repeat, Tag, Trash2 } from 'lucide-react'
 
 // updatedAt e createdAt vêm do mesmo INSERT (mesmo now() do Postgres), mas usamos uma
 // margem pra não depender de igualdade exata de timestamp entre as duas colunas.
@@ -162,7 +162,7 @@ export default function TransactionList({ transactions, onEdit, onDelete, onView
         <p className="empty-state-sub">Adicione sua primeira receita ou despesa para começar a acompanhar seu saldo.</p>
         {onCreateClick && (
           <button type="button" className="btn btn-primary" onClick={onCreateClick} style={{ marginTop: 16 }}>
-            + Adicionar transação
+            <Plus size={16} /> Adicionar transação
           </button>
         )}
       </div>

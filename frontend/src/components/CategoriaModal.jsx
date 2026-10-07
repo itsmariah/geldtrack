@@ -2,7 +2,7 @@ import { useState } from 'react'
 import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
-import { X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, X } from 'lucide-react'
 
 export default function CategoriaModal({ categoria, tipoPadrao, onClose, onSaved }) {
   const [form, setForm] = useState({
@@ -51,7 +51,7 @@ export default function CategoriaModal({ categoria, tipoPadrao, onClose, onSaved
                 checked={form.tipo === 'receita'}
                 onChange={e => setForm({ ...form, tipo: e.target.value })}
               />
-              ↑ Receita
+              <ArrowDownLeft size={16} /> Receita
             </label>
             <label className={`type-btn ${form.tipo === 'despesa' ? 'active-expense' : ''}`}>
               <input
@@ -60,7 +60,7 @@ export default function CategoriaModal({ categoria, tipoPadrao, onClose, onSaved
                 checked={form.tipo === 'despesa'}
                 onChange={e => setForm({ ...form, tipo: e.target.value })}
               />
-              ↓ Despesa
+              <ArrowUpRight size={16} /> Despesa
             </label>
           </div>
         )}

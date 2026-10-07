@@ -1,4 +1,4 @@
-import { Paperclip, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Paperclip, X } from 'lucide-react'
 
 import { useState, useEffect, useRef } from 'react'
 import api from '../services/api'
@@ -121,7 +121,7 @@ export default function TransactionModal({ transaction, contas, eventos = [], de
   return (
     <Modal onClose={onClose}>
       <div className="modal-header">
-        <h3>{transaction ? 'Editar Transação' : 'Nova Transação'}</h3>
+        <h3>{transaction ? 'Editar Transação' : 'Nova transação'}</h3>
         <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
       </div>
 
@@ -136,7 +136,7 @@ export default function TransactionModal({ transaction, contas, eventos = [], de
                 checked={form.tipo === 'receita'}
                 onChange={e => setForm({ ...form, tipo: e.target.value })}
               />
-              ↑ Receita
+              <ArrowDownLeft size={16} /> Receita
             </label>
             <label className={`type-btn ${form.tipo === 'despesa' ? 'active-expense' : ''}`}>
               <input
@@ -145,7 +145,7 @@ export default function TransactionModal({ transaction, contas, eventos = [], de
                 checked={form.tipo === 'despesa'}
                 onChange={e => setForm({ ...form, tipo: e.target.value })}
               />
-              ↓ Despesa
+              <ArrowUpRight size={16} /> Despesa
             </label>
           </div>
 

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import RecurringModal from '../components/RecurringModal'
 import RecurringCard from '../components/RecurringCard'
 import SortableGrid from '../components/SortableGrid'
@@ -8,6 +7,7 @@ import { salvarOrdem } from '../utils/salvarOrdem'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
+import { Plus } from 'lucide-react'
 
 export default function Recurring() {
   const [recorrencias, setRecorrencias] = useState([])
@@ -85,45 +85,42 @@ export default function Recurring() {
   }
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Transações recorrentes</h2>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={contas.length === 0}>
-            + Nova recorrência
+    <>
+      <div className="dashboard-header">
+        <h2>Transações recorrentes</h2>
+        <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={contas.length === 0}>
+          <Plus size={16} /> Nova recorrência
+        </button>
+      </div>
+
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchRecorrencias}>Tentar novamente</button>
+        </Alert>
+      )}
+
+      {loading ? (
+        <SkeletonList rows={3} />
+      ) : error ? null : recorrencias.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">🔁</div>
+          <p>Você ainda não tem nenhuma recorrência.</p>
+          <p className="empty-state-sub">Cadastre contas que se repetem todo mês, como aluguel, assinaturas ou salário, e o sistema lança elas automaticamente.</p>
+          <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
+            <Plus size={16} /> Criar minha primeira recorrência
           </button>
         </div>
-
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchRecorrencias}>Tentar novamente</button>
-          </Alert>
-        )}
-
-        {loading ? (
-          <SkeletonList rows={3} />
-        ) : error ? null : recorrencias.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">🔁</div>
-            <p>Você ainda não tem nenhuma recorrência.</p>
-            <p className="empty-state-sub">Cadastre contas que se repetem todo mês, como aluguel, assinaturas ou salário, e o sistema lança elas automaticamente.</p>
-            <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
-              + Criar minha primeira recorrência
-            </button>
-          </div>
-        ) : (
-          <SortableGrid
-            items={recorrencias}
-            onReorder={handleReorder}
-            descricao="recorrência reordenável"
-            renderItem={recorrencia => (
-              <RecurringCard recorrencia={recorrencia} onEdit={handleEdit} onDelete={setDeleteId} onToggleAtiva={handleToggleAtiva} />
-            )}
-          />
-        )}
-      </main>
+      ) : (
+        <SortableGrid
+          items={recorrencias}
+          onReorder={handleReorder}
+          descricao="recorrência reordenável"
+          renderItem={recorrencia => (
+            <RecurringCard recorrencia={recorrencia} onEdit={handleEdit} onDelete={setDeleteId} onToggleAtiva={handleToggleAtiva} />
+          )}
+        />
+      )}
 
       {showModal && (
         <RecurringModal
@@ -145,6 +142,6 @@ export default function Recurring() {
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }

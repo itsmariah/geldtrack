@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import GrupoModal from '../components/GrupoModal'
 import SortableGrid from '../components/SortableGrid'
 import { salvarOrdem } from '../utils/salvarOrdem'
@@ -73,72 +72,69 @@ export default function Grupos() {
   }
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Grupos</h2>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={16} /> Novo grupo</button>
-        </div>
+    <>
+      <div className="dashboard-header">
+        <h2>Grupos</h2>
+        <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={16} /> Novo grupo</button>
+      </div>
 
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchGrupos}>Tentar novamente</button>
-          </Alert>
-        )}
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchGrupos}>Tentar novamente</button>
+        </Alert>
+      )}
 
-        {loading ? (
-          <SkeletonList rows={3} />
-        ) : error ? null : (
-          <>
-            {grupos.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">🧾</div>
-                <p>Você ainda não tem nenhum grupo.</p>
-                <p className="empty-state-sub">Crie um grupo pra dividir despesas com outras pessoas e ver quem deve quem, ou entre num grupo existente com um código.</p>
-                <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
-                  + Criar meu primeiro grupo
-                </button>
-              </div>
-            ) : (
-              <div style={{ marginBottom: 24 }}>
-                <SortableGrid
-                  items={grupos}
-                  onReorder={handleReorder}
-                  descricao="grupo reordenável"
-                  renderItem={grupo => <GrupoCard grupo={grupo} />}
-                />
-              </div>
-            )}
-
-            <div className="transactions-section">
-              <div className="section-header">
-                <h3>Entrar em um grupo</h3>
-              </div>
-              {entrarError && <Alert type="error">{entrarError}</Alert>}
-              <form onSubmit={handleSubmitEntrar} style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="text"
-                  value={codigoInput}
-                  onChange={e => setCodigoInput(e.target.value)}
-                  placeholder="Ex: AB3F92"
-                  maxLength={12}
-                  style={{ flex: 1, textTransform: 'uppercase' }}
-                />
-                <button type="submit" className="btn btn-primary btn-sm" disabled={entrando}>
-                  {entrando ? 'Entrando...' : 'Entrar'}
-                </button>
-              </form>
-              <p className="form-hint">Peça o código pra quem já está no grupo e entre digitando ele aqui.</p>
+      {loading ? (
+        <SkeletonList rows={3} />
+      ) : error ? null : (
+        <>
+          {grupos.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">🧾</div>
+              <p>Você ainda não tem nenhum grupo.</p>
+              <p className="empty-state-sub">Crie um grupo pra dividir despesas com outras pessoas e ver quem deve quem, ou entre num grupo existente com um código.</p>
+              <button type="button" className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
+                <Plus size={16} /> Criar meu primeiro grupo
+              </button>
             </div>
-          </>
-        )}
-      </main>
+          ) : (
+            <div style={{ marginBottom: 24 }}>
+              <SortableGrid
+                items={grupos}
+                onReorder={handleReorder}
+                descricao="grupo reordenável"
+                renderItem={grupo => <GrupoCard grupo={grupo} />}
+              />
+            </div>
+          )}
+
+          <div className="transactions-section">
+            <div className="section-header">
+              <h3>Entrar em um grupo</h3>
+            </div>
+            {entrarError && <Alert type="error">{entrarError}</Alert>}
+            <form onSubmit={handleSubmitEntrar} style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={codigoInput}
+                onChange={e => setCodigoInput(e.target.value)}
+                placeholder="Ex: AB3F92"
+                maxLength={12}
+                style={{ flex: 1, textTransform: 'uppercase' }}
+              />
+              <button type="submit" className="btn btn-primary btn-sm" disabled={entrando}>
+                {entrando ? 'Entrando...' : 'Entrar'}
+              </button>
+            </form>
+            <p className="form-hint">Peça o código pra quem já está no grupo e entre digitando ele aqui.</p>
+          </div>
+        </>
+      )}
 
       {showModal && <GrupoModal onClose={handleModalClose} onSaved={handleSaved} />}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }

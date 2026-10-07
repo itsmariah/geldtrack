@@ -3,7 +3,7 @@ import api from '../services/api'
 import { useCategorias } from '../context/CategoriasContext'
 import Modal from './Modal'
 import Alert from './Alert'
-import { X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, X } from 'lucide-react'
 
 // new Date().toISOString() é UTC — perto da meia-noite no Brasil (UTC-3) isso adianta
 // a data em um dia. Aqui montamos a data local manualmente para evitar esse desvio.
@@ -67,7 +67,7 @@ export default function RecurringModal({ recorrencia, contas, onClose, onSaved }
               checked={form.tipo === 'receita'}
               onChange={e => setForm({ ...form, tipo: e.target.value, categoria: categoriasPorTipo('receita')[0] })}
             />
-            ↑ Receita
+            <ArrowDownLeft size={16} /> Receita
           </label>
           <label className={`type-btn ${form.tipo === 'despesa' ? 'active-expense' : ''}`}>
             <input
@@ -76,7 +76,7 @@ export default function RecurringModal({ recorrencia, contas, onClose, onSaved }
               checked={form.tipo === 'despesa'}
               onChange={e => setForm({ ...form, tipo: e.target.value, categoria: categoriasPorTipo('despesa')[0] })}
             />
-            ↓ Despesa
+            <ArrowUpRight size={16} /> Despesa
           </label>
         </div>
 

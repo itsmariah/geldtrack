@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import api from '../services/api'
 import { useCategorias } from '../context/CategoriasContext'
-import Navbar from '../components/Navbar'
 import CategoriaModal from '../components/CategoriaModal'
 import CategoriaChip from '../components/CategoriaChip'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -56,61 +55,58 @@ export default function Categorias() {
   }
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Categorias</h2>
-          <button className="btn btn-primary" onClick={() => abrirNovaCategoria('despesa')}>
-            + Nova categoria
-          </button>
-        </div>
+    <>
+      <div className="dashboard-header">
+        <h2>Categorias</h2>
+        <button className="btn btn-primary" onClick={() => abrirNovaCategoria('despesa')}>
+          <Plus size={16} /> Nova categoria
+        </button>
+      </div>
 
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={refetch}>Tentar novamente</button>
-          </Alert>
-        )}
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={refetch}>Tentar novamente</button>
+        </Alert>
+      )}
 
-        {loading ? (
-          <SkeletonList rows={4} />
-        ) : (
-          <>
-            <div className="transactions-section" style={{ marginBottom: 24 }}>
-              <div className="section-header">
-                <h3>↓ Despesas</h3>
-                <button className="btn btn-outline btn-sm" onClick={() => abrirNovaCategoria('despesa')}><Plus size={16} /> Adicionar</button>
-              </div>
-              {despesas.length === 0 ? (
-                <p style={{ color: 'var(--text-muted)' }}>Nenhuma categoria de despesa ainda.</p>
-              ) : (
-                <div className="categoria-grid">
-                  {despesas.map(c => (
-                    <CategoriaChip key={c.id} categoria={c} onEdit={handleEdit} onDelete={setDeleteCategoria} />
-                  ))}
-                </div>
-              )}
+      {loading ? (
+        <SkeletonList rows={4} />
+      ) : (
+        <>
+          <div className="transactions-section" style={{ marginBottom: 24 }}>
+            <div className="section-header">
+              <h3>↓ Despesas</h3>
+              <button className="btn btn-outline btn-sm" onClick={() => abrirNovaCategoria('despesa')}><Plus size={16} /> Adicionar</button>
             </div>
-
-            <div className="transactions-section">
-              <div className="section-header">
-                <h3>↑ Receitas</h3>
-                <button className="btn btn-outline btn-sm" onClick={() => abrirNovaCategoria('receita')}><Plus size={16} /> Adicionar</button>
+            {despesas.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)' }}>Nenhuma categoria de despesa ainda.</p>
+            ) : (
+              <div className="categoria-grid">
+                {despesas.map(c => (
+                  <CategoriaChip key={c.id} categoria={c} onEdit={handleEdit} onDelete={setDeleteCategoria} />
+                ))}
               </div>
-              {receitas.length === 0 ? (
-                <p style={{ color: 'var(--text-muted)' }}>Nenhuma categoria de receita ainda.</p>
-              ) : (
-                <div className="categoria-grid">
-                  {receitas.map(c => (
-                    <CategoriaChip key={c.id} categoria={c} onEdit={handleEdit} onDelete={setDeleteCategoria} />
-                  ))}
-                </div>
-              )}
+            )}
+          </div>
+
+          <div className="transactions-section">
+            <div className="section-header">
+              <h3>↑ Receitas</h3>
+              <button className="btn btn-outline btn-sm" onClick={() => abrirNovaCategoria('receita')}><Plus size={16} /> Adicionar</button>
             </div>
-          </>
-        )}
-      </main>
+            {receitas.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)' }}>Nenhuma categoria de receita ainda.</p>
+            ) : (
+              <div className="categoria-grid">
+                {receitas.map(c => (
+                  <CategoriaChip key={c.id} categoria={c} onEdit={handleEdit} onDelete={setDeleteCategoria} />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {showModal && (
         <CategoriaModal
@@ -132,6 +128,6 @@ export default function Categorias() {
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }

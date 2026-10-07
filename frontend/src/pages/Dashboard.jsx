@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import SummaryCards from '../components/SummaryCards'
 import TransactionModal from '../components/TransactionModal'
 import TransactionList from '../components/TransactionList'
@@ -16,7 +16,7 @@ import Pagination from '../components/Pagination'
 import Alert from '../components/Alert'
 import { SkeletonCards, SkeletonList, SkeletonChart } from '../components/Skeleton'
 import { useCategorias } from '../context/CategoriasContext'
-import { ChevronDown, Download } from 'lucide-react'
+import { ChevronDown, Download, Plus, Upload } from 'lucide-react'
 
 // 20 por página: a lista cresce todo dia e, no celular, 50 itens de uma vez já é uma
 // rolagem longa — a paginação numerada deixa pular direto pra qualquer página.
@@ -25,6 +25,8 @@ const PAGE_SIZE = 20
 export default function Dashboard() {
   const { user } = useAuth()
   const { todasCategorias } = useCategorias()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [transactions, setTransactions] = useState([])
   const [balance, setBalance] = useState({ receitas: 0, despesas: 0, saldo: 0 })
   const [categoryData, setCategoryData] = useState([])
@@ -105,6 +107,19 @@ export default function Dashboard() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Botão "+" da barra inferior (BottomNav): chega aqui com state.novaTransacao e abre o
+  // modal assim que as contas carregam. O state é limpo pra não reabrir ao voltar/recarregar.
+  useEffect(() => {
+    if (!location.state?.novaTransacao || loading) return
+    navigate(location.pathname, { replace: true, state: {} })
+    if (contas.length > 0) {
+      setEditingTransaction(null)
+      setShowModal(true)
+    } else {
+      setError('Cadastre uma conta antes de adicionar transações.')
+    }
+  }, [location, loading, contas.length, navigate])
 
   const handleDelete = (id) => setDeleteId(id)
 
@@ -223,138 +238,135 @@ export default function Dashboard() {
     .map(d => ({ name: d.categoria, value: d.total }))
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Olá, {user?.nome?.split(' ')[0]} 👋</h2>
-          <div className="header-actions">
-            <button className="btn btn-outline" onClick={handleExportCsv} disabled={exporting}>
-              <Download size={16} /> {exporting ? 'Exportando...' : 'Exportar CSV'}
-            </button>
-            <button className="btn btn-outline" onClick={() => setShowOFXModal(true)} disabled={contas.length === 0}>
-              ↓ Importar OFX
-            </button>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={contas.length === 0}>
-              + Nova Transação
-            </button>
-          </div>
+    <>
+      <div className="dashboard-header">
+        <h2>Olá, {user?.nome?.split(' ')[0]} 👋</h2>
+        <div className="header-actions">
+          <button className="btn btn-outline" onClick={handleExportCsv} disabled={exporting}>
+            <Download size={16} /> {exporting ? 'Exportando...' : 'Exportar CSV'}
+          </button>
+          <button className="btn btn-outline" onClick={() => setShowOFXModal(true)} disabled={contas.length === 0}>
+            <Upload size={16} /> Importar OFX
+          </button>
+          <button className="btn btn-primary dashboard-new-btn" onClick={() => setShowModal(true)} disabled={contas.length === 0}>
+            <Plus size={16} /> Nova transação
+          </button>
         </div>
+      </div>
 
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchData}>Tentar novamente</button>
-          </Alert>
-        )}
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchData}>Tentar novamente</button>
+        </Alert>
+      )}
 
-        {loading ? <SkeletonCards /> : <SummaryCards balance={balance} />}
+      {loading ? <SkeletonCards /> : <SummaryCards balance={balance} />}
 
-        {!loading && <ProjectionCard projecao={projecao} />}
+      {!loading && <ProjectionCard projecao={projecao} />}
 
-        {!loading && <InsightsPanel insights={insights} />}
+      {!loading && <InsightsPanel insights={insights} />}
 
-        <div className="dashboard-grid">
-          <div className="transactions-section" ref={transactionsRef}>
-            <div className="section-header">
-              <h3>Transações</h3>
-              <div className="filters">
-                <input
-                  type="search"
-                  className="filter-search"
-                  value={buscaInput}
-                  onChange={e => setBuscaInput(e.target.value)}
-                  placeholder="Buscar por descrição ou categoria..."
-                  aria-label="Buscar transações"
-                />
-                {/* Só aparece no celular — lá os filtros ficam recolhidos pra lista não
-                    começar depois de uma tela inteira de selects. */}
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm filters-toggle"
-                  onClick={() => setShowFiltersMobile(v => !v)}
-                  aria-expanded={showFiltersMobile}
-                  aria-controls="dashboard-filters-extra"
-                >
-                  Filtros{extraFiltersCount > 0 ? ` (${extraFiltersCount})` : ''} <ChevronDown size={16} className={`icon-chevron${showFiltersMobile ? ' icon-chevron--open' : ''}`} />
-                </button>
-                <div id="dashboard-filters-extra" className={`filters-extra${showFiltersMobile ? ' filters-extra--open' : ''}`}>
-                  <select value={filters.tipo} onChange={e => updateFilters({ tipo: e.target.value })}>
-                    <option value="">Todos os tipos</option>
-                    <option value="receita">Receitas</option>
-                    <option value="despesa">Despesas</option>
+      <div className="dashboard-grid">
+        <div className="transactions-section" ref={transactionsRef}>
+          <div className="section-header">
+            <h3>Transações</h3>
+            <div className="filters">
+              <input
+                type="search"
+                className="filter-search"
+                value={buscaInput}
+                onChange={e => setBuscaInput(e.target.value)}
+                placeholder="Buscar por descrição ou categoria..."
+                aria-label="Buscar transações"
+              />
+              {/* Só aparece no celular — lá os filtros ficam recolhidos pra lista não
+                  começar depois de uma tela inteira de selects. */}
+              <button
+                type="button"
+                className="btn btn-outline btn-sm filters-toggle"
+                onClick={() => setShowFiltersMobile(v => !v)}
+                aria-expanded={showFiltersMobile}
+                aria-controls="dashboard-filters-extra"
+              >
+                Filtros{extraFiltersCount > 0 ? ` (${extraFiltersCount})` : ''} <ChevronDown size={16} className={`icon-chevron${showFiltersMobile ? ' icon-chevron--open' : ''}`} />
+              </button>
+              <div id="dashboard-filters-extra" className={`filters-extra${showFiltersMobile ? ' filters-extra--open' : ''}`}>
+                <select value={filters.tipo} onChange={e => updateFilters({ tipo: e.target.value })}>
+                  <option value="">Todos os tipos</option>
+                  <option value="receita">Receitas</option>
+                  <option value="despesa">Despesas</option>
+                </select>
+                <select value={filters.categoria} onChange={e => updateFilters({ categoria: e.target.value })}>
+                  <option value="">Todas as categorias</option>
+                  {todasCategorias.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                {contas.length > 1 && (
+                  <select value={filters.conta} onChange={e => updateFilters({ conta: e.target.value })}>
+                    <option value="">Todas as contas</option>
+                    {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                   </select>
-                  <select value={filters.categoria} onChange={e => updateFilters({ categoria: e.target.value })}>
-                    <option value="">Todas as categorias</option>
-                    {todasCategorias.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  {contas.length > 1 && (
-                    <select value={filters.conta} onChange={e => updateFilters({ conta: e.target.value })}>
-                      <option value="">Todas as contas</option>
-                      {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                    </select>
-                  )}
-                  <input
-                    type="date"
-                    value={filters.data_inicio}
-                    onChange={e => updateFilters({ data_inicio: e.target.value })}
-                    title="Data início"
-                  />
-                  <input
-                    type="date"
-                    value={filters.data_fim}
-                    onChange={e => updateFilters({ data_fim: e.target.value })}
-                    title="Data fim"
-                  />
-                </div>
-                {hasFilters && (
-                  <button className="btn btn-outline btn-sm filters-clear" onClick={clearFilters}>
-                    Limpar filtros
-                  </button>
                 )}
+                <input
+                  type="date"
+                  value={filters.data_inicio}
+                  onChange={e => updateFilters({ data_inicio: e.target.value })}
+                  title="Data início"
+                />
+                <input
+                  type="date"
+                  value={filters.data_fim}
+                  onChange={e => updateFilters({ data_fim: e.target.value })}
+                  title="Data fim"
+                />
               </div>
+              {hasFilters && (
+                <button className="btn btn-outline btn-sm filters-clear" onClick={clearFilters}>
+                  Limpar filtros
+                </button>
+              )}
             </div>
-            {temDiaComVarias && !loading && !error && (
-              <p className="transactions-hint">Dica: segure e arraste transações do mesmo dia para mudar a ordem.</p>
-            )}
-
-            {loading ? (
-              <SkeletonList rows={5} />
-            ) : error ? null : (
-              <>
-                <TransactionList
-                  transactions={transactions}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onViewAnexo={(t) => setAnexoTransactionId(t.id)}
-                  onViewHistorico={(t) => setHistoricoTransactionId(t.id)}
-                  onReorder={handleReorder}
-                  hasFilters={hasFilters}
-                  onCreateClick={() => setShowModal(true)}
-                />
-                <Pagination
-                  page={page}
-                  totalPages={pagination.totalPages}
-                  total={pagination.total}
-                  itemLabel={pagination.total === 1 ? 'transação' : 'transações'}
-                  onChange={handlePageChange}
-                />
-              </>
-            )}
           </div>
+          {temDiaComVarias && !loading && !error && (
+            <p className="transactions-hint">Dica: segure e arraste transações do mesmo dia para mudar a ordem.</p>
+          )}
 
-          <div className="dashboard-side">
-            <div className="chart-section">
-              <h3>Gastos por Categoria</h3>
-              {loading ? <SkeletonChart /> : <ExpensePieChart data={despesasByCategory} emptyMessage="Nenhuma despesa registrada" />}
-            </div>
-            <div className="chart-section">
-              <h3>Fontes de Renda</h3>
-              {loading ? <SkeletonChart /> : <ExpensePieChart data={receitasByCategory} emptyMessage="Nenhuma receita registrada" />}
-            </div>
+          {loading ? (
+            <SkeletonList rows={5} />
+          ) : error ? null : (
+            <>
+              <TransactionList
+                transactions={transactions}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onViewAnexo={(t) => setAnexoTransactionId(t.id)}
+                onViewHistorico={(t) => setHistoricoTransactionId(t.id)}
+                onReorder={handleReorder}
+                hasFilters={hasFilters}
+                onCreateClick={() => setShowModal(true)}
+              />
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                itemLabel={pagination.total === 1 ? 'transação' : 'transações'}
+                onChange={handlePageChange}
+              />
+            </>
+          )}
+        </div>
+
+        <div className="dashboard-side">
+          <div className="chart-section">
+            <h3>Gastos por Categoria</h3>
+            {loading ? <SkeletonChart /> : <ExpensePieChart data={despesasByCategory} emptyMessage="Nenhuma despesa registrada" />}
+          </div>
+          <div className="chart-section">
+            <h3>Fontes de Renda</h3>
+            {loading ? <SkeletonChart /> : <ExpensePieChart data={receitasByCategory} emptyMessage="Nenhuma receita registrada" />}
           </div>
         </div>
-      </main>
+      </div>
 
       {showModal && (
         <TransactionModal
@@ -393,6 +405,6 @@ export default function Dashboard() {
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }

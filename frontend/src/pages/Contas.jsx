@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import ContaModal from '../components/ContaModal'
 import ContaCard from '../components/ContaCard'
 import SortableGrid from '../components/SortableGrid'
@@ -15,7 +14,7 @@ import Alert from '../components/Alert'
 import { SkeletonList } from '../components/Skeleton'
 import { fmt, fmtDate } from '../utils/format'
 import { agruparContasPorInstituicao, totalDoGrupo, instituicoesUsadas } from '../utils/agruparContas'
-import { ArrowLeftRight, Trash2 } from 'lucide-react'
+import { ArrowLeftRight, Landmark, Plus, Trash2 } from 'lucide-react'
 
 export default function Contas() {
   const [contas, setContas] = useState([])
@@ -175,123 +174,120 @@ export default function Contas() {
   )
 
   return (
-    <div className="app-layout">
-      <Navbar />
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h2>Contas</h2>
-          <div className="header-actions">
-            {contas.length > 1 && (
-              <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
-                <ArrowLeftRight size={16} /> Transferir
-              </button>
-            )}
-            <button className="btn btn-outline" onClick={() => setShowConectarBanco(true)}>
-              🏦 Conectar banco
+    <>
+      <div className="dashboard-header">
+        <h2>Contas</h2>
+        <div className="header-actions">
+          {contas.length > 1 && (
+            <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
+              <ArrowLeftRight size={16} /> Transferir
             </button>
-            <button className="btn btn-primary" onClick={() => setShowContaModal(true)}>
-              + Nova conta
-            </button>
-          </div>
+          )}
+          <button className="btn btn-outline" onClick={() => setShowConectarBanco(true)}>
+            <Landmark size={16} /> Conectar banco
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowContaModal(true)}>
+            <Plus size={16} /> Nova conta
+          </button>
         </div>
+      </div>
 
-        {error && (
-          <Alert type="error" className="alert-with-action">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-outline" onClick={fetchData}>Tentar novamente</button>
-          </Alert>
-        )}
+      {error && (
+        <Alert type="error" className="alert-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm btn-outline" onClick={fetchData}>Tentar novamente</button>
+        </Alert>
+      )}
 
-        {loading ? (
-          <SkeletonList rows={3} />
-        ) : (
-          <>
-            {grupos.length === 0 ? (
-              renderGridContas(contas, novaLista => salvarOrdemContas([], novaLista))
-            ) : (
-              <>
-                {/* Blocos de instituição arrastam pelo cabeçalho; as contas, dentro do próprio bloco. */}
-                <BlocosSortable
-                  blocos={grupos.map(g => ({ ...g, id: g.nome.toLocaleLowerCase('pt-BR') }))}
-                  onReorder={novosGrupos => salvarOrdemContas(novosGrupos, semInstituicao)}
-                  className="contas-grupo"
-                  renderCabecalho={grupo => {
-                    const total = totalDoGrupo(grupo.contas, taxas)
-                    return (
-                      <div className="contas-grupo-header">
-                        <h3>🏦 {grupo.nome}</h3>
-                        {grupo.contas.length > 1 && (
-                          <span className="contas-grupo-total" title={total.aproximado ? 'Convertido para R$ pela cotação salva' : undefined}>
-                            Total {total.aproximado ? '≈ ' : ''}{fmt(total.valor, total.moeda)}
-                          </span>
-                        )}
-                      </div>
-                    )
-                  }}
-                  renderConteudo={grupo => renderGridContas(grupo.contas, novasContas => salvarOrdemContas(
-                    grupos.map(g => (g.nome === grupo.nome ? { ...g, contas: novasContas } : g)),
-                    semInstituicao,
-                  ))}
-                />
-                {semInstituicao.length > 0 && (
-                  <section className="contas-grupo">
+      {loading ? (
+        <SkeletonList rows={3} />
+      ) : (
+        <>
+          {grupos.length === 0 ? (
+            renderGridContas(contas, novaLista => salvarOrdemContas([], novaLista))
+          ) : (
+            <>
+              {/* Blocos de instituição arrastam pelo cabeçalho; as contas, dentro do próprio bloco. */}
+              <BlocosSortable
+                blocos={grupos.map(g => ({ ...g, id: g.nome.toLocaleLowerCase('pt-BR') }))}
+                onReorder={novosGrupos => salvarOrdemContas(novosGrupos, semInstituicao)}
+                className="contas-grupo"
+                renderCabecalho={grupo => {
+                  const total = totalDoGrupo(grupo.contas, taxas)
+                  return (
                     <div className="contas-grupo-header">
-                      <h3>Outras contas</h3>
+                      <h3>🏦 {grupo.nome}</h3>
+                      {grupo.contas.length > 1 && (
+                        <span className="contas-grupo-total" title={total.aproximado ? 'Convertido para R$ pela cotação salva' : undefined}>
+                          Total {total.aproximado ? '≈ ' : ''}{fmt(total.valor, total.moeda)}
+                        </span>
+                      )}
                     </div>
-                    {renderGridContas(semInstituicao, novaLista => salvarOrdemContas(grupos, novaLista))}
-                  </section>
-                )}
-              </>
-            )}
+                  )
+                }}
+                renderConteudo={grupo => renderGridContas(grupo.contas, novasContas => salvarOrdemContas(
+                  grupos.map(g => (g.nome === grupo.nome ? { ...g, contas: novasContas } : g)),
+                  semInstituicao,
+                ))}
+              />
+              {semInstituicao.length > 0 && (
+                <section className="contas-grupo">
+                  <div className="contas-grupo-header">
+                    <h3>Outras contas</h3>
+                  </div>
+                  {renderGridContas(semInstituicao, novaLista => salvarOrdemContas(grupos, novaLista))}
+                </section>
+              )}
+            </>
+          )}
 
-            <CotacoesPanel contas={contas} />
+          <CotacoesPanel contas={contas} />
 
-            {conexoes.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <h3 style={{ marginBottom: 12 }}>Conexões bancárias</h3>
-                <div className="goals-grid">
-                  {conexoes.map(conexao => (
-                    <ConexaoBancariaCard
-                      key={conexao.id}
-                      conexao={conexao}
-                      onSincronizar={handleSincronizar}
-                      onDelete={setDeleteConexao}
-                      sincronizando={sincronizandoId === conexao.id}
-                    />
-                  ))}
-                </div>
+          {conexoes.length > 0 && (
+            <div style={{ marginTop: 24 }}>
+              <h3 style={{ marginBottom: 12 }}>Conexões bancárias</h3>
+              <div className="goals-grid">
+                {conexoes.map(conexao => (
+                  <ConexaoBancariaCard
+                    key={conexao.id}
+                    conexao={conexao}
+                    onSincronizar={handleSincronizar}
+                    onDelete={setDeleteConexao}
+                    sincronizando={sincronizandoId === conexao.id}
+                  />
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {transferencias.length > 0 && (
-              <div className="transactions-section" style={{ marginTop: 24 }}>
-                <div className="section-header">
-                  <h3>Transferências</h3>
-                </div>
-                <ul className="transaction-list">
-                  {transferencias.map(t => (
-                    <li key={t.id} className="transaction-item">
-                      <div className="tx-icon"><ArrowLeftRight size={16} /></div>
-                      <div className="tx-info">
-                        <span className="tx-desc">{t.contaOrigemNome} → {t.contaDestinoNome}{t.descricao ? ` · ${t.descricao}` : ''}</span>
-                        <span className="tx-meta">{fmtDate(t.data)}</span>
-                      </div>
-                      <div className="tx-amount">
-                        {t.moedaDestino && t.moedaDestino !== t.moeda
-                          ? `${fmt(t.valor, t.moeda)} → ${fmt(t.valorDestino, t.moedaDestino)}`
-                          : fmt(t.valor, t.moeda)}
-                      </div>
-                      <div className="tx-actions">
-                        <button className="btn-icon btn-danger" onClick={() => setDeleteTransferId(t.id)} title="Desfazer" aria-label="Desfazer"><Trash2 size={16} /></button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+          {transferencias.length > 0 && (
+            <div className="transactions-section" style={{ marginTop: 24 }}>
+              <div className="section-header">
+                <h3>Transferências</h3>
               </div>
-            )}
-          </>
-        )}
-      </main>
+              <ul className="transaction-list">
+                {transferencias.map(t => (
+                  <li key={t.id} className="transaction-item">
+                    <div className="tx-icon"><ArrowLeftRight size={16} /></div>
+                    <div className="tx-info">
+                      <span className="tx-desc">{t.contaOrigemNome} → {t.contaDestinoNome}{t.descricao ? ` · ${t.descricao}` : ''}</span>
+                      <span className="tx-meta">{fmtDate(t.data)}</span>
+                    </div>
+                    <div className="tx-amount">
+                      {t.moedaDestino && t.moedaDestino !== t.moeda
+                        ? `${fmt(t.valor, t.moeda)} → ${fmt(t.valorDestino, t.moedaDestino)}`
+                        : fmt(t.valor, t.moeda)}
+                    </div>
+                    <div className="tx-actions">
+                      <button className="btn-icon btn-danger" onClick={() => setDeleteTransferId(t.id)} title="Desfazer" aria-label="Desfazer"><Trash2 size={16} /></button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
 
       {showContaModal && (
         <ContaModal
@@ -348,6 +344,6 @@ export default function Contas() {
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   )
 }
