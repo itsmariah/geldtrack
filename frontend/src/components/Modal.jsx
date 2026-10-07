@@ -30,7 +30,9 @@ export default function Modal({ onClose, wide = false, children }) {
       }
     }
     document.addEventListener('keydown', handleKeyDown)
-    modalRef.current?.focus()
+    // Se um campo de dentro já pegou o foco (autoFocus), não rouba — senão o teclado do
+    // celular não abre direto no primeiro campo.
+    if (!modalRef.current?.contains(document.activeElement)) modalRef.current?.focus()
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 

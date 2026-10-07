@@ -3,6 +3,7 @@ import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
 import { Loader2, X } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 
 export default function MetaModal({ meta, onClose, onSaved }) {
   const [form, setForm] = useState({
@@ -56,11 +57,8 @@ export default function MetaModal({ meta, onClose, onSaved }) {
 
         <div className="form-group">
           <label htmlFor="meta-valor-alvo">Valor alvo (R$)</label>
-          <input
+          <MoneyInput
             id="meta-valor-alvo"
-            type="number"
-            step="0.01"
-            min="0.01"
             value={form.valorAlvo}
             onChange={e => setForm({ ...form, valorAlvo: e.target.value })}
             placeholder="0,00"

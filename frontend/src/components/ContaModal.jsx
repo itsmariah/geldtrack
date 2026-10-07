@@ -4,6 +4,7 @@ import { TIPOS_CONTA } from '../utils/contaTipos'
 import Modal from './Modal'
 import Alert from './Alert'
 import { Loader2, X } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 
 // instituicoes: as já usadas em outras contas da família, sugeridas no campo pra ninguém
 // criar "Wise" e "wise " como grupos separados sem querer.
@@ -122,10 +123,10 @@ export default function ContaModal({ conta, instituicoes = [], onClose, onSaved 
 
         <div className="form-group">
           <label htmlFor="conta-saldo">Saldo inicial ({form.moeda === 'BRL' ? 'R$' : form.moeda})</label>
-          <input
+          <MoneyInput
             id="conta-saldo"
-            type="number"
-            step="0.01"
+            moeda={form.moeda}
+            allowNegative
             value={form.saldoInicial}
             onChange={e => setForm({ ...form, saldoInicial: e.target.value })}
             placeholder="0,00"

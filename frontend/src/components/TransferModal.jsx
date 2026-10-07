@@ -4,6 +4,7 @@ import { fmt } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
 import { Loader2, X } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 
 function todayLocal() {
   const now = new Date()
@@ -112,11 +113,9 @@ export default function TransferModal({ contas, onClose, onSaved }) {
 
         <div className="form-group">
           <label htmlFor="transf-valor">{moedasDiferentes ? 'Valor enviado' : 'Valor'} ({simbolo(moedaOrigem)})</label>
-          <input
+          <MoneyInput
             id="transf-valor"
-            type="number"
-            step="0.01"
-            min="0.01"
+            moeda={moedaOrigem}
             value={form.valor}
             onChange={e => setForm({ ...form, valor: e.target.value })}
             placeholder="0,00"
@@ -127,11 +126,9 @@ export default function TransferModal({ contas, onClose, onSaved }) {
         {moedasDiferentes && (
           <div className="form-group">
             <label htmlFor="transf-valor-destino">Valor recebido ({simbolo(moedaDestino)})</label>
-            <input
+            <MoneyInput
               id="transf-valor-destino"
-              type="number"
-              step="0.01"
-              min="0.01"
+              moeda={moedaDestino}
               value={valorDestino}
               onChange={e => setValorDestinoDigitado(e.target.value)}
               placeholder="0,00"

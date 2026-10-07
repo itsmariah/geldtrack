@@ -4,6 +4,7 @@ import { useCategorias } from '../context/CategoriasContext'
 import Modal from './Modal'
 import Alert from './Alert'
 import { Loader2, X } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 
 export default function BudgetModal({ orcamento, existingCategorias, onClose, onSaved }) {
   const { categoriasDespesa } = useCategorias()
@@ -63,11 +64,8 @@ export default function BudgetModal({ orcamento, existingCategorias, onClose, on
 
           <div className="form-group">
             <label htmlFor="orcamento-valor">Limite mensal (R$)</label>
-            <input
+            <MoneyInput
               id="orcamento-valor"
-              type="number"
-              step="0.01"
-              min="0.01"
               value={form.valorLimite}
               onChange={e => setForm({ ...form, valorLimite: e.target.value })}
               placeholder="0,00"

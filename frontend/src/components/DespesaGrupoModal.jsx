@@ -4,6 +4,7 @@ import Modal from './Modal'
 import Alert from './Alert'
 import { fmt } from '../utils/format'
 import { Loader2, X } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 
 // new Date().toISOString() é UTC — perto da meia-noite no Brasil (UTC-3) isso adianta
 // a data em um dia. Aqui montamos a data local manualmente para evitar esse desvio.
@@ -107,11 +108,9 @@ export default function DespesaGrupoModal({ grupoId, despesa, membros, moedas, m
 
         <div className="form-group">
           <label htmlFor="despesa-valor">Valor total ({moedas.find(m => m.codigo === form.moeda)?.simbolo || form.moeda})</label>
-          <input
+          <MoneyInput
             id="despesa-valor"
-            type="number"
-            step="0.01"
-            min="0.01"
+            moeda={form.moeda}
             value={form.valorTotal}
             onChange={e => setForm({ ...form, valorTotal: e.target.value })}
             placeholder="0,00"

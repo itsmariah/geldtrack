@@ -3,6 +3,7 @@ import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
 import { Loader2, X } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 
 export default function EventoModal({ evento, onClose, onSaved }) {
   const [form, setForm] = useState({
@@ -83,11 +84,8 @@ export default function EventoModal({ evento, onClose, onSaved }) {
 
         <div className="form-group">
           <label htmlFor="evento-orcamento">Orçamento (opcional)</label>
-          <input
+          <MoneyInput
             id="evento-orcamento"
-            type="number"
-            step="0.01"
-            min="0.01"
             value={form.orcamento}
             onChange={e => setForm({ ...form, orcamento: e.target.value })}
             placeholder="0,00"

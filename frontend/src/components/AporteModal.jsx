@@ -3,6 +3,7 @@ import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
 import { Loader2, X } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 
 // new Date().toISOString() é UTC — perto da meia-noite no Brasil (UTC-3) isso adianta
 // a data em um dia. Aqui montamos a data local manualmente para evitar esse desvio.
@@ -44,11 +45,8 @@ export default function AporteModal({ meta, onClose, onSaved }) {
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="aporte-valor">Valor (R$)</label>
-          <input
+          <MoneyInput
             id="aporte-valor"
-            type="number"
-            step="0.01"
-            min="0.01"
             value={form.valor}
             onChange={e => setForm({ ...form, valor: e.target.value })}
             placeholder="0,00"

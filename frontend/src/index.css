@@ -229,6 +229,77 @@ select:focus-visible,
 .password-toggle:hover { color: var(--text); background: var(--bg3); }
 .password-toggle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 input[type="date"]::-webkit-calendar-picker-indicator { filter: var(--picker-invert); }
+
+/* ── CAMPO DE DINHEIRO (components/MoneyInput.jsx) ── */
+.money-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 6px 0 14px;
+  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.money-input:focus-within { border-color: var(--primary); box-shadow: var(--focus-ring); }
+.money-input-prefix { flex-shrink: 0; color: var(--text-muted); font-size: 14px; font-weight: 600; }
+.form-group .money-input input,
+.form-group .money-input input:focus {
+  flex: 1; min-width: 0;
+  border: none; background: transparent; box-shadow: none; outline: none;
+  padding: 10px 0;
+  font-variant-numeric: tabular-nums;
+}
+.form-group .money-input input.money-input-lg { font-size: 22px; font-weight: 700; padding: 8px 0; }
+.money-input:has(.money-input-lg) .money-input-prefix { font-size: 18px; }
+.money-input-sign {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+  font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.money-input-sign:hover { border-color: var(--primary); }
+
+/* ── CHIPS (atalhos de categoria/data) ── */
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.chip {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.chip:hover { color: var(--text); border-color: var(--primary); }
+.chip:active { transform: scale(0.94); }
+.chip--active, .chip--active:hover { background: rgba(99,102,241,0.18); border-color: var(--primary); color: var(--primary-light); font-weight: 600; }
+
+/* ── VALIDAÇÃO AO VIVO ── */
+.form-group--invalid .money-input,
+.form-group--invalid > input,
+.form-group--invalid > select { border-color: var(--red); }
+.form-group--invalid .money-input:focus-within,
+.form-group--invalid > input:focus,
+.form-group--invalid > select:focus { box-shadow: 0 0 0 3px rgba(239,68,68,0.25); }
+.field-error, .field-hint--magic {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12.5px; line-height: 1.4;
+  animation: field-msg-in var(--dur-base) var(--ease-out);
+}
+.field-error { color: var(--red); }
+.field-hint--magic { color: var(--primary-light); }
+@keyframes field-msg-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.form--shake .form-group--invalid { animation: field-shake 0.4s var(--ease-out); }
+@keyframes field-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); } 40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); } 80% { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .field-error, .field-hint--magic, .form--shake .form-group--invalid { animation: none; }
+}
 input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-invert); }
 
 /* ── ALERTS ── */
@@ -1362,6 +1433,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 @media (max-width: 600px) {
   /* O iOS dá zoom automático ao focar qualquer campo com fonte menor que 16px. */
   input, select, textarea { font-size: 16px !important; }
+  .form-group .money-input input.money-input-lg { font-size: 24px !important; }
 
   .main-content { padding: 16px calc(12px + var(--safe-right)) calc(24px + var(--safe-bottom)) calc(12px + var(--safe-left)); }
   .navbar { padding-left: calc(12px + var(--safe-left)); padding-right: calc(12px + var(--safe-right)); gap: 8px; height: calc(56px + var(--safe-top)); }

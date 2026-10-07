@@ -4,6 +4,7 @@ import { fmt, fmtDate } from '../utils/format'
 import Modal from './Modal'
 import Alert from './Alert'
 import { Loader2, X } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 
 // new Date().toISOString() é UTC — perto da meia-noite no Brasil (UTC-3) isso adianta
 // a data em um dia. Aqui montamos a data local manualmente para evitar esse desvio.
@@ -122,11 +123,9 @@ export default function PagamentoGrupoModal({ grupoId, membros, moedas, moedaPad
 
         <div className="form-group">
           <label htmlFor="pagamento-valor">Valor ({moedas.find(m => m.codigo === form.moeda)?.simbolo || form.moeda})</label>
-          <input
+          <MoneyInput
             id="pagamento-valor"
-            type="number"
-            step="0.01"
-            min="0.01"
+            moeda={form.moeda}
             value={form.valor}
             onChange={e => setForm({ ...form, valor: e.target.value })}
             placeholder="0,00"
@@ -155,11 +154,9 @@ export default function PagamentoGrupoModal({ grupoId, membros, moedas, moedaPad
               >
                 {outrasMoedas.map(m => <option key={m.codigo} value={m.codigo}>{m.simbolo}</option>)}
               </select>
-              <input
+              <MoneyInput
                 id="pagamento-valor-pago"
-                type="number"
-                step="0.01"
-                min="0.01"
+                moeda={moedaPagamentoEfetiva}
                 value={valorPagamento}
                 onChange={e => setValorPagamentoDigitado(e.target.value)}
                 placeholder="0,00"
