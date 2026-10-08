@@ -24,6 +24,9 @@
   --alert-warning-fg: #fde68a;
   --skeleton-shine: #454b7a;
   --focus-ring: 0 0 0 3px rgba(99,102,241,0.35);
+  /* Sombra dos cards em repouso — no escuro o contraste de fundo já separa as camadas. */
+  --shadow-card: none;
+  --border-strong: #3a3f6b;
 
   /* ── TOKENS DE DESIGN (iguais nos dois temas) ── */
   /* Tipografia — fontes empacotadas no app (ver utils/fontes.js); o resto é fallback. */
@@ -78,27 +81,30 @@
 
 /* ── TEMA CLARO ── */
 :root[data-theme="light"] {
-  --bg: #f6f7fb;
+  /* Fundo areia com cards brancos: o contraste quente separa as camadas como no escuro. */
+  --bg: #f3efe7;
   --bg2: #ffffff;
-  --bg3: #eef0f6;
-  --border: #dde1ec;
-  --text: #161922;
-  --text-muted: #5b6478;
+  --bg3: #f8f5ef;
+  --border: #e5ded1;
+  --border-strong: #d6ccb9;
+  --text: #1f1c17;
+  --text-muted: #6e6759;
   --primary-light: #4f46e5;
   --green: #15803d;
   --red: #b91c1c;
   --yellow: #a16207;
-  --shadow: 0 4px 24px rgba(15,23,42,0.10);
-  --gradient-tint: #e0e4fb;
-  --nav-glass: rgba(255,255,255,0.72);
-  --hover-overlay: rgba(15,23,42,0.035);
+  --shadow: 0 6px 24px rgba(60,40,10,0.10);
+  --shadow-card: 0 1px 2px rgba(60,40,10,0.05), 0 4px 14px rgba(60,40,10,0.05);
+  --gradient-tint: #e6e3f6;
+  --nav-glass: rgba(255,255,255,0.78);
+  --hover-overlay: rgba(60,40,10,0.04);
   --picker-invert: invert(0);
   --alert-error-fg: #b91c1c;
   --alert-success-fg: #15803d;
   --alert-warning-fg: #92400e;
-  --skeleton-shine: #eef1f7;
-  --shadow-sm: 0 1px 2px rgba(15,23,42,0.06);
-  --shadow-lg: 0 16px 48px rgba(15,23,42,0.16);
+  --skeleton-shine: #f7f3ea;
+  --shadow-sm: 0 1px 2px rgba(60,40,10,0.06);
+  --shadow-lg: 0 16px 48px rgba(60,40,10,0.16);
 }
 
 body {
@@ -110,6 +116,12 @@ body {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Cards e painéis com sombra em repouso (só aparece no tema claro). Fica antes das regras
+   de hover/arraste para que elas continuem vencendo. */
+.card, .projection-card, .insight-card, .transactions-section, .chart-section,
+.reports-filters, .meta-card, .budget-card, .recurring-card, .conta-card,
+.feature-card, .download-card, .getting-started { box-shadow: var(--shadow-card); }
 
 /* ── TIPOGRAFIA DE DESTAQUE ── */
 h1, h2, h3,
@@ -216,6 +228,13 @@ select:focus-visible,
 .form-group input:focus,
 .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
 .form-group select option { background: var(--bg2); }
+/* Tema claro: campos brancos com borda bege, que ganha força no hover. */
+:root[data-theme="light"] .form-group input,
+:root[data-theme="light"] .form-group select,
+:root[data-theme="light"] .form-group textarea { background: var(--bg2); }
+:root[data-theme="light"] .form-group input:hover:not(:focus),
+:root[data-theme="light"] .form-group select:hover:not(:focus),
+:root[data-theme="light"] .form-group textarea:hover:not(:focus) { border-color: var(--border-strong); }
 .password-field { position: relative; }
 .form-group .password-field input { padding-right: 44px; }
 /* Edge desenha o próprio "olho" em campos de senha — some pra não ficar dois botões. */
@@ -720,6 +739,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   top: 0;
   z-index: 100;
 }
+:root[data-theme="light"] .navbar { box-shadow: 0 1px 0 rgba(60,40,10,0.03), 0 2px 10px rgba(60,40,10,0.04); }
 .navbar-brand {
   font-size: 18px;
   font-weight: 700;
@@ -900,6 +920,13 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .insight-card--atencao { border-left-color: var(--red); }
 .insight-card--positivo { border-left-color: var(--green); }
 .insight-card--neutro { border-left-color: var(--primary); }
+/* Tema claro: detalhes que no escuro o próprio contraste já resolve. */
+:root[data-theme="light"] .card-balance { background: linear-gradient(180deg, rgba(99,102,241,0.07), transparent 45%), var(--bg2); }
+:root[data-theme="light"] .card-income { background: linear-gradient(180deg, rgba(21,128,61,0.06), transparent 45%), var(--bg2); }
+:root[data-theme="light"] .card-expense { background: linear-gradient(180deg, rgba(185,28,28,0.05), transparent 45%), var(--bg2); }
+:root[data-theme="light"] .insight-card--atencao { background: color-mix(in srgb, var(--red) 4%, var(--bg2)); }
+:root[data-theme="light"] .insight-card--positivo { background: color-mix(in srgb, var(--green) 4%, var(--bg2)); }
+:root[data-theme="light"] .insight-card--neutro { background: color-mix(in srgb, var(--primary) 4%, var(--bg2)); }
 .insight-icon { font-size: 16px; flex-shrink: 0; line-height: 1.4; }
 .insight-text { color: var(--text); }
 .insight-text strong { font-weight: 700; }
@@ -925,6 +952,11 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   font-size: 13px;
   cursor: pointer;
 }
+:root[data-theme="light"] .filters select,
+:root[data-theme="light"] .filters input[type="date"],
+:root[data-theme="light"] .filters input[type="search"] { background: var(--bg2); }
+:root[data-theme="light"] .filters select:hover:not(:focus),
+:root[data-theme="light"] .filters input:hover:not(:focus) { border-color: var(--border-strong); }
 .filters input[type="search"] { cursor: text; min-width: 220px; flex: 1 1 220px; }
 /* No desktop o wrapper "some" e os filtros ficam em linha como sempre; no celular vira
    um bloco recolhível aberto pelo botão .filters-toggle. */
@@ -957,6 +989,10 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   transition: border-color var(--dur-base) var(--ease-out);
 }
 .transaction-item:hover { border-color: var(--border); }
+:root[data-theme="light"] .transaction-item,
+:root[data-theme="light"] .grupo-despesa-item { border-color: var(--border); }
+:root[data-theme="light"] .transaction-item:hover,
+:root[data-theme="light"] .grupo-despesa-item:hover { border-color: var(--border-strong); }
 .transaction-item--sortable { cursor: grab; touch-action: manipulation; position: relative; }
 .transaction-item--sortable:active { cursor: grabbing; }
 .transaction-item--dragging {
@@ -1241,6 +1277,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   padding: 24px;
   backdrop-filter: blur(4px);
 }
+:root[data-theme="light"] .modal-overlay { background: rgba(40,30,15,0.45); }
 .modal {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -1469,8 +1506,9 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
    preso depois do toque até tocar em outro lugar. */
 @media (hover: none) {
   .card:hover, .meta-card:hover, .budget-card:hover, .recurring-card:hover,
-  .conta-card:hover, .categoria-chip:hover { transform: none; box-shadow: none; }
-  .feature-card:hover { translate: none; scale: none; box-shadow: none; }
+  .conta-card:hover { transform: none; box-shadow: var(--shadow-card); }
+  .categoria-chip:hover { transform: none; box-shadow: none; }
+  .feature-card:hover { translate: none; scale: none; box-shadow: var(--shadow-card); }
   .btn-primary:hover:not(:disabled) { transform: none; }
   /* Sem hover pra revelar a alça de arraste — deixa sempre visível. */
   .tx-grip { opacity: 0.6; }
