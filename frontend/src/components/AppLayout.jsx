@@ -4,6 +4,7 @@ import { m } from 'framer-motion'
 import Navbar from './Navbar'
 import BottomNav from './BottomNav'
 import PageLoader from './PageLoader'
+import CommandPalette from './CommandPalette'
 
 // Casca das páginas logadas: a navbar (e a barra inferior no celular) ficam montadas entre
 // uma rota e outra — só o conteúdo troca, com uma transição de entrada. O Suspense fica
@@ -26,6 +27,7 @@ export default function AppLayout() {
         </Suspense>
       </m.main>
       <BottomNav />
+      <CommandPalette />
     </div>
   )
 }

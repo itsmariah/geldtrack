@@ -21,6 +21,8 @@ import PullToRefresh from '../components/PullToRefresh'
 import { saudacao, contextoDoDia } from '../utils/saudacao'
 import { serieMensal } from '../utils/serieMensal'
 import WelcomeTour, { deveMostrarBoasVindas } from '../components/WelcomeTour'
+import RecapBanner from '../components/RecapBanner'
+import GettingStarted from '../components/GettingStarted'
 
 // 20 por página: a lista cresce todo dia e, no celular, 50 itens de uma vez já é uma
 // rolagem longa — a paginação numerada deixa pular direto pra qualquer página.
@@ -110,6 +112,14 @@ export default function Dashboard() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Resultado de transação na busca global (CommandPalette): abre o Dashboard já filtrado.
+  useEffect(() => {
+    if (!location.state?.busca) return
+    setBuscaInput(location.state.busca)
+    navigate(location.pathname, { replace: true, state: {} })
+    transactionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [location, navigate])
 
   // Botão "+" da barra inferior (BottomNav) chega com state.novaTransacao; o atalho
   // "Nova transação" do ícone do app instalado (manifest) chega com ?nova=1. Os dois abrem
@@ -285,6 +295,15 @@ export default function Dashboard() {
           <span>{error}</span>
           <button className="btn btn-sm btn-outline" onClick={fetchData}>Tentar novamente</button>
         </Alert>
+      )}
+
+      <RecapBanner />
+      {!loading && (
+        <GettingStarted
+          temConta={contas.length > 0}
+          temTransacao={balance.receitas + balance.despesas > 0 || transactions.length > 0}
+          onNovaTransacao={() => (contas.length > 0 ? setShowModal(true) : navigate('/contas'))}
+        />
       )}
 
       {loading ? <SkeletonCards /> : <SummaryCards balance={balance} serie={serie} />}

@@ -6,8 +6,9 @@ import { NAV_LINKS, isPathActive } from '../utils/navLinks'
 import ProfileModal from './ProfileModal'
 import ThemeToggle from './ThemeToggle'
 import PrivacyToggle from './PrivacyToggle'
+import { abrirBusca } from './CommandPalette'
 import Avatar from './Avatar'
-import { Menu, X } from 'lucide-react'
+import { Menu, Search, X } from 'lucide-react'
 
 const SPRING = { type: 'spring', stiffness: 500, damping: 38 }
 
@@ -50,6 +51,10 @@ export default function Navbar() {
       </nav>
 
       <div className="navbar-user">
+        <button type="button" className="theme-toggle navbar-search" onClick={abrirBusca} aria-label="Buscar (Ctrl+K)" title="Buscar (Ctrl+K)">
+          <Search size={18} />
+          <kbd className="navbar-search-kbd">Ctrl K</kbd>
+        </button>
         <PrivacyToggle />
         <ThemeToggle />
         <button className="user-btn" onClick={() => setShowProfile(true)} aria-label="Meu perfil">

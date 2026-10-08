@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -12,8 +12,12 @@ import { useTheme } from '../context/ThemeContext'
 import { getChartTheme } from '../utils/chartTheme'
 import { SkeletonCards, SkeletonList, SkeletonChart } from '../components/Skeleton'
 import Alert from '../components/Alert'
-import { ArrowDownLeft, ArrowUpRight, FileDown, Inbox, Loader2, Repeat, SearchX } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, FileDown, Inbox, Loader2, Repeat, SearchX, Sparkles } from 'lucide-react'
 import EmptyIllustration from '../components/EmptyIllustration'
+import SpendingCalendar from '../components/SpendingCalendar'
+
+// A retrospectiva só é baixada quando alguém abre (chunk próprio).
+const MonthlyRecap = lazy(() => import('../components/MonthlyRecap'))
 
 // new Date().toISOString() é UTC — perto da virada do mês no Brasil (UTC-3) isso pode
 // adiantar o mês padrão exibido. Aqui montamos o mês local manualmente para evitar isso.
@@ -28,6 +32,7 @@ export default function Reports() {
   const [searchParams] = useSearchParams()
   const [month, setMonth] = useState(searchParams.get('month') || currentMonthLocal())
   const [report, setReport] = useState(null)
+  const [showRecap, setShowRecap] = useState(false)
   const [evolution, setEvolution] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -164,6 +169,9 @@ export default function Reports() {
             onChange={e => setMonth(e.target.value)}
             className="month-picker"
           />
+          <button className="btn btn-outline" onClick={() => setShowRecap(true)} disabled={loading || !report}>
+            <Sparkles size={16} /> Retrospectiva
+          </button>
           <button className="btn btn-outline" onClick={handleDownloadPdf} disabled={generatingPdf || loading || !report}>
             {generatingPdf ? <Loader2 size={16} className="icon-spin" aria-hidden="true" /> : <FileDown size={16} />} {generatingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
           </button>
@@ -289,6 +297,11 @@ export default function Reports() {
             </div>
           </div>
 
+          <div className="chart-section" style={{ marginBottom: 24 }}>
+            <h3>Calendário de gastos</h3>
+            <SpendingCalendar transacoes={report.transactions} mes={month} taxas={taxas} />
+          </div>
+
           <div className="transactions-section">
             <div className="section-header">
               <h3>
@@ -350,6 +363,7 @@ export default function Reports() {
           </div>
         </>
       ) : null}
+      {showRecap && <Suspense fallback={null}><MonthlyRecap mes={month} onClose={() => setShowRecap(false)} /></Suspense>}
     </>
   )
 }
