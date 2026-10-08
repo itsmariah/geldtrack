@@ -11,7 +11,6 @@ import AppLayout from './components/AppLayout'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import PageLoader from './components/PageLoader'
-import FontTester from './components/FontTester'
 import PwaUpdateBanner from './components/PwaUpdateBanner'
 import ConnectionStatus from './components/ConnectionStatus'
 
@@ -71,7 +70,6 @@ export default function App() {
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
                     </Suspense>
-                    <FontTester />
                     <PwaUpdateBanner />
                     <ConnectionStatus />
                   </BrowserRouter>

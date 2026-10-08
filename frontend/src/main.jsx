@@ -4,6 +4,9 @@ import App from './App'
 import './index.css'
 import { registerSW } from 'virtual:pwa-register'
 import { avisarNovaVersao } from './utils/pwaUpdate'
+import { registrarFontes } from './utils/fontes'
+
+registrarFontes()
 
 const UMA_HORA = 60 * 60 * 1000
 

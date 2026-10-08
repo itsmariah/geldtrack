@@ -26,9 +26,9 @@
   --focus-ring: 0 0 0 3px rgba(99,102,241,0.35);
 
   /* ── TOKENS DE DESIGN (iguais nos dois temas) ── */
-  /* Tipografia — trocadas em tempo de execução pelo FontTester enquanto a fonte final não é escolhida. */
-  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Tipografia — fontes empacotadas no app (ver utils/fontes.js); o resto é fallback. */
+  --font-body: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --text-xs: 12px;
   --text-sm: 13px;
@@ -767,7 +767,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .navbar-menu-btn:hover { border-color: var(--primary); }
 .navbar-nav-logout { display: none; }
 .navbar-backdrop { display: none; }
-.navbar-nav a { position: relative; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 14px; color: var(--text-muted); font-weight: 500; transition: color var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out); }
+.navbar-nav a { position: relative; padding: 6px 11px; border-radius: var(--radius-sm); font-size: 14px; color: var(--text-muted); font-weight: 500; transition: color var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out); }
 .navbar-nav a:hover { background: var(--hover-overlay); color: var(--text); }
 .navbar-nav a.active { color: var(--primary-light); font-weight: 600; }
 .navbar-nav a.active:hover { background: transparent; }
@@ -1476,8 +1476,11 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   .tx-grip { opacity: 0.6; }
 }
 
-/* A navbar do app recolhe num menu bem antes do resto do layout: são 10 links em linha. */
-@media (max-width: 1180px) {
+/* A navbar do app recolhe num menu bem antes do resto do layout: são 10 links em linha
+   (com a Manrope, que é mais larga, eles só cabem com folga a partir de ~1360px). */
+@media (max-width: 1500px) { .navbar-search-kbd { display: none; } .navbar-search { width: 36px; padding: 0; justify-content: center; border-radius: 50%; } }
+@media (max-width: 1400px) { .user-btn-nome { display: none; } .user-btn { padding: 3px; border-radius: 50%; } }
+@media (max-width: 1360px) {
   .navbar-menu-btn { display: flex; }
   .navbar-nav {
     display: none;
@@ -2209,7 +2212,7 @@ kbd, .cmdk-kbd {
 .gs-item--feito .gs-item-text b { text-decoration: line-through; color: var(--text-muted); }
 .gs-item-go { color: var(--text-muted); flex-shrink: 0; }
 
-@media (max-width: 1180px) {
+@media (max-width: 1360px) {
   .navbar-search { width: 36px; padding: 0; justify-content: center; border-radius: 50%; }
   .navbar-search-kbd { display: none; }
 }
@@ -2231,36 +2234,3 @@ kbd, .cmdk-kbd {
   .recap-progress-fill.active { animation-duration: 8s !important; }
 }
 
-/* ── FONT TESTER (temporário — sai junto com components/FontTester.jsx) ── */
-.font-tester {
-  position: fixed;
-  left: calc(16px + var(--safe-left));
-  bottom: calc(16px + var(--safe-bottom));
-  z-index: 1200;
-  width: 300px;
-  background: var(--bg2);
-  border: 1px solid var(--primary);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.font-tester-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 12px; }
-.font-tester-title {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: none; border: none; color: var(--text); cursor: pointer;
-  font: 600 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.font-tester-body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px; }
-.font-tester-row { display: flex; flex-direction: column; gap: 4px; }
-.font-tester-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
-.font-tester-control { display: flex; align-items: center; gap: 4px; }
-.font-tester-control select {
-  flex: 1; min-width: 0;
-  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  color: var(--text); padding: 7px 10px; font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.font-tester-sample { font-family: var(--font-body); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; border-top: 1px solid var(--border); padding-top: 10px; }
-@media (max-width: 600px) {
-  .font-tester { left: calc(12px + var(--safe-left)); right: calc(12px + var(--safe-right)); width: auto; bottom: calc(12px + var(--safe-bottom)); }
-}
