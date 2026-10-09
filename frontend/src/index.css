@@ -826,6 +826,14 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .theme-toggle:hover { border-color: var(--primary); background: var(--bg3); }
 .theme-toggle .lucide { transition: transform var(--dur-slow) var(--ease-spring); }
 .theme-toggle:hover .lucide { transform: rotate(-20deg) scale(1.1); }
+.theme-toggle-icon { display: inline-flex; }
+
+/* Troca de tema (ThemeContext): o tema novo se revela num círculo a partir do botão. O
+   clip-path é animado via JS; aqui só desligamos o cross-fade padrão do navegador e as
+   transições de cor dos elementos enquanto a troca acontece. */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+.theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }
 
 /* ── PROFILE PHOTO ── */
 .profile-photo-field { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
