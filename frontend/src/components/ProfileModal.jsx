@@ -5,6 +5,7 @@ import Alert from './Alert'
 import PasswordMatchHint from './PasswordMatchHint'
 import PasswordInput from './PasswordInput'
 import FotoPicker from './FotoPicker'
+import ExcluirContaModal from './ExcluirContaModal'
 import { Loader2, X } from 'lucide-react'
 
 export default function ProfileModal({ onClose }) {
@@ -16,6 +17,7 @@ export default function ProfileModal({ onClose }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [excluindoConta, setExcluindoConta] = useState(false)
 
   const handleFotoChange = (novaFoto) => {
     setFoto(novaFoto)
@@ -55,6 +57,8 @@ export default function ProfileModal({ onClose }) {
       setLoading(false)
     }
   }
+
+  if (excluindoConta) return <ExcluirContaModal onClose={() => setExcluindoConta(false)} />
 
   return (
     <Modal onClose={onClose}>
@@ -139,6 +143,16 @@ export default function ProfileModal({ onClose }) {
             </button>
           </div>
         </form>
+
+        <div className="profile-danger-zone">
+          <div>
+            <strong>Excluir conta</strong>
+            <span className="form-hint">Apaga seus dados pessoais de forma definitiva.</span>
+          </div>
+          <button type="button" className="btn btn-outline btn-sm btn-outline-danger" onClick={() => setExcluindoConta(true)}>
+            Excluir minha conta
+          </button>
+        </div>
     </Modal>
   )
 }

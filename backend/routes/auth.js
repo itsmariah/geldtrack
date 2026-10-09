@@ -9,6 +9,8 @@ const { sendPasswordResetEmail } = require('../utils/mailer');
 const { hashResetToken } = require('../utils/resetToken');
 const { gerarCodigoUnico } = require('../utils/gerarCodigoFamilia');
 const { chavesAoAtivar } = require('../utils/enviarResumos');
+const { excluirConta } = require('../utils/excluirConta');
+const pluggyClient = require('../utils/pluggyClient');
 
 const USER_FAMILIA_SELECT = {
   id: true,
@@ -55,6 +57,17 @@ const forgotPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Muitas solicitações. Tente novamente mais tarde.' },
+});
+
+// Excluir conta pede a senha de novo — limite por usuário (já autenticado), pra não dar
+// pra adivinhar a senha de uma sessão roubada.
+const excluirContaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.userId),
+  message: { error: 'Muitas tentativas. Tente novamente em alguns minutos.' },
 });
 
 // RF01 - Cadastro de usuário
@@ -280,6 +293,34 @@ router.put('/profile', authMiddleware, async (req, res) => {
     res.json(response);
   } catch (err) {
     res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Excluir a própria conta — exigido pela App Store e pela Play Store. Pede a senha de novo
+// (com limite de tentativas). O que acontece com família, grupos e conexões
+// bancárias está descrito em utils/excluirConta.js.
+router.delete('/conta', authMiddleware, excluirContaLimiter, async (req, res) => {
+  try {
+    const { senha } = req.body || {};
+    if (!senha) return res.status(400).json({ error: 'Digite sua senha para confirmar' });
+
+    const user = await prisma.usuario.findUnique({ where: { id: req.userId }, select: { senha: true } });
+    if (!user || !(await bcrypt.compare(senha, user.senha))) {
+      return res.status(403).json({ error: 'Senha incorreta' });
+    }
+
+    const pluggyItemIds = await prisma.$transaction(tx => excluirConta(tx, req.userId), { timeout: 30000 });
+
+    // Revoga o acesso ao banco na Pluggy depois do commit — se falhar, a conta já foi
+    // excluída mesmo assim (o item fica órfão na Pluggy, sem nada apontando pra ele aqui).
+    for (const itemId of pluggyItemIds) {
+      try { await pluggyClient.deleteItem(itemId); } catch (err) { console.error('Erro ao revogar item na Pluggy:', err.message); }
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    console.error('Erro ao excluir conta:', err);
+    res.status(500).json({ error: 'Erro ao excluir a conta' });
   }
 });
 

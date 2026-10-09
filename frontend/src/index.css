@@ -844,6 +844,14 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   flex-shrink: 0;
 }
 .profile-photo-actions { display: flex; gap: 8px; }
+/* Exclusão de conta (ProfileModal + ExcluirContaModal). */
+.profile-danger-zone { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.profile-danger-zone strong { display: block; font-size: 14px; }
+.profile-danger-zone .form-hint { margin-top: 2px; }
+.btn-outline-danger { color: var(--red); border-color: rgba(239,68,68,0.4); }
+.btn-outline-danger:hover:not(:disabled) { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); }
+.excluir-conta-lista { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; padding-left: 20px; color: var(--text-muted); font-size: 14px; }
+.excluir-conta-aviso { font-weight: 600; color: var(--red); font-size: 14px; margin-bottom: 20px; }
 
 /* ── DASHBOARD ── */
 .dashboard-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }

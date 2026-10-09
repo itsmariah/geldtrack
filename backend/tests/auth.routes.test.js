@@ -265,3 +265,47 @@ describe('POST /api/auth/reset-password', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('DELETE /api/auth/conta', () => {
+  const pluggyClient = require('../utils/pluggyClient');
+  const excluir = (body) => request(app).delete('/api/auth/conta').set('Authorization', `Bearer ${makeToken(7, 0)}`).send(body);
+
+  beforeEach(async () => {
+    const senha = await bcrypt.hash('certa123', 4);
+    vi.spyOn(prisma.usuario, 'findUnique').mockResolvedValue({ tokenVersion: 0, familiaId: 1, papelFamilia: 'dono', senha });
+  });
+
+  it('exige a senha (400) sem excluir nada', async () => {
+    const txSpy = vi.spyOn(prisma, '$transaction');
+    const res = await excluir({});
+    expect(res.status).toBe(400);
+    expect(txSpy).not.toHaveBeenCalled();
+  });
+
+  it('recusa senha errada com 403 (não 401, que deslogaria o front) sem excluir nada', async () => {
+    const txSpy = vi.spyOn(prisma, '$transaction');
+    const res = await excluir({ senha: 'errada' });
+    expect(res.status).toBe(403);
+    expect(txSpy).not.toHaveBeenCalled();
+  });
+
+  it('exclui com a senha certa e revoga as conexões na Pluggy depois do commit', async () => {
+    vi.spyOn(prisma, '$transaction').mockResolvedValue(['item-1']);
+    const deleteItemSpy = vi.spyOn(pluggyClient, 'deleteItem').mockResolvedValue();
+
+    const res = await excluir({ senha: 'certa123' });
+
+    expect(res.status).toBe(204);
+    expect(deleteItemSpy).toHaveBeenCalledWith('item-1');
+  });
+
+  it('a conta é excluída mesmo se a revogação na Pluggy falhar', async () => {
+    vi.spyOn(prisma, '$transaction').mockResolvedValue(['item-1']);
+    vi.spyOn(pluggyClient, 'deleteItem').mockRejectedValue(new Error('fora do ar'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await excluir({ senha: 'certa123' });
+
+    expect(res.status).toBe(204);
+  });
+});
