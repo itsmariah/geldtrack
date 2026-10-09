@@ -16,6 +16,7 @@ function serializeGrupo(grupo) {
   return {
     id: grupo.id,
     nome: grupo.nome,
+    foto: grupo.foto ?? null,
     codigo: grupo.codigo,
     criadorUsuarioId: grupo.criadorUsuarioId,
     createdAt: grupo.createdAt,

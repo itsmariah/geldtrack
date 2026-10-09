@@ -359,6 +359,8 @@ model Evento {
 model Grupo {
   id               Int              @id @default(autoincrement())
   nome             String
+  // Foto do grupo — mesmo formato da foto de perfil (data URL já redimensionada no upload).
+  foto             String?
   // Código curto pra outra pessoa entrar, mesmo padrão de Familia.codigo.
   codigo           String           @unique
   criadorUsuarioId Int

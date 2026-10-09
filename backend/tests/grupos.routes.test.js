@@ -150,6 +150,11 @@ describe('GET /api/grupos/:id', () => {
 });
 
 describe('POST /api/grupos', () => {
+  // gerarCodigoUnico consulta se o código já existe — sem isso o teste bate no banco real.
+  beforeEach(() => {
+    vi.spyOn(prisma.grupo, 'findUnique').mockResolvedValue(null);
+  });
+
   it('cria o grupo e o membro admin do criador numa escrita só', async () => {
     const createSpy = vi.spyOn(prisma.grupo, 'create').mockResolvedValue({ ...rawGrupo(), membros: [rawMembro()] });
 
@@ -167,6 +172,24 @@ describe('POST /api/grupos', () => {
   it('rejeita nome inválido (400) e não chama o Prisma', async () => {
     const createSpy = vi.spyOn(prisma.grupo, 'create');
     const res = await request(app).post('/api/grupos').set('Authorization', `Bearer ${token}`).send({ nome: '' });
+    expect(res.status).toBe(400);
+    expect(createSpy).not.toHaveBeenCalled();
+  });
+
+  it('cria o grupo já com foto e devolve a foto', async () => {
+    const foto = 'data:image/jpeg;base64,AAAA';
+    const createSpy = vi.spyOn(prisma.grupo, 'create').mockResolvedValue({ ...rawGrupo({ foto }), membros: [rawMembro()] });
+
+    const res = await request(app).post('/api/grupos').set('Authorization', `Bearer ${token}`).send({ nome: 'Viagem Nordeste', foto });
+
+    expect(res.status).toBe(201);
+    expect(createSpy.mock.calls[0][0].data.foto).toBe(foto);
+    expect(res.body.foto).toBe(foto);
+  });
+
+  it('rejeita foto que não é imagem (400) e não chama o Prisma', async () => {
+    const createSpy = vi.spyOn(prisma.grupo, 'create');
+    const res = await request(app).post('/api/grupos').set('Authorization', `Bearer ${token}`).send({ nome: 'Viagem', foto: 'https://exemplo.com/x.jpg' });
     expect(res.status).toBe(400);
     expect(createSpy).not.toHaveBeenCalled();
   });
@@ -352,6 +375,30 @@ describe('PUT /api/grupos/:id', () => {
     expect(updateSpy.mock.calls[0][0].where).toEqual({ id: 1 });
     expect(updateSpy.mock.calls[0][0].data).toEqual({ nome: 'Viagem Sul' });
     expect(res.body.nome).toBe('Viagem Sul');
+  });
+
+  it('troca a foto quando enviada e remove com null', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ papel: 'admin' }));
+    vi.spyOn(prisma.grupo, 'findUnique').mockResolvedValue({ nome: 'Viagem Nordeste' });
+    vi.spyOn(prisma.transacao, 'findMany').mockResolvedValue([]);
+    const foto = 'data:image/jpeg;base64,AAAA';
+    const updateSpy = vi.spyOn(prisma.grupo, 'update').mockResolvedValue(rawGrupo({ foto, membros: [rawMembro()] }));
+
+    const res = await request(app).put('/api/grupos/1').set('Authorization', `Bearer ${token}`).send({ nome: 'Viagem Nordeste', foto });
+    expect(res.status).toBe(200);
+    expect(updateSpy.mock.calls[0][0].data).toEqual({ nome: 'Viagem Nordeste', foto });
+    expect(res.body.foto).toBe(foto);
+
+    await request(app).put('/api/grupos/1').set('Authorization', `Bearer ${token}`).send({ nome: 'Viagem Nordeste', foto: null });
+    expect(updateSpy.mock.calls[1][0].data).toEqual({ nome: 'Viagem Nordeste', foto: null });
+  });
+
+  it('rejeita foto inválida (400) sem atualizar', async () => {
+    vi.spyOn(prisma.grupoMembro, 'findFirst').mockResolvedValue(rawMembro({ papel: 'admin' }));
+    const updateSpy = vi.spyOn(prisma.grupo, 'update');
+    const res = await request(app).put('/api/grupos/1').set('Authorization', `Bearer ${token}`).send({ nome: 'Viagem', foto: 'data:text/html;base64,AAAA' });
+    expect(res.status).toBe(400);
+    expect(updateSpy).not.toHaveBeenCalled();
   });
 
   it('leva o nome novo pras transações do dashboard (com histórico), sem mexer nas editadas pelo usuário', async () => {

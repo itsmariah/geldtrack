@@ -1,15 +1,14 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { resizeImage } from '../utils/resizeImage'
 import Modal from './Modal'
 import Alert from './Alert'
 import PasswordMatchHint from './PasswordMatchHint'
 import PasswordInput from './PasswordInput'
+import FotoPicker from './FotoPicker'
 import { Loader2, X } from 'lucide-react'
 
 export default function ProfileModal({ onClose }) {
   const { user, updateProfile } = useAuth()
-  const fotoInputRef = useRef(null)
   const [form, setForm] = useState({ nome: user?.nome || '', email: user?.email || '', senha: '', confirmar: '' })
   const [foto, setFoto] = useState(user?.foto ?? null)
   const [resumos, setResumos] = useState({ resumoSemanal: Boolean(user?.resumoSemanal), resumoMensal: Boolean(user?.resumoMensal) })
@@ -18,30 +17,8 @@ export default function ProfileModal({ onClose }) {
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleFotoChange = async (e) => {
-    const file = e.target.files[0]
-    e.target.value = ''
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      return setError('Selecione um arquivo de imagem')
-    }
-    if (file.size > 8 * 1024 * 1024) {
-      return setError('Imagem muito grande (máximo 8MB)')
-    }
-
-    try {
-      setError('')
-      const resized = await resizeImage(file)
-      setFoto(resized)
-      setFotoChanged(true)
-    } catch {
-      setError('Não foi possível processar a imagem')
-    }
-  }
-
-  const handleRemoveFoto = () => {
-    setFoto(null)
+  const handleFotoChange = (novaFoto) => {
+    setFoto(novaFoto)
     setFotoChanged(true)
   }
 
@@ -90,36 +67,7 @@ export default function ProfileModal({ onClose }) {
         {success && <Alert type="success">{success}</Alert>}
 
         <form onSubmit={handleSubmit}>
-          <div className="profile-photo-field">
-            {foto ? (
-              <img src={foto} alt="Foto de perfil" className="profile-photo-preview" />
-            ) : (
-              <div className="profile-photo-preview profile-photo-placeholder">
-                {user?.nome?.[0]?.toUpperCase()}
-              </div>
-            )}
-            <div className="profile-photo-actions">
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => fotoInputRef.current?.click()}
-              >
-                Escolher foto
-              </button>
-              <input
-                ref={fotoInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFotoChange}
-                hidden
-              />
-              {foto && (
-                <button type="button" className="btn btn-outline btn-sm" onClick={handleRemoveFoto}>
-                  Remover
-                </button>
-              )}
-            </div>
-          </div>
+          <FotoPicker foto={foto} nome={user?.nome} alt="Foto de perfil" onChange={handleFotoChange} onError={setError} />
           <div className="form-group">
             <label htmlFor="profile-nome">Nome</label>
             <input

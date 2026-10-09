@@ -2,11 +2,13 @@ import { useState } from 'react'
 import api from '../services/api'
 import Modal from './Modal'
 import Alert from './Alert'
+import FotoPicker from './FotoPicker'
 import { Loader2, X } from 'lucide-react'
 
-// Sem "grupo": cria um grupo novo. Com "grupo": renomeia (só admin chega aqui).
+// Sem "grupo": cria um grupo novo. Com "grupo": edita nome e foto (só admin chega aqui).
 export default function GrupoModal({ grupo, onClose, onSaved }) {
   const [nome, setNome] = useState(grupo?.nome || '')
+  const [foto, setFoto] = useState(grupo?.foto ?? null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -16,13 +18,13 @@ export default function GrupoModal({ grupo, onClose, onSaved }) {
     setLoading(true)
     try {
       if (grupo) {
-        await api.put(`/grupos/${grupo.id}`, { nome })
+        await api.put(`/grupos/${grupo.id}`, { nome, foto })
       } else {
-        await api.post('/grupos', { nome })
+        await api.post('/grupos', { nome, foto })
       }
       onSaved()
     } catch (err) {
-      setError(err.response?.data?.error || (grupo ? 'Erro ao renomear grupo' : 'Erro ao criar grupo'))
+      setError(err.response?.data?.error || (grupo ? 'Erro ao editar grupo' : 'Erro ao criar grupo'))
     } finally {
       setLoading(false)
     }
@@ -38,6 +40,7 @@ export default function GrupoModal({ grupo, onClose, onSaved }) {
       {error && <Alert type="error">{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
+        <FotoPicker foto={foto} nome={nome} alt="Foto do grupo" onChange={setFoto} onError={setError} />
         <div className="form-group">
           <label htmlFor="grupo-nome">Nome</label>
           <input

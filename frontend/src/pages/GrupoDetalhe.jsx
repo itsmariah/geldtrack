@@ -167,9 +167,9 @@ export default function GrupoDetalhe() {
     }
   }
 
-  const handleGrupoRenomeado = () => {
+  const handleGrupoEditado = () => {
     setShowEditarGrupo(false)
-    toast('Nome do grupo atualizado.')
+    toast('Grupo atualizado.')
     fetchGrupo()
   }
 
@@ -256,12 +256,15 @@ export default function GrupoDetalhe() {
       <div className="dashboard-header">
         <div>
           <Link to="/grupos" className="btn-link"><ArrowLeft size={16} /> Voltar pra Grupos</Link>
-          <h2 style={{ marginTop: 6 }}>{grupo.nome}</h2>
+          <div className="grupo-card-titulo" style={{ marginTop: 6 }}>
+            <Avatar nome={grupo.nome} foto={grupo.foto} size="lg" />
+            <h2>{grupo.nome}</h2>
+          </div>
         </div>
         {souAdmin && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-outline btn-sm" onClick={() => setShowEditarGrupo(true)}>
-              Editar nome
+              Editar grupo
             </button>
             <button className="btn btn-outline btn-sm" onClick={() => setConfirmarExcluirGrupo(true)}>
               Excluir grupo
@@ -508,7 +511,7 @@ export default function GrupoDetalhe() {
       )}
 
       {showEditarGrupo && (
-        <GrupoModal grupo={grupo} onClose={() => setShowEditarGrupo(false)} onSaved={handleGrupoRenomeado} />
+        <GrupoModal grupo={grupo} onClose={() => setShowEditarGrupo(false)} onSaved={handleGrupoEditado} />
       )}
 
       {removendoMembro && (

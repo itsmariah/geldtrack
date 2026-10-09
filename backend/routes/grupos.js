@@ -2,7 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
-const { validateNomeGrupo, validateCodigoGrupo, validateNomeConvidado } = require('../utils/validateGrupo');
+const { validateNomeGrupo, validateCodigoGrupo, validateNomeConvidado, validateFotoGrupo } = require('../utils/validateGrupo');
 const { validateDespesaGrupoInput } = require('../utils/validateDespesaGrupo');
 const { validatePagamentoGrupoInput } = require('../utils/validatePagamentoGrupo');
 const { serializeGrupo, serializeGrupoMembro, serializeDespesaGrupo, serializeDespesasGrupo, serializePagamentoGrupo, serializePagamentosGrupo } = require('../utils/serializeGrupo');
@@ -235,14 +235,15 @@ router.get('/:id', async (req, res) => {
 // natureza (Prisma nested write), sem precisar de $transaction manual.
 router.post('/', async (req, res) => {
   try {
-    const { nome } = req.body;
-    const validationError = validateNomeGrupo(nome);
+    const { nome, foto } = req.body;
+    const validationError = validateNomeGrupo(nome) || (foto !== undefined ? validateFotoGrupo(foto) : null);
     if (validationError) return res.status(400).json({ error: validationError });
 
     const codigo = await gerarCodigoUnico();
     const grupo = await prisma.grupo.create({
       data: {
         nome: nome.trim(),
+        ...(foto ? { foto } : {}),
         codigo,
         criadorUsuarioId: req.userId,
         membros: { create: { usuarioId: req.userId, papel: 'admin' } },
@@ -274,7 +275,7 @@ router.put('/reorder', async (req, res) => {
   }
 });
 
-// Renomeia o grupo — só admin, mesma regra de excluir. Leva o nome novo pras transações
+// Edita nome e foto do grupo — só admin, mesma regra de excluir. Leva o nome novo pras transações
 // que os membros já adicionaram ao dashboard (o sufixo "(nome antigo)" da descrição), com
 // histórico de edição — igual à sincronização de uma despesa editada. Descrição que o
 // usuário já mudou no dashboard fica como está.
@@ -283,14 +284,16 @@ router.put('/:id', async (req, res) => {
     const grupoId = Number(req.params.id);
     const meuMembro = await getMembroAtual(grupoId, req.userId);
     if (!meuMembro) return res.status(404).json({ error: 'Grupo não encontrado' });
-    if (meuMembro.papel !== 'admin') return res.status(403).json({ error: 'Só um admin pode renomear o grupo' });
+    if (meuMembro.papel !== 'admin') return res.status(403).json({ error: 'Só um admin pode editar o grupo' });
 
-    const { nome } = req.body;
-    const validationError = validateNomeGrupo(nome);
+    // foto ausente = mantém a atual; null = remove.
+    const { nome, foto } = req.body;
+    const validationError = validateNomeGrupo(nome) || (foto !== undefined ? validateFotoGrupo(foto) : null);
     if (validationError) return res.status(400).json({ error: validationError });
 
     const anterior = await prisma.grupo.findUnique({ where: { id: grupoId }, select: { nome: true } });
-    const grupo = await prisma.grupo.update({ where: { id: grupoId }, data: { nome: nome.trim() }, include: membrosInclude });
+    const data = { nome: nome.trim(), ...(foto !== undefined ? { foto } : {}) };
+    const grupo = await prisma.grupo.update({ where: { id: grupoId }, data, include: membrosInclude });
 
     const transacoes = await prisma.transacao.findMany({
       where: { OR: [{ despesaGrupo: { grupoId } }, { pagamentoGrupo: { grupoId } }] },
@@ -305,7 +308,7 @@ router.put('/:id', async (req, res) => {
     }
     res.json(serializeGrupo(grupo));
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao renomear grupo' });
+    res.status(500).json({ error: 'Erro ao editar grupo' });
   }
 });
 

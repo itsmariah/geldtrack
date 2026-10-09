@@ -802,6 +802,8 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .avatar--xs { width: 20px; height: 20px; font-size: 10px; }
 .avatar--lg { width: 40px; height: 40px; font-size: 16px; }
+/* Foto (ou inicial) do grupo ao lado do nome — card da lista e cabeçalho do detalhe. */
+.grupo-card-titulo { display: flex; align-items: center; gap: 12px; min-width: 0; }
 /* Linha de texto com avatares no meio ("[foto] Ana deve R$ 10 a [foto] Beto"). */
 .grupo-pessoas { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
 
