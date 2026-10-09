@@ -39,6 +39,8 @@ export default function Recurring() {
     }
   }, [])
 
+  const handleReorder = (novaLista) => salvarOrdem('/recorrencias/reorder', novaLista, { setLista: setRecorrencias, recarregar: fetchRecorrencias, setError })
+
   useEffect(() => { fetchRecorrencias() }, [fetchRecorrencias])
 
   const handleEdit = (recorrencia) => {
