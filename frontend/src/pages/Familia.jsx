@@ -4,6 +4,7 @@ import api from '../services/api'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Alert from '../components/Alert'
 import Avatar from '../components/Avatar'
+import FotoPicker from '../components/FotoPicker'
 import { SkeletonList } from '../components/Skeleton'
 import { Loader2, Trash2 } from 'lucide-react'
 import { useToast } from '../context/ToastContext'
@@ -17,6 +18,7 @@ export default function Familia() {
 
   const [editandoNome, setEditandoNome] = useState(false)
   const [nomeInput, setNomeInput] = useState('')
+  const [fotoInput, setFotoInput] = useState(null)
   const [salvandoNome, setSalvandoNome] = useState(false)
 
   const [regenerando, setRegenerando] = useState(false)
@@ -38,7 +40,6 @@ export default function Familia() {
     try {
       const { data } = await api.get('/familia')
       setFamilia(data)
-      setNomeInput(data.nome)
     } catch (err) {
       console.error(err)
       setError('Não foi possível carregar os dados da família. Verifique sua conexão e tente novamente.')
@@ -53,16 +54,23 @@ export default function Familia() {
   const souDono = meuPapel === 'dono'
   const posoSair = (familia?.membros.length || 0) > 1
 
+  // Sempre parte dos dados atuais (a família pode ter mudado depois de entrar em outra).
+  const abrirEdicao = () => {
+    setNomeInput(familia.nome)
+    setFotoInput(familia.foto)
+    setEditandoNome(true)
+  }
+
   const handleSalvarNome = async (e) => {
     e.preventDefault()
     setSalvandoNome(true)
     try {
-      const { data } = await api.put('/familia', { nome: nomeInput })
+      const { data } = await api.put('/familia', { nome: nomeInput, foto: fotoInput })
       setFamilia(data)
       setEditandoNome(false)
-      toast('Nome da família atualizado.')
+      toast('Família atualizada.')
     } catch (err) {
-      setError(err.response?.data?.error || 'Não foi possível renomear a família.')
+      setError(err.response?.data?.error || 'Não foi possível salvar as alterações da família.')
     } finally {
       setSalvandoNome(false)
     }
@@ -165,29 +173,36 @@ export default function Familia() {
         <>
           <div className="transactions-section" style={{ marginBottom: 24 }}>
             <div className="section-header">
-              <h3>{familia.nome}</h3>
+              <div className="grupo-card-titulo">
+                <Avatar nome={familia.nome} foto={familia.foto} size="lg" />
+                <h3>{familia.nome}</h3>
+              </div>
               {souDono && !editandoNome && (
-                <button className="btn btn-outline btn-sm" onClick={() => setEditandoNome(true)}>Renomear</button>
+                <button className="btn btn-outline btn-sm" onClick={abrirEdicao}>Editar</button>
               )}
             </div>
 
             {editandoNome ? (
-              <form onSubmit={handleSalvarNome} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-                <input
-                  type="text"
-                  value={nomeInput}
-                  onChange={e => setNomeInput(e.target.value)}
-                  maxLength={60}
-                  required
-                  style={{ flex: 1 }}
-                />
-                <button type="submit" className="btn btn-primary btn-sm" disabled={salvandoNome}>
-                  {salvandoNome && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
-                  {salvandoNome ? 'Salvando...' : 'Salvar'}
-                </button>
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => { setEditandoNome(false); setNomeInput(familia.nome) }}>
-                  Cancelar
-                </button>
+              <form onSubmit={handleSalvarNome} style={{ marginBottom: 20 }}>
+                <FotoPicker foto={fotoInput} nome={nomeInput} alt="Foto da família" onChange={setFotoInput} onError={setError} />
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    value={nomeInput}
+                    onChange={e => setNomeInput(e.target.value)}
+                    maxLength={60}
+                    required
+                    aria-label="Nome da família"
+                    style={{ flex: 1, minWidth: 160 }}
+                  />
+                  <button type="submit" className="btn btn-primary btn-sm" disabled={salvandoNome}>
+                    {salvandoNome && <Loader2 size={16} className="icon-spin" aria-hidden="true" />}
+                    {salvandoNome ? 'Salvando...' : 'Salvar'}
+                  </button>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditandoNome(false)}>
+                    Cancelar
+                  </button>
+                </div>
               </form>
             ) : null}
 

@@ -36,7 +36,7 @@ describe('GET /api/familia', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      id: 1, nome: 'Família de Mariah', codigo: 'WM2BST',
+      id: 1, nome: 'Família de Mariah', foto: null, codigo: 'WM2BST',
       membros: [{ id: 7, nome: 'Mariah', email: 'mariah@example.com', foto: null, papel: 'dono' }],
     });
   });
@@ -68,6 +68,32 @@ describe('PUT /api/familia', () => {
   it('rejeita nome vazio (400)', async () => {
     const res = await request(app).put('/api/familia').set('Authorization', `Bearer ${token}`).send({ nome: '  ' });
     expect(res.status).toBe(400);
+  });
+
+  it('troca a foto quando enviada, remove com null e mantém quando ausente', async () => {
+    const foto = 'data:image/jpeg;base64,AAAA';
+    const updateSpy = vi.spyOn(prisma.familia, 'update').mockResolvedValue({
+      id: 1, nome: 'Família Silva', foto, codigo: 'WM2BST', membros: [membro()],
+    });
+    const put = (body) => request(app).put('/api/familia').set('Authorization', `Bearer ${token}`).send(body);
+
+    const res = await put({ nome: 'Família Silva', foto });
+    expect(res.status).toBe(200);
+    expect(res.body.foto).toBe(foto);
+    expect(updateSpy.mock.calls[0][0].data).toEqual({ nome: 'Família Silva', foto });
+
+    await put({ nome: 'Família Silva', foto: null });
+    expect(updateSpy.mock.calls[1][0].data).toEqual({ nome: 'Família Silva', foto: null });
+
+    await put({ nome: 'Família Silva' });
+    expect(updateSpy.mock.calls[2][0].data).toEqual({ nome: 'Família Silva' });
+  });
+
+  it('rejeita foto que não é imagem (400) sem atualizar', async () => {
+    const updateSpy = vi.spyOn(prisma.familia, 'update');
+    const res = await request(app).put('/api/familia').set('Authorization', `Bearer ${token}`).send({ nome: 'Família Silva', foto: 'https://exemplo.com/x.jpg' });
+    expect(res.status).toBe(400);
+    expect(updateSpy).not.toHaveBeenCalled();
   });
 });
 

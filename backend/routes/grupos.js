@@ -2,7 +2,8 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
-const { validateNomeGrupo, validateCodigoGrupo, validateNomeConvidado, validateFotoGrupo } = require('../utils/validateGrupo');
+const { validateNomeGrupo, validateCodigoGrupo, validateNomeConvidado } = require('../utils/validateGrupo');
+const { validateFoto } = require('../utils/validateFoto');
 const { validateDespesaGrupoInput } = require('../utils/validateDespesaGrupo');
 const { validatePagamentoGrupoInput } = require('../utils/validatePagamentoGrupo');
 const { serializeGrupo, serializeGrupoMembro, serializeDespesaGrupo, serializeDespesasGrupo, serializePagamentoGrupo, serializePagamentosGrupo } = require('../utils/serializeGrupo');
@@ -236,7 +237,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { nome, foto } = req.body;
-    const validationError = validateNomeGrupo(nome) || (foto !== undefined ? validateFotoGrupo(foto) : null);
+    const validationError = validateNomeGrupo(nome) || (foto !== undefined ? validateFoto(foto) : null);
     if (validationError) return res.status(400).json({ error: validationError });
 
     const codigo = await gerarCodigoUnico();
@@ -288,7 +289,7 @@ router.put('/:id', async (req, res) => {
 
     // foto ausente = mantém a atual; null = remove.
     const { nome, foto } = req.body;
-    const validationError = validateNomeGrupo(nome) || (foto !== undefined ? validateFotoGrupo(foto) : null);
+    const validationError = validateNomeGrupo(nome) || (foto !== undefined ? validateFoto(foto) : null);
     if (validationError) return res.status(400).json({ error: validationError });
 
     const anterior = await prisma.grupo.findUnique({ where: { id: grupoId }, select: { nome: true } });

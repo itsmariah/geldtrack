@@ -56,6 +56,8 @@ model Usuario {
 model Familia {
   id                Int               @id @default(autoincrement())
   nome              String
+  // Foto da família — mesmo formato da foto de perfil (data URL já redimensionada no upload).
+  foto              String?
   // Código curto compartilhado fora do app (ex: WhatsApp) pra outra pessoa entrar —
   // sem convite por e-mail, sem token com expiração.
   codigo            String            @unique

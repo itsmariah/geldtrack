@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const prisma = require('../database/db');
 const authMiddleware = require('../middleware/auth');
 const { validateNomeFamilia, validateCodigoFamilia } = require('../utils/validateFamilia');
+const { validateFoto } = require('../utils/validateFoto');
 const { serializeFamilia } = require('../utils/serializeFamilia');
 const { gerarCodigoUnico } = require('../utils/gerarCodigoFamilia');
 
@@ -35,23 +36,23 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Renomear a família — só o dono
+// Editar nome e foto da família — só o dono. foto ausente = mantém a atual; null = remove.
 router.put('/', async (req, res) => {
   try {
-    if (req.papelFamilia !== 'dono') return res.status(403).json({ error: 'Só o dono da família pode renomeá-la' });
+    if (req.papelFamilia !== 'dono') return res.status(403).json({ error: 'Só o dono da família pode editá-la' });
 
-    const { nome } = req.body;
-    const validationError = validateNomeFamilia(nome);
+    const { nome, foto } = req.body;
+    const validationError = validateNomeFamilia(nome) || (foto !== undefined ? validateFoto(foto) : null);
     if (validationError) return res.status(400).json({ error: validationError });
 
     const updated = await prisma.familia.update({
       where: { id: req.familiaId },
-      data: { nome: nome.trim() },
+      data: { nome: nome.trim(), ...(foto !== undefined ? { foto } : {}) },
       include: familiaInclude,
     });
     res.json(serializeFamilia(updated));
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao renomear família' });
+    res.status(500).json({ error: 'Erro ao editar família' });
   }
 });
 
