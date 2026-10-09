@@ -12,6 +12,15 @@ const PRIMARY = NAV_LINKS.filter(l => l.primary)
 const SECONDARY = NAV_LINKS.filter(l => !l.primary)
 const SPRING = { type: 'spring', stiffness: 520, damping: 40 }
 
+// Tocar de novo na aba em que já se está sobe a página pro topo (como nos apps nativos),
+// em vez de "navegar" pra mesma rota sem efeito nenhum.
+function voltarAoTopo(e) {
+  e.preventDefault()
+  haptic('light')
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })
+}
+
 // Barra de navegação inferior — só aparece no layout de celular/tablet (ver .bottom-nav
 // no CSS). Abas: Início, Contas, [+], Relatórios, Mais. O "+" leva pro Dashboard já
 // abrindo o modal de nova transação (Dashboard lê location.state.novaTransacao).
@@ -28,7 +37,13 @@ export default function BottomNav() {
   const tab = ({ path, label, short, icon: Icon }) => {
     const active = isPathActive(pathname, path)
     return (
-      <Link key={path} to={path} className={`bottom-nav-tab${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined}>
+      <Link
+        key={path}
+        to={path}
+        className={`bottom-nav-tab${active ? ' active' : ''}`}
+        aria-current={active ? 'page' : undefined}
+        onClick={pathname === path ? voltarAoTopo : undefined}
+      >
         <span className="bottom-nav-icon">
           {active && <m.span layoutId="bottom-nav-pill" className="bottom-nav-pill" transition={SPRING} />}
           <Icon size={22} strokeWidth={active ? 2.4 : 2} />
