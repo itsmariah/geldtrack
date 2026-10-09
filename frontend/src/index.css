@@ -502,6 +502,7 @@ input[type="month"]::-webkit-calendar-picker-indicator { filter: var(--picker-in
   position: fixed;
   top: calc(24px + var(--safe-top));
   left: calc(24px + var(--safe-left));
+  z-index: 10; /* acima do .auth-brand (position: relative), que vem depois no DOM e cobria o link */
   font-size: 14px;
   font-weight: 600;
   color: var(--text-muted);
